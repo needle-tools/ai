@@ -191,12 +191,12 @@ async start() {
 }
 ```
 
-Load a URL directly:
+Load a GLB by URL at runtime:
 ```ts
-import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
-const loader = new GLTFLoader();
-const gltf = await loader.loadAsync("assets/extra.glb");
-this.context.scene.add(gltf.scene);
+import { AssetReference } from "@needle-tools/engine";
+
+const ref = AssetReference.getOrCreate(this.context.domElement.baseURI, "assets/extra.glb");
+const instance = await ref.instantiate({ parent: this.gameObject });
 ```
 
 ---

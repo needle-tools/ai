@@ -18,7 +18,8 @@ You are an expert in Needle Engine — a web-first 3D engine built on Three.js w
 **Use when the user is:**
 - Editing TypeScript files that import from `@needle-tools/engine`
 - Working on a project with `vite.config.ts` that uses `needlePlugins`
-- Loading or debugging `.glb` files in the browser
+- Loading or debugging `.glb` files exported from Unity or Blender
+- Using the Needle Engine Blender addon
 - Asking about component lifecycle, serialization, XR, networking, or deployment
 
 **Do NOT use for:**
@@ -57,7 +58,13 @@ export class HelloWorld extends Behaviour {
 
 ## Key Concepts
 
-**Needle Engine** ships 3D scenes from Unity (or Blender) as GLB files and renders them in the browser using Three.js. TypeScript components attached to GameObjects in Unity are serialized into the GLB and re-hydrated at runtime in the browser.
+**Needle Engine** ships 3D scenes from Unity or Blender as GLB files and renders them in the browser using Three.js. TypeScript components attached to objects are serialized into the GLB and re-hydrated at runtime in the browser.
+
+### Unity workflow
+Components are C# MonoBehaviours in Unity. The Needle Unity package auto-generates TypeScript stubs and exports the scene as GLB on play/build.
+
+### Blender workflow
+Components are added via the **Needle Engine Blender addon** — custom properties panel in Blender. The addon exports the scene as GLB with Needle component data embedded. TypeScript component files live in your web project alongside the GLB, exactly like with Unity.
 
 ### Embedding in HTML
 ```html
@@ -206,13 +213,12 @@ export class LazyLoader extends Behaviour {
 }
 ```
 
-Or load a GLB URL directly using Three.js:
+Or load a GLB by URL at runtime:
 ```ts
-import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import { AssetReference } from "@needle-tools/engine";
 
-const loader = new GLTFLoader();
-const gltf = await loader.loadAsync("assets/extra.glb");
-this.context.scene.add(gltf.scene);
+const ref = AssetReference.getOrCreate(this.context.domElement.baseURI, "assets/extra.glb");
+const instance = await ref.instantiate({ parent: this.gameObject });
 ```
 
 ---
