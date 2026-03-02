@@ -304,15 +304,124 @@ Needle Engine has built-in WebXR support for VR and AR across Meta Quest, Apple 
 
 ---
 
+## Engine Hooks
+
+Use these hooks to integrate Needle Engine with any JavaScript framework or plain HTML — without writing a component.
+
+```ts
+import { NeedleEngine, Context } from "@needle-tools/engine";
+
+// Fires when any <needle-engine> element finishes loading its scene
+NeedleEngine.addContextCreatedCallback((ctx: Context) => {
+  console.log("Scene loaded", ctx.scene);
+});
+```
+
+The `<needle-engine>` web component also fires DOM events you can listen to from outside:
+
+```ts
+const ne = document.querySelector("needle-engine")!;
+
+ne.addEventListener("ready",           () => { /* context initialized */ });
+ne.addEventListener("loadingfinished", () => { /* all assets loaded   */ });
+ne.addEventListener("loadstart",       () => { /* loading started      */ });
+```
+
+---
+
+## Frontend UI ↔ 3D Scene Communication
+
+Needle Engine is a standard web component — any JavaScript on the page can talk to it.
+
+### HTML/JS → 3D (call a method on a component)
+```ts
+// In your component
+@registerType
+export class GameManager extends Behaviour {
+  addScore(points: number) { this.score += points; }
+}
+```
+```js
+// From any JS on the page (button click, fetch result, etc.)
+const ctx = document.querySelector("needle-engine").context;
+const gm = ctx.scene.getComponentInChildren(GameManager);
+gm?.addScore(10);
+```
+
+### 3D → HTML/JS (dispatch a custom DOM event from a component)
+```ts
+// In your component
+update() {
+  if (playerDied) {
+    // Bubble up to the page — any framework can listen
+    this.context.domElement.dispatchEvent(
+      new CustomEvent("game-over", { bubbles: true, detail: { score: this.score } })
+    );
+  }
+}
+```
+```js
+// In React / Svelte / Vue / vanilla JS
+document.querySelector("needle-engine").addEventListener("game-over", (e) => {
+  showModal(`Game over! Score: ${e.detail.score}`);
+});
+```
+
+### React example
+```tsx
+import { useEffect, useState } from "react";
+
+function ScoreDisplay() {
+  const [score, setScore] = useState(0);
+
+  useEffect(() => {
+    const ne = document.querySelector("needle-engine");
+    const onScore = (e: CustomEvent) => setScore(e.detail.score);
+    ne?.addEventListener("score-changed", onScore as EventListener);
+    return () => ne?.removeEventListener("score-changed", onScore as EventListener);
+  }, []);
+
+  return <div>Score: {score}</div>;
+}
+```
+
+### Svelte example
+```svelte
+<script>
+  import { onMount } from "svelte";
+  let score = 0;
+
+  onMount(() => {
+    const ne = document.querySelector("needle-engine");
+    const handler = (e) => score = e.detail.score;
+    ne?.addEventListener("score-changed", handler);
+    return () => ne?.removeEventListener("score-changed", handler);
+  });
+</script>
+
+<p>Score: {score}</p>
+<needle-engine src="assets/scene.glb" />
+```
+
+---
+
 ## Creating a New Project
 
 ```bash
-npm create needle my-app            # default Vite template
-npm create needle my-app -t react   # React template
-npm create needle my-app -t vue     # Vue.js template
+npm create needle my-app                  # Vite (default)
+npm create needle my-app -t react         # React + Vite
+npm create needle my-app -t vue           # Vue + Vite
+npm create needle my-app -t sveltekit     # SvelteKit
+npm create needle my-app -t nextjs        # Next.js
+npm create needle my-app -t react-three-fiber  # R3F
 ```
 
-Available templates: `vite` (default), `react`, `vue`, `sveltekit`, `svelte`, `nextjs`, `react-three-fiber`.
+**Starter templates on GitHub:**
+- [Vite](https://github.com/needle-tools/needle-engine-support/tree/main/packages/create/templates/vite)
+- [React](https://github.com/needle-tools/needle-engine-support/tree/main/packages/create/templates/react)
+- [Vue](https://github.com/needle-tools/needle-engine-support/tree/main/packages/create/templates/vue)
+- [SvelteKit](https://github.com/needle-tools/needle-engine-support/tree/main/packages/create/templates/sveltekit)
+- [Next.js](https://github.com/needle-tools/needle-engine-support/tree/main/packages/create/templates/nextjs)
 
 ---
 
