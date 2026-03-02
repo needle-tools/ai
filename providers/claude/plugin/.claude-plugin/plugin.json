@@ -8,6 +8,5 @@
   },
   "homepage": "https://needle.tools",
   "repository": "https://github.com/needle-tools/ai",
-  "license": "MIT",
-  "topics": "3d, threejs, glTF, webxr, unity, blender, deployment, compression, needle-engine, mcp"
+  "license": "MIT"
 }
