@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "needle-cloud": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "needle-cloud@latest", "mcp"]
+    }
+  }
+}

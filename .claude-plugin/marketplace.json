@@ -1,0 +1,18 @@
+{
+  "name": "needle",
+  "owner": {
+    "name": "Needle Tools",
+    "email": "hi@needle.tools"
+  },
+  "plugins": [
+    {
+      "name": "needle-engine",
+      "source": "./providers/claude/plugin/",
+      "description": "Build interactive 3D web experiences with Needle Engine",
+      "version": "1.0.0",
+      "author": {
+        "name": "Needle Tools"
+      }
+    }
+  ]
+}

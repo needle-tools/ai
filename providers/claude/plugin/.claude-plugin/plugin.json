@@ -1,0 +1,13 @@
+{
+  "name": "needle-engine",
+  "description": "Build interactive 3D web experiences with Needle Engine. Provides component API reference, scripting patterns, deployment tools, and documentation search via MCP.",
+  "version": "1.0.0",
+  "author": {
+    "name": "Needle Tools",
+    "url": "https://needle.tools"
+  },
+  "homepage": "https://needle.tools",
+  "repository": "https://github.com/needle-tools/ai",
+  "license": "MIT",
+  "topics": "3d, threejs, glTF, webxr, unity, blender, deployment, compression, needle-engine, mcp"
+}
