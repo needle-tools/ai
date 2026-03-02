@@ -306,25 +306,28 @@ Needle Engine has built-in WebXR support for VR and AR across Meta Quest, Apple 
 
 ## Engine Hooks
 
-Use these hooks to integrate Needle Engine with any JavaScript framework or plain HTML — without writing a component.
+Standalone lifecycle hooks — use these outside of a component class (e.g. in framework setup code):
 
 ```ts
-import { NeedleEngine, Context } from "@needle-tools/engine";
+import { onStart, onUpdate, onBeforeRender, onDestroy } from "@needle-tools/engine";
 
-// Fires when any <needle-engine> element finishes loading its scene
-NeedleEngine.addContextCreatedCallback((ctx: Context) => {
-  console.log("Scene loaded", ctx.scene);
+onStart((ctx) => {
+  // runs once when the scene is ready
+  console.log("Scene ready", ctx.scene);
 });
-```
 
-The `<needle-engine>` web component also fires DOM events you can listen to from outside:
+onUpdate((ctx) => {
+  // runs every frame
+  const dt = ctx.time.deltaTime;
+});
 
-```ts
-const ne = document.querySelector("needle-engine")!;
+onBeforeRender((ctx) => {
+  // runs just before Three.js renders each frame
+});
 
-ne.addEventListener("ready",           () => { /* context initialized */ });
-ne.addEventListener("loadingfinished", () => { /* all assets loaded   */ });
-ne.addEventListener("loadstart",       () => { /* loading started      */ });
+onDestroy((ctx) => {
+  // runs when the context is torn down
+});
 ```
 
 ---
@@ -333,75 +336,27 @@ ne.addEventListener("loadstart",       () => { /* loading started      */ });
 
 Needle Engine is a standard web component — any JavaScript on the page can talk to it.
 
-### HTML/JS → 3D (call a method on a component)
-```ts
-// In your component
-@registerType
-export class GameManager extends Behaviour {
-  addScore(points: number) { this.score += points; }
-}
-```
+**JS → 3D:** get a component and call methods on it directly
 ```js
-// From any JS on the page (button click, fetch result, etc.)
 const ctx = document.querySelector("needle-engine").context;
-const gm = ctx.scene.getComponentInChildren(GameManager);
+const gm  = ctx.scene.getComponentInChildren(GameManager);
 gm?.addScore(10);
 ```
 
-### 3D → HTML/JS (dispatch a custom DOM event from a component)
+**3D → JS:** dispatch a custom DOM event from inside a component
 ```ts
-// In your component
-update() {
-  if (playerDied) {
-    // Bubble up to the page — any framework can listen
-    this.context.domElement.dispatchEvent(
-      new CustomEvent("game-over", { bubbles: true, detail: { score: this.score } })
-    );
-  }
-}
+// In your component:
+this.context.domElement.dispatchEvent(
+  new CustomEvent("score-changed", { bubbles: true, detail: { score: 42 } })
+);
 ```
 ```js
-// In React / Svelte / Vue / vanilla JS
-document.querySelector("needle-engine").addEventListener("game-over", (e) => {
-  showModal(`Game over! Score: ${e.detail.score}`);
-});
+// Anywhere on the page (React, Svelte, Vue, vanilla):
+document.querySelector("needle-engine")
+  .addEventListener("score-changed", (e) => console.log(e.detail.score));
 ```
 
-### React example
-```tsx
-import { useEffect, useState } from "react";
-
-function ScoreDisplay() {
-  const [score, setScore] = useState(0);
-
-  useEffect(() => {
-    const ne = document.querySelector("needle-engine");
-    const onScore = (e: CustomEvent) => setScore(e.detail.score);
-    ne?.addEventListener("score-changed", onScore as EventListener);
-    return () => ne?.removeEventListener("score-changed", onScore as EventListener);
-  }, []);
-
-  return <div>Score: {score}</div>;
-}
-```
-
-### Svelte example
-```svelte
-<script>
-  import { onMount } from "svelte";
-  let score = 0;
-
-  onMount(() => {
-    const ne = document.querySelector("needle-engine");
-    const handler = (e) => score = e.detail.score;
-    ne?.addEventListener("score-changed", handler);
-    return () => ne?.removeEventListener("score-changed", handler);
-  });
-</script>
-
-<p>Score: {score}</p>
-<needle-engine src="assets/scene.glb" />
-```
+See [references/integration.md](references/integration.md) for full React, Svelte, and Vue examples.
 
 ---
 
@@ -491,6 +446,7 @@ Use this *before* guessing at API details — the docs are the source of truth.
 ## References
 
 - 📖 [Full API Reference](references/api.md) — complete lifecycle, decorators, and context API
+- 🔗 [Framework Integration](references/integration.md) — React, Svelte, Vue, vanilla JS examples + hook reference
 - 🐛 [Troubleshooting](references/troubleshooting.md) — common errors and fixes
 - 🧩 [Component Template](templates/my-component.ts) — annotated starter component
 
