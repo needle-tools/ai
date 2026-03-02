@@ -92,6 +92,8 @@ export class MyComponent extends Behaviour {
 ```
 
 ### Physics Callbacks (requires Rapier collider on GameObject)
+
+Add inside your component class:
 ```ts
 onCollisionEnter(col: Collision) {}
 onCollisionStay(col: Collision)  {}
@@ -102,6 +104,8 @@ onTriggerExit(col: Collision)    {}
 ```
 
 ### Coroutines
+
+Add inside your component class:
 ```ts
 start() {
   this.startCoroutine(this.myRoutine());
@@ -159,7 +163,7 @@ findObjectsOfType(MyComponent, this.context)
 ## Instantiate & Destroy
 
 ```ts
-import { GameObject, Instantiate } from "@needle-tools/engine";
+import { GameObject } from "@needle-tools/engine";
 
 // Clone an object (like Unity Instantiate)
 const clone = GameObject.instantiate(this.gameObject);
@@ -179,10 +183,10 @@ this.gameObject.removeComponent(comp); // removes component (does NOT call onDes
 import { Animator } from "@needle-tools/engine";
 
 const animator = this.gameObject.getComponent(Animator);
-animator?.play("Run");                        // play by clip name
-animator?.crossFade("Walk", 0.25);           // cross-fade transition
-animator?.setFloat("Speed", 1.5);            // Animator parameter
+animator?.play("Run");                   // play by state name
+animator?.setFloat("Speed", 1.5);       // Animator parameters
 animator?.setBool("IsJumping", true);
+animator?.setTrigger("Jump");
 ```
 
 ---
@@ -202,10 +206,13 @@ export class LazyLoader extends Behaviour {
 }
 ```
 
-Or load a raw URL:
+Or load a GLB URL directly using Three.js:
 ```ts
-import { NeedleEngine } from "@needle-tools/engine";
-NeedleEngine.addContextCreatedCallback((ctx) => { /* scene ready */ });
+import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+
+const loader = new GLTFLoader();
+const gltf = await loader.loadAsync("assets/extra.glb");
+this.context.scene.add(gltf.scene);
 ```
 
 ---

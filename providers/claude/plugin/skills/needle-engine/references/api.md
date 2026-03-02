@@ -124,11 +124,11 @@ go.userData.tags // string[] (set from Unity via Tag component)
 ## Finding Objects
 
 ```ts
-import { findObjectOfType, findObjectsOfType, findObjectByName } from "@needle-tools/engine";
+import { findObjectOfType, findObjectsOfType } from "@needle-tools/engine";
 
-findObjectOfType(MyComponent, ctx)       // first match in scene
-findObjectsOfType(MyComponent, ctx)      // all matches
-findObjectByName("Player", ctx.scene)    // by object name
+findObjectOfType(MyComponent, ctx)          // first match in scene
+findObjectsOfType(MyComponent, ctx)         // all matches
+ctx.scene.getObjectByName("Player")         // by name (Three.js built-in)
 ```
 
 ---
@@ -161,17 +161,15 @@ this.stopAllCoroutines();
 ## Animation
 
 ```ts
-import { Animator, AnimationClip } from "@needle-tools/engine";
+import { Animator } from "@needle-tools/engine";
 
 const anim = this.gameObject.getComponent(Animator);
 
-anim.play("Run");                      // play by state name
-anim.crossFade("Walk", 0.3);           // cross-fade over 0.3s
-anim.setFloat("Speed", 1.5);
-anim.setInteger("State", 2);
+anim.play("Run");                  // play by state name
+anim.setFloat("Speed", 1.5);      // Animator parameters (match Unity parameter names)
 anim.setBool("IsGrounded", true);
 anim.setTrigger("Jump");
-anim.speed = 0.5;                      // global playback speed multiplier
+anim.speed = 0.5;                  // global playback speed multiplier
 ```
 
 ---
