@@ -101,6 +101,19 @@ Needle Engine has built-in WebXR support for VR and AR across Meta Quest, Apple 
 - Use `XRRig` to define the user's starting position — the user is parented to the rig during XR sessions
 - Available components: `WebXRImageTracking`, `WebXRPlaneTracking`, `XRControllerModel`, `NeedleXRSession`
 
+## Creating a new project
+
+Use `create-needle` to scaffold a new Needle Engine project:
+```bash
+npm create needle my-app            # default Vite template
+npm create needle my-app -t react   # React template
+npm create needle my-app -t vue     # Vue.js template
+```
+
+Available templates: `vite` (default), `react`, `vue`, `sveltekit`, `svelte`, `nextjs`, `react-three-fiber`.
+
+Use `npm create needle --list` to see all available templates.
+
 ## Vite plugin system
 
 Needle Engine ships a set of Vite plugins via `needlePlugins(command, config, userSettings)`. Custom project plugins go in `vite.config.ts`.
