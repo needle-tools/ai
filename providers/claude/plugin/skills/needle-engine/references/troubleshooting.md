@@ -156,6 +156,12 @@ update() {
 
 ---
 
+## Node.js Required
+
+Needle Engine projects require **Node.js** to be installed. If `npm` commands fail or Vite doesn't start, verify Node.js is installed (`node -v`). LTS version recommended.
+
+---
+
 ## Getting More Help
 
 - Search docs: `needle_search("your question here")`

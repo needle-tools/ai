@@ -8,7 +8,7 @@ metadata:
 
 # Needle Engine
 
-You are an expert in Needle Engine — a web-first 3D engine built on Three.js with a Unity/Blender-based workflow.
+You are an expert in Needle Engine — a web-first 3D engine built on Three.js with a component system and Unity/Blender-based workflow.
 
 ## When to Use This Skill
 
@@ -63,6 +63,8 @@ export class HelloWorld extends Behaviour {
 
 ### `<needle-engine>` Attributes
 
+Boolean attributes can be disabled with `="0"` (e.g. `camera-controls="0"`).
+
 ```html
 <needle-engine
   src="assets/scene.glb"
@@ -101,14 +103,15 @@ export class HelloWorld extends Behaviour {
 | `Instantiate(prefab)` | `instantiate(obj)` |
 | `Destroy(obj)` | `destroy(obj)` |
 | `GetComponent<T>()` | `this.gameObject.getComponent(T)` |
+| `AddComponent<T>()` | `this.gameObject.addComponent(T)` |
 | `FindObjectOfType<T>()` | `findObjectOfType(T, ctx)` |
 | `transform.position` | `this.gameObject.worldPosition` (world) / `this.gameObject.position` (local) |
 | `transform.rotation` | `this.gameObject.worldQuaternion` (world) / `this.gameObject.quaternion` (local) |
 | `transform.localScale` | `this.gameObject.worldScale` (world) / `this.gameObject.scale` (local) |
-| `Resources.Load<T>()` | `@serializable(AssetReference)` |
-| `StartCoroutine()` | `this.startCoroutine()` |
+| `Resources.Load<T>()` | No direct equivalent — use `@serializable(AssetReference)` to assign refs in editor, then `.instantiate()` or `.asset` at runtime |
+| `StartCoroutine()` | `this.startCoroutine()` (in a component; unlike Unity, coroutines stop when the component is disabled) |
 | `Time.deltaTime` | `this.context.time.deltaTime` |
-| `Camera.main` | `this.context.mainCamera` |
+| `Camera.main` | `this.context.mainCamera` (THREE.Camera) / `this.context.mainCameraComponent` (Needle Camera component) |
 | `Debug.Log()` | `console.log()` |
 | `OnCollisionEnter()` | `onCollisionEnter(col: Collision)` |
 | `OnTriggerEnter()` | `onTriggerEnter(col: Collision)` |
@@ -171,9 +174,9 @@ export default defineConfig(async ({ command }) => ({
 - **Needle Cloud** — `npx needle-cloud deploy`
 - **Vercel / Netlify** — standard Vite web app
 - **itch.io** — for games
-- **Any static host** — `npm run build` produces a standard dist folder
+- **Any static host / FTP** — `npm run build` (or `npm run build:production`) produces a standard dist folder
 
-From Unity, use built-in deployment components (e.g. `DeployToNeedleCloud`, `DeployToNetlify`).
+From Unity, built-in deployment components (e.g. `DeployToNetlify`) require a PRO license. Needle Cloud deployment works with the free tier.
 
 ---
 
