@@ -9,6 +9,7 @@
 2. **Class not imported** — The file containing the class must be imported somewhere in your entry point (`main.ts`). Tree-shaking can eliminate unreferenced classes.
 3. **Name mismatch** — The C# class name in Unity must exactly match the TypeScript class name. Check for typos.
 4. **Wrong namespace** — If the Unity C# class is in a namespace, the TypeScript class must match (or the codegen mapping must be set up).
+5. **Name duplicates** — If multiple classes have the same name, the deserializer may pick the wrong one. Ensure unique class names for components.
 
 ```ts
 // ✅ Correct
@@ -55,7 +56,7 @@ export class MyComponent extends Behaviour { ... }
 **Symptom:** Field changes locally but other clients don't see updates.
 
 **Causes:**
-1. **No `SyncedRoom`** in the scene — networking requires a `SyncedRoom` component.
+1. **No `SyncedRoom`** in the scene — networking requires a `SyncedRoom` component or a component that connects to a room via `this.context.connection` API
 2. **Mutating array/object in place** — `this.arr.push(x)` does NOT trigger sync. You must reassign: `this.arr = [...this.arr, x]` or `this.arr = this.arr`.
 3. **Missing `@registerType`** on the component — sync relies on class registration.
 4. **Not connected** — check `this.context.connection.isConnected`.
@@ -70,7 +71,7 @@ export class MyComponent extends Behaviour { ... }
 - Rapier physics must be active — add a `Rigidbody` or `Collider` component in Unity on both objects
 - The GameObject must have a `Collider` component (Box, Sphere, Mesh, etc.)
 - For trigger events, the collider must be set to **Is Trigger** in Unity
-- Both objects need Rapier colliders — mesh-only objects don't participate in physics events
+- Both objects need collider components — mesh-only objects don't participate in physics events
 
 ---
 
@@ -78,7 +79,7 @@ export class MyComponent extends Behaviour { ... }
 
 **By design:** `this.gameObject.removeComponent(comp)` removes the component from update loops but does **not** call `onDestroy`. This is consistent with Unity's `DestroyImmediate` on a component (vs the object).
 
-**Fix:** Use `GameObject.destroy(go)` to fully clean up an object and all its components. If you need cleanup on component removal specifically, call `onDestroy()` manually before `removeComponent()`.
+**Fix:** Use `destroy(myComponent)` to fully clean up an object and all its components. If you need cleanup on component removal specifically, call `destroy` manually before `removeComponent()`.
 
 ---
 
@@ -86,7 +87,7 @@ export class MyComponent extends Behaviour { ... }
 
 **Checklist:**
 1. `Animator` component must be on the same or parent GameObject
-2. State name must match exactly what's in the Unity AnimatorController
+2. State name must match exactly what's in the AnimatorController
 3. Check that `animator.runtimeAnimatorController` is set (not null)
 4. If calling `play()` in `awake()`, try `start()` instead — the animator may not be initialized yet
 
@@ -112,7 +113,7 @@ import { needlePlugins } from "@needle-tools/engine/vite";
 
 **Symptom:** TS error: Property 'context' does not exist on type 'MyComponent'
 
-**Fix:** Make sure you extend `Behaviour` (not `Component` or a plain class):
+**Fix:** Make sure you extend `Behaviour` or `Component` (not a plain class):
 ```ts
 import { Behaviour } from "@needle-tools/engine";
 export class MyComponent extends Behaviour { ... }
@@ -159,5 +160,5 @@ update() {
 
 - Search docs: `needle_search("your question here")`
 - [Needle Engine Docs](https://engine.needle.tools/docs/)
-- [Community Forum / GitHub Discussions](https://github.com/needle-tools/needle-engine-support/discussions)
+- [Community Forum](https://forum.needle.tools)
 - [Discord](https://discord.needle.tools)
