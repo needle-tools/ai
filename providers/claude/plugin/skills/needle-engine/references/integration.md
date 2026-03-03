@@ -23,7 +23,8 @@ function ScoreDisplay() {
 ### Call into the 3D scene from React
 ```tsx
 function GameControls() {
-  const addScore = () => {
+  const addScore = async () => {
+    const { GameManager } = await import("@needle-tools/engine");
     const ctx = (document.querySelector("needle-engine") as any)?.context;
     ctx?.scene.getComponentInChildren(GameManager)?.addScore(10);
   };
@@ -31,16 +32,14 @@ function GameControls() {
 }
 ```
 
-### Wait for scene ready before accessing components
+### Use engine hooks from React
 ```tsx
 useEffect(() => {
-  const ne = document.querySelector("needle-engine");
-  const onReady = () => {
-    const ctx = (ne as any).context;
-    // safe to access components here
-  };
-  ne?.addEventListener("loadingfinished", onReady);
-  return () => ne?.removeEventListener("loadingfinished", onReady);
+  import("@needle-tools/engine").then(({ onStart }) => {
+    onStart((ctx) => {
+      // safe to access components here
+    });
+  });
 }, []);
 ```
 
@@ -60,7 +59,8 @@ useEffect(() => {
     return () => ne?.removeEventListener("score-changed", handler);
   });
 
-  function addScore() {
+  async function addScore() {
+    const { GameManager } = await import("@needle-tools/engine");
     const ctx = document.querySelector("needle-engine")?.context;
     ctx?.scene.getComponentInChildren(GameManager)?.addScore(10);
   }
@@ -73,7 +73,7 @@ useEffect(() => {
 
 ---
 
-## Vue
+## Vue / Nuxt
 
 ```vue
 <template>
@@ -89,7 +89,14 @@ const ne = ref(null);
 
 function onScore(e) { score.value = e.detail.score; }
 
-onMounted(() => ne.value?.addEventListener("score-changed", onScore));
+onMounted(() => {
+  ne.value?.addEventListener("score-changed", onScore);
+  import("@needle-tools/engine").then(({ onStart }) => {
+    onStart((ctx) => {
+      // safe to access components here
+    });
+  });
+});
 onUnmounted(() => ne.value?.removeEventListener("score-changed", onScore));
 </script>
 ```
@@ -99,23 +106,13 @@ onUnmounted(() => ne.value?.removeEventListener("score-changed", onScore));
 ## Vanilla JS / No Framework
 
 ```html
-<needle-engine src="assets/scene.glb" id="scene"></needle-engine>
+<needle-engine src="assets/scene.glb"></needle-engine>
 
 <script type="module">
-  import "@needle-tools/engine";
   import { onStart, onUpdate } from "@needle-tools/engine";
 
-  const ne = document.getElementById("scene");
-
-  // Wait for scene to finish loading
-  ne.addEventListener("loadingfinished", () => {
-    const ctx = ne.context;
-    console.log("Scene ready:", ctx.scene);
-  });
-
-  // Standalone hooks (no component class needed)
   onStart((ctx) => {
-    console.log("Engine started");
+    console.log("Scene ready:", ctx.scene);
   });
 </script>
 ```
@@ -135,10 +132,22 @@ These standalone functions from `@needle-tools/engine` mirror the component life
 
 All callbacks receive `(ctx: Context)` as their argument.
 
+### Client-only (no SSR)
+When server-side rendering is **disabled**, import and call hooks directly:
 ```ts
 import { onStart, onUpdate, onBeforeRender, onDestroy } from "@needle-tools/engine";
 
 onStart((ctx) => { /* setup */ });
 onUpdate((ctx) => { /* per-frame logic */ });
 onDestroy((ctx) => { /* cleanup */ });
+```
+
+### With SSR (Next.js, SvelteKit, Nuxt, etc.)
+`@needle-tools/engine` depends on WebGL / browser APIs and **cannot be imported on the server**. Use a dynamic import so the module is only loaded client-side (same pattern as with any three.js-based engine):
+```ts
+import("@needle-tools/engine").then(({ onStart, onUpdate, onDestroy }) => {
+  onStart((ctx) => { /* setup */ });
+  onUpdate((ctx) => { /* per-frame logic */ });
+  onDestroy((ctx) => { /* cleanup */ });
+});
 ```

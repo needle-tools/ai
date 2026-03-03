@@ -1,14 +1,9 @@
 ---
 name: needle-engine
 description: Automatically provides Needle Engine context when working in a Needle Engine web project. Use this skill when editing TypeScript components, Vite config, GLB assets, or anything related to @needle-tools/engine.
-reviewed-against: "@needle-tools/engine@4.15.0"
-last-reviewed: "2026-03"
-allowed-tools:
-  - needle_search
-  - Read
-  - Write
-  - Edit
-  - Bash
+metadata:
+  reviewed-against: "@needle-tools/engine@4.15.0"
+  last-reviewed: "2026-03"
 ---
 
 # Needle Engine
@@ -21,7 +16,7 @@ You are an expert in Needle Engine — a web-first 3D engine built on Three.js w
 - Editing TypeScript files that import from `@needle-tools/engine`
 - Working on a project with `vite.config.ts` that uses `needlePlugins`
 - Loading or debugging `.glb` files exported from Unity or Blender
-- Using the Needle Engine Blender addon
+- Using the Needle Engine Blender addon or Unity package
 - Asking about component lifecycle, serialization, XR, networking, or deployment
 
 **Do NOT use for:**
@@ -33,7 +28,6 @@ You are an expert in Needle Engine — a web-first 3D engine built on Three.js w
 ## Quick Start
 
 ```html
-<!-- Embed a scene in any HTML page -->
 <needle-engine src="assets/scene.glb"></needle-engine>
 <script type="module">
   import "@needle-tools/engine";
@@ -54,232 +48,18 @@ export class HelloWorld extends Behaviour {
 }
 ```
 
-> ⚠️ **TypeScript config required:** `tsconfig.json` must have `"experimentalDecorators": true` and `"useDefineForClassFields": false` for decorators to work.
+> **TypeScript config required:** `tsconfig.json` must have `"experimentalDecorators": true` and `"useDefineForClassFields": false` for decorators to work.
 
 ---
 
 ## Key Concepts
 
-**Needle Engine** ships 3D scenes from Unity or Blender as GLB files and renders them in the browser using Three.js. TypeScript components attached to objects are serialized into the GLB and re-hydrated at runtime in the browser.
+**Needle Engine** ships 3D scenes from Unity or Blender as GLB files and renders them in the browser using Three.js. TypeScript components attached to objects are serialized into the GLB and re-hydrated at runtime.
 
-### Unity workflow
-Components are C# MonoBehaviours in Unity. The Needle Unity package auto-generates TypeScript stubs and exports the scene as GLB on play/build.
-
-### Blender workflow
-Components are added via the **Needle Engine Blender addon** — custom properties panel in Blender. The addon exports the scene as GLB with Needle component data embedded. TypeScript component files live in your web project alongside the GLB, exactly like with Unity.
-
-### Embedding in HTML
-```html
-<!-- The <needle-engine> web component creates and manages a 3D context -->
-<needle-engine src="assets/scene.glb"></needle-engine>
-```
-Access the context programmatically: `document.querySelector("needle-engine").context`
-
----
-
-## Component Lifecycle
-
-Mirrors Unity MonoBehaviour exactly:
-
-```ts
-import { Behaviour, serializable, registerType } from "@needle-tools/engine";
-
-@registerType
-export class MyComponent extends Behaviour {
-  @serializable() myValue: number = 1;
-
-  awake()        {}   // once on instantiate (before Start)
-  start()        {}   // once on first frame
-  update()       {}   // every frame
-  lateUpdate()   {}   // every frame, after all update() calls
-  fixedUpdate()  {}   // fixed timestep (physics)
-  onEnable()     {}   // when component/GO becomes active
-  onDisable()    {}   // when component/GO becomes inactive
-  onDestroy()    {}   // on removal
-  onBeforeRender(_frame: XRFrame | null) {}
-}
-```
-
-### Physics Callbacks (requires Rapier collider on GameObject)
-
-Add inside your component class:
-```ts
-onCollisionEnter(col: Collision) {}
-onCollisionStay(col: Collision)  {}
-onCollisionExit(col: Collision)  {}
-onTriggerEnter(col: Collision)   {}
-onTriggerStay(col: Collision)    {}
-onTriggerExit(col: Collision)    {}
-```
-
-### Coroutines
-
-Add inside your component class:
-```ts
-start() {
-  this.startCoroutine(this.myRoutine());
-}
-
-*myRoutine() {
-  console.log("Start");
-  yield;              // wait one frame
-  // yield WaitForSeconds(2);  // wait N seconds
-  console.log("One frame later");
-}
-```
-
----
-
-## Serialization
-
-- `@registerType` — makes the class discoverable by the GLB deserializer
-- `@serializable()` — marks a field for GLB deserialization (primitives)
-- `@serializable(Object3D)` — for Three.js object references
-- `@serializable(Texture)` — for textures (import Texture from "three")
-- `@serializable(RGBAColor)` — for colors
-- `@serializable(AssetReference)` — for lazily-loaded GLB assets
-
----
-
-## Accessing the Scene
-
-```ts
-this.context.scene       // THREE.Scene
-this.context.mainCamera  // active camera (THREE.Camera)
-this.context.renderer    // THREE.WebGLRenderer
-this.context.time.frame      // current frame number
-this.context.time.deltaTime  // seconds since last frame
-this.gameObject              // the THREE.Object3D this component is on
-```
-
----
-
-## Finding Components
-
-```ts
-this.gameObject.getComponent(MyComponent)
-this.gameObject.getComponentInChildren(MyComponent)
-this.context.scene.getComponentInChildren(MyComponent)
-
-// Global search
-import { findObjectOfType, findObjectsOfType } from "@needle-tools/engine";
-findObjectOfType(MyComponent, this.context)
-findObjectsOfType(MyComponent, this.context)
-```
-
----
-
-## Instantiate & Destroy
-
-```ts
-import { GameObject } from "@needle-tools/engine";
-
-// Clone an object (like Unity Instantiate)
-const clone = GameObject.instantiate(this.gameObject);
-// With position/rotation:
-const clone2 = GameObject.instantiate(prefab, { position: new Vector3(1,0,0) });
-
-// Destroy
-GameObject.destroy(clone);         // removes object + calls onDestroy on all components
-this.gameObject.removeComponent(comp); // removes component (does NOT call onDestroy)
-```
-
----
-
-## Animation
-
-```ts
-import { Animator } from "@needle-tools/engine";
-
-const animator = this.gameObject.getComponent(Animator);
-animator?.play("Run");                   // play by state name
-animator?.setFloat("Speed", 1.5);       // Animator parameters
-animator?.setBool("IsJumping", true);
-animator?.setTrigger("Jump");
-```
-
----
-
-## Loading Assets at Runtime
-
-```ts
-import { AssetReference } from "@needle-tools/engine";
-
-@registerType
-export class LazyLoader extends Behaviour {
-  @serializable(AssetReference) sceneRef!: AssetReference;
-
-  async loadIt() {
-    const instance = await this.sceneRef.instantiate({ parent: this.gameObject });
-  }
-}
-```
-
-Or load a GLB by URL at runtime:
-```ts
-import { AssetReference } from "@needle-tools/engine";
-
-const ref = AssetReference.getOrCreate(this.context.domElement.baseURI, "assets/extra.glb");
-const instance = await ref.instantiate({ parent: this.gameObject });
-```
-
----
-
-## Input Handling
-
-```ts
-// Polling
-if (this.context.input.getPointerDown(0)) { /* pointer pressed */ }
-if (this.context.input.getKeyDown("Space")) { /* space pressed */ }
-
-// Event-based (NEPointerEvent works across mouse, touch, and XR controllers)
-this.gameObject.addEventListener("pointerdown", (e: NEPointerEvent) => { });
-```
-
-### Custom Events Between Components
-```ts
-// Dispatch
-this.gameObject.dispatchEvent(new CustomEvent("myEvent", { detail: { score: 42 } }));
-
-// Listen from another component
-other.gameObject.addEventListener("myEvent", (e: CustomEvent) => {
-  console.log(e.detail.score);
-});
-```
-
----
-
-## Physics & Raycasting
-
-```ts
-// Default raycasts hit visible geometry — no colliders needed
-const hits = this.context.physics.raycast();
-
-// Physics-based raycasts (require colliders, uses Rapier physics engine)
-const physicsHits = this.context.physics.raycastPhysics();
-```
-
----
-
-## Networking & Multiplayer
-
-Needle Engine has built-in multiplayer. Add a `SyncedRoom` component to enable networking.
-
-- `@syncField()` — automatically syncs a field across all connected clients
-- Primitives (string, number, boolean) sync automatically on change
-- Complex types (arrays/objects) require reassignment to trigger sync: `this.myArray = this.myArray`
-- Key components: `SyncedRoom`, `SyncedTransform`, `PlayerSync`, `Voip`
-- Uses WebSockets + optional WebRTC peer-to-peer connections
-
----
-
-## WebXR (VR & AR)
-
-Needle Engine has built-in WebXR support for VR and AR across Meta Quest, Apple Vision Pro, and mobile AR.
-
-- Add the `WebXR` component to enable VR/AR sessions
-- Use `XRRig` to define the user's starting position — the user is parented to the rig during XR sessions
-- Available components: `WebXRImageTracking`, `WebXRPlaneTracking`, `XRControllerModel`, `NeedleXRSession`
+- **Unity workflow:** C# MonoBehaviours → auto-generated TypeScript stubs → GLB export on play/build
+- **Blender workflow:** Components added via the Needle Engine Blender addon → GLB export with component data embedded
+- **Embedding:** `<needle-engine src="assets/scene.glb">` web component creates and manages a 3D context
+- **Context access:** `document.querySelector("needle-engine").context`
 
 ---
 
@@ -288,14 +68,14 @@ Needle Engine has built-in WebXR support for VR and AR across Meta Quest, Apple 
 | Unity (C#) | Needle Engine (TypeScript) |
 |---|---|
 | `MonoBehaviour` | `Behaviour` |
-| `[SerializeField]` | `@serializable()` |
-| `[RequireComponent]` | `@requireComponent(Type)` |
-| `Instantiate(prefab)` | `GameObject.instantiate(obj)` |
-| `Destroy(obj)` | `GameObject.destroy(obj)` |
+| `[SerializeField]` / public field | `@serializable()` (required for all serialized fields) |
+| `Instantiate(prefab)` | `instantiate(obj)` |
+| `Destroy(obj)` | `destroy(obj)` |
 | `GetComponent<T>()` | `this.gameObject.getComponent(T)` |
 | `FindObjectOfType<T>()` | `findObjectOfType(T, ctx)` |
-| `transform.position` | `this.gameObject.position` |
-| `transform.rotation` | `this.gameObject.quaternion` |
+| `transform.position` | `this.gameObject.worldPosition` (world) / `this.gameObject.position` (local) |
+| `transform.rotation` | `this.gameObject.worldQuaternion` (world) / `this.gameObject.quaternion` (local) |
+| `transform.localScale` | `this.gameObject.worldScale` (world) / `this.gameObject.scale` (local) |
 | `Resources.Load<T>()` | `@serializable(AssetReference)` |
 | `StartCoroutine()` | `this.startCoroutine()` |
 | `Time.deltaTime` | `this.context.time.deltaTime` |
@@ -306,59 +86,26 @@ Needle Engine has built-in WebXR support for VR and AR across Meta Quest, Apple 
 
 ---
 
-## Engine Hooks
+## Three.js → Needle Cheat Sheet
 
-Standalone lifecycle hooks — use these outside of a component class (e.g. in framework setup code):
+| Three.js | Needle Engine |
+|---|---|
+| `new Mesh(geo, mat)` | Created in Unity/Blender, exported as GLB; access via `Renderer.sharedMesh` / `Renderer.sharedMaterials` |
+| `scene.add(obj)` | `this.gameObject.add(obj)` or `instantiate(prefab)` |
+| `scene.remove(obj)` | `obj.removeFromParent()` (re-parent) or `destroy(obj)` (permanent) |
+| `obj.position` | `obj.position` (local) / `obj.worldPosition` (world — Needle extension) |
+| `obj.quaternion` | `obj.quaternion` (local) / `obj.worldQuaternion` (world — Needle extension) |
+| `obj.scale` | `obj.scale` (local) / `obj.worldScale` (world — Needle extension) |
+| `obj.getWorldPosition(v)` | `obj.worldPosition` (getter, no temp vec needed) |
+| `obj.traverse(cb)` | `obj.traverse(cb)` (same — it's Three.js underneath) |
+| `obj.children` | `obj.children` (same) |
+| `obj.parent` | `obj.parent` (same) |
+| `raycaster.intersectObjects()` | `this.context.physics.raycast()` (auto BVH, faster) |
+| `renderer.setAnimationLoop(cb)` | `update() {}` in a component, or `onUpdate(cb)` hook |
+| `clock.getDelta()` | `this.context.time.deltaTime` |
+| `new GLTFLoader().load(url)` | `AssetReference.getOrCreate(base, url)` then `.instantiate()`, or `loadAsset(url)` |
 
-```ts
-import { onStart, onUpdate, onBeforeRender, onDestroy } from "@needle-tools/engine";
-
-onStart((ctx) => {
-  // runs once when the scene is ready
-  console.log("Scene ready", ctx.scene);
-});
-
-onUpdate((ctx) => {
-  // runs every frame
-  const dt = ctx.time.deltaTime;
-});
-
-onBeforeRender((ctx) => {
-  // runs just before Three.js renders each frame
-});
-
-onDestroy((ctx) => {
-  // runs when the context is torn down
-});
-```
-
----
-
-## Frontend UI ↔ 3D Scene Communication
-
-Needle Engine is a standard web component — any JavaScript on the page can talk to it.
-
-**JS → 3D:** get a component and call methods on it directly
-```js
-const ctx = document.querySelector("needle-engine").context;
-const gm  = ctx.scene.getComponentInChildren(GameManager);
-gm?.addScore(10);
-```
-
-**3D → JS:** dispatch a custom DOM event from inside a component
-```ts
-// In your component:
-this.context.domElement.dispatchEvent(
-  new CustomEvent("score-changed", { bubbles: true, detail: { score: 42 } })
-);
-```
-```js
-// Anywhere on the page (React, Svelte, Vue, vanilla):
-document.querySelector("needle-engine")
-  .addEventListener("score-changed", (e) => console.log(e.detail.score));
-```
-
-See [references/integration.md](references/integration.md) for full React, Svelte, and Vue examples.
+Needle Engine extends `Object3D` with component methods (`getComponent`, `addComponent`, `worldPosition`, `worldQuaternion`, `worldScale`, `worldForward`, `worldRight`, `worldUp`, `contains`, etc.). `this.gameObject` is the `Object3D` a component is attached to. The underlying Three.js API still works directly.
 
 ---
 
@@ -372,13 +119,6 @@ npm create needle my-app -t sveltekit     # SvelteKit
 npm create needle my-app -t nextjs        # Next.js
 npm create needle my-app -t react-three-fiber  # R3F
 ```
-
-**Starter templates on GitHub:**
-- [Vite](https://github.com/needle-tools/needle-engine-support/tree/main/packages/create/templates/vite)
-- [React](https://github.com/needle-tools/needle-engine-support/tree/main/packages/create/templates/react)
-- [Vue](https://github.com/needle-tools/needle-engine-support/tree/main/packages/create/templates/vue)
-- [SvelteKit](https://github.com/needle-tools/needle-engine-support/tree/main/packages/create/templates/sveltekit)
-- [Next.js](https://github.com/needle-tools/needle-engine-support/tree/main/packages/create/templates/nextjs)
 
 ---
 
@@ -441,16 +181,19 @@ Use this *before* guessing at API details — the docs are the source of truth.
 - `useDefineForClassFields: false` must be set in `tsconfig.json` — otherwise decorators silently break field initialization
 - `@syncField()` only triggers on reassignment — mutating an array/object in place won't sync; do `this.arr = this.arr`
 - Physics callbacks (`onCollisionEnter` etc.) require a Rapier `Collider` component on the GameObject
-- `removeComponent()` does NOT call `onDestroy` — use `GameObject.destroy()` for full cleanup
+- `removeComponent()` does NOT call `onDestroy` — use `destroy(obj)` for full cleanup
+- Prefer `instantiate()` and `destroy()` functions over `GameObject.instantiate()` / `GameObject.destroy()`
 
 ---
 
 ## References
 
-- 📖 [Full API Reference](references/api.md) — complete lifecycle, decorators, and context API
-- 🔗 [Framework Integration](references/integration.md) — React, Svelte, Vue, vanilla JS examples + hook reference
-- 🐛 [Troubleshooting](references/troubleshooting.md) — common errors and fixes
-- 🧩 [Component Template](templates/my-component.ts) — annotated starter component
+For detailed API usage, read these reference files:
+
+- [Full API Reference](references/api.md) — lifecycle, decorators, context API, animation, networking, XR, physics
+- [Framework Integration](references/integration.md) — React, Svelte, Vue, vanilla JS examples + SSR patterns
+- [Troubleshooting](references/troubleshooting.md) — common errors and fixes
+- [Component Template](templates/my-component.ts) — annotated starter component
 
 ## Important URLs
 
