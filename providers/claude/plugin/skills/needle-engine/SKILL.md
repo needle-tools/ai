@@ -61,6 +61,35 @@ export class HelloWorld extends Behaviour {
 - **Embedding:** `<needle-engine src="assets/scene.glb">` web component creates and manages a 3D context
 - **Context access:** use `onStart(ctx => { ... })` or `onInitialize(ctx => { ... })` lifecycle hooks (preferred); `document.querySelector("needle-engine").context` works but only from UI event handlers
 
+### `<needle-engine>` Attributes
+
+```html
+<needle-engine
+  src="assets/scene.glb"
+  camera-controls
+  auto-rotate
+  autoplay
+  background-color="#222"
+  environment-image="studio"
+  contactshadows
+></needle-engine>
+```
+
+| Attribute | Description |
+|---|---|
+| `src` | GLB/glTF file path(s) — string, array, or comma-separated |
+| `camera-controls` | Add OrbitControls automatically (no camera component needed) |
+| `auto-rotate` | Auto-rotate the camera (requires `camera-controls`) |
+| `autoplay` | Auto-play animations in the loaded scene |
+| `background-color` | Hex or RGB background color (e.g. `#ff0000`) |
+| `background-image` | Skybox URL or preset: `studio`, `blurred-skybox`, `quicklook`, `quicklook-ar` |
+| `background-blurriness` | Blur intensity for background (0–1) |
+| `environment-image` | Environment lighting image URL or preset (same presets as `background-image`) |
+| `contactshadows` | Enable contact shadows |
+| `tone-mapping` | `none`, `linear`, `neutral`, `agx` |
+| `poster` | Placeholder image URL shown while loading |
+| `loadstart` / `progress` / `loadfinished` | Callback functions for loading lifecycle |
+
 ---
 
 ## Unity → Needle Cheat Sheet
@@ -177,10 +206,10 @@ Use this *before* guessing at API details — the docs are the source of truth.
 ## Common Gotchas
 
 - `@registerType` is required or the component won't be instantiated from GLB (Unity/Blender export adds this automatically, but hand-written components need it)
-- GLB assets go in `assets/`, static files (fonts, images) in `public/`
+- GLB assets go in `assets/`, static files (fonts, images) in `public/` (configurable via `needle.config.json`)
 - `useDefineForClassFields: false` must be set in `tsconfig.json` — otherwise decorators silently break field initialization
 - `@syncField()` only triggers on reassignment — mutating an array/object in place won't sync; do `this.arr = this.arr`
-- Physics callbacks (`onCollisionEnter` etc.) require a Rapier `Collider` component on the GameObject
+- Physics callbacks (`onCollisionEnter` etc.) require a Needle `Collider` component on the GameObject
 - `removeComponent()` does NOT call `onDestroy` — use `destroy(obj)` for full cleanup
 - Prefer `instantiate()` and `destroy()` functions over `GameObject.instantiate()` / `GameObject.destroy()`
 
