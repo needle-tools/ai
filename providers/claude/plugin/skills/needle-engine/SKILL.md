@@ -154,6 +154,29 @@ npm create needle my-app -t react-three-fiber  # R3F
 
 ---
 
+## CDN Usage (No Bundler)
+
+Needle Engine can be used without Vite/npm — just an importmap and `<needle-engine>`:
+
+```html
+<script type="importmap">
+{
+  "imports": {
+    "@needle-tools/engine": "https://cdn.jsdelivr.net/npm/@needle-tools/engine@4.15.0/dist/needle-engine.min.js"
+  }
+}
+</script>
+<needle-engine src="assets/scene.glb"></needle-engine>
+<script type="module">
+  import { onStart, Behaviour, registerType } from "@needle-tools/engine";
+  // ...
+</script>
+```
+
+**Warning — dual THREE.js instances:** Do NOT add a separate `"three"` entry in your importmap pointing to a standalone three.js build. NE bundles its own three.js chunk internally. If two THREE.js instances exist, meshes will be invisible with no errors. If you need to import from `"three"`, point it at NE's bundled chunk (filename contains a version hash, check the dist folder).
+
+---
+
 ## Vite Plugin System
 
 ```ts
