@@ -39,7 +39,7 @@ class MyComponent extends Behaviour {
   onXRControllerAdded?(args: NeedleXRControllerEventArgs)   // controller connected
   onXRControllerRemoved?(args: NeedleXRControllerEventArgs) // controller disconnected
 
-  // Physics (requires Rapier Collider component on same GameObject)
+  // Physics (requires Needle Collider component on same GameObject)
   onCollisionEnter(col: Collision)
   onCollisionStay(col: Collision)
   onCollisionExit(col: Collision)
@@ -272,8 +272,14 @@ Load any asset directly (without AssetReference):
 ```ts
 import { loadAsset } from "@needle-tools/engine";
 
-const gltf = await loadAsset("assets/model.glb");
+const model = await loadAsset("assets/model.glb");
+const obj = model.scene; // ← Object3D is on .scene, not the return value itself
+obj.traverse(n => { /* ... */ });
 ```
+
+> **`loadAsset()` returns a model wrapper** (with `.scene`, `.animations`, etc.) — not an Object3D directly. The wrapper type is universal regardless of format (GLB, FBX, OBJ, USDZ). Use `model.scene` to get the root Object3D.
+
+> **Caching:** `AssetReference.getOrCreateFromUrl()` caches by URL and returns the **same Object3D** on repeated calls. Adding a cached object to the scene again just moves it. Use `.instantiate()` or call `loadAsset()` with `{ context }` for independent copies.
 
 > **Note:** Needle Engine automatically handles KTX, Draco, and meshopt decompression — no loader setup needed.
 

@@ -80,7 +80,7 @@ Boolean attributes can be disabled with `="0"` (e.g. `camera-controls="0"`).
 | Attribute | Description |
 |---|---|
 | `src` | GLB/glTF file path(s) — string, array, or comma-separated |
-| `camera-controls` | Add OrbitControls automatically (no camera component needed) |
+| `camera-controls` | Adds default OrbitControls with auto-fit if no `OrbitControls`/`ICameraController` exists in the root GLB. Disable with `="0"` for fully custom camera. To tweak defaults, get `OrbitControls` from the main camera in `onStart` |
 | `auto-rotate` | Auto-rotate the camera (requires `camera-controls`) |
 | `autoplay` | Auto-play animations in the loaded scene |
 | `background-color` | Hex or RGB background color (e.g. `#ff0000`) |
@@ -215,6 +215,8 @@ Use this *before* guessing at API details — the docs are the source of truth.
 - Physics callbacks (`onCollisionEnter` etc.) require a Needle `Collider` component on the GameObject
 - `removeComponent()` does NOT call `onDestroy` — use `destroy(obj)` for full cleanup
 - Prefer `instantiate()` and `destroy()` functions over `GameObject.instantiate()` / `GameObject.destroy()`
+- `loadAsset()` returns a model wrapper (not an Object3D) — use `.scene` to get the root Object3D
+- `AssetReference.getOrCreateFromUrl()` caches by URL — loading the same URL twice returns the same Object3D. Use `.instantiate()` or `loadAsset()` with `{ context }` for multiple copies
 
 ---
 
