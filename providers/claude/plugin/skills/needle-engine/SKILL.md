@@ -59,7 +59,7 @@ export class HelloWorld extends Behaviour {
 - **Unity workflow:** C# MonoBehaviours → auto-generated TypeScript stubs → GLB export on play/build
 - **Blender workflow:** Components added via the Needle Engine Blender addon → GLB export with component data embedded
 - **Embedding:** `<needle-engine src="assets/scene.glb">` web component creates and manages a 3D context
-- **Context access:** `document.querySelector("needle-engine").context`
+- **Context access:** use `onStart(ctx => { ... })` or `onInitialize(ctx => { ... })` lifecycle hooks (preferred); `document.querySelector("needle-engine").context` works but only from UI event handlers
 
 ---
 
