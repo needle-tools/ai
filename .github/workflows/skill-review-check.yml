@@ -1,0 +1,156 @@
+name: Skill Review Check
+
+# Polls npm daily to detect new @needle-tools/engine releases.
+# When a new version is found (compared to the version stamp in SKILL.md),
+# opens a GitHub Issue to trigger a manual skill review.
+
+on:
+  schedule:
+    # Run daily at 08:00 UTC
+    - cron: '0 8 * * *'
+  workflow_dispatch:
+    inputs:
+      force_version:
+        description: 'Force a specific version to create a review issue for (e.g. 4.16.0). Leave blank to auto-detect.'
+        required: false
+        default: ''
+
+jobs:
+  check-and-notify:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Read skill version stamp
+        id: skill_version
+        run: |
+          # Extract the reviewed-against version from SKILL.md frontmatter or body
+          STAMP=$(grep -o 'reviewed-against:.*"@needle-tools/engine@[^"]*"' \
+            providers/claude/plugin/skills/needle-engine/SKILL.md \
+            | grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+' | head -1 || echo "")
+
+          if [ -z "$STAMP" ]; then
+            echo "::warning::Could not find reviewed-against stamp in SKILL.md"
+            STAMP="0.0.0"
+          fi
+          echo "stamp=$STAMP" >> $GITHUB_OUTPUT
+          echo "Skill last reviewed against: $STAMP"
+
+      - name: Fetch latest npm version
+        id: npm_version
+        run: |
+          if [ -n "${{ github.event.inputs.force_version }}" ]; then
+            LATEST="${{ github.event.inputs.force_version }}"
+            echo "Using forced version: $LATEST"
+          else
+            LATEST=$(curl -sf https://registry.npmjs.org/@needle-tools/engine/latest \
+              | grep -o '"version":"[^"]*"' | head -1 | grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+')
+          fi
+
+          if [ -z "$LATEST" ]; then
+            echo "::error::Failed to fetch npm version"
+            exit 1
+          fi
+          echo "latest=$LATEST" >> $GITHUB_OUTPUT
+          echo "Latest npm version: $LATEST"
+
+      - name: Compare versions
+        id: compare
+        run: |
+          STAMP="${{ steps.skill_version.outputs.stamp }}"
+          LATEST="${{ steps.npm_version.outputs.latest }}"
+
+          # Use sort -V for semantic version comparison
+          HIGHER=$(printf '%s\n%s' "$STAMP" "$LATEST" | sort -V | tail -1)
+
+          if [ "$HIGHER" = "$LATEST" ] && [ "$LATEST" != "$STAMP" ]; then
+            echo "new_version=true" >> $GITHUB_OUTPUT
+            echo "New version detected: $STAMP → $LATEST"
+          else
+            echo "new_version=false" >> $GITHUB_OUTPUT
+            echo "No new version (skill is at $STAMP, npm is at $LATEST)"
+          fi
+
+      - name: Check for existing open review issue
+        id: existing_issue
+        if: steps.compare.outputs.new_version == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          LATEST="${{ steps.npm_version.outputs.latest }}"
+          # Search for an already-open issue for this exact version
+          EXISTING=$(gh issue list \
+            --repo ${{ github.repository }} \
+            --state open \
+            --label "skill-review" \
+            --search "Skill review needed — @needle-tools/engine v${LATEST}" \
+            --json number \
+            --jq '.[0].number // ""')
+
+          echo "existing=$EXISTING" >> $GITHUB_OUTPUT
+          if [ -n "$EXISTING" ]; then
+            echo "Issue #$EXISTING already exists for v$LATEST, skipping."
+          fi
+
+      - name: Open skill review issue
+        if: steps.compare.outputs.new_version == 'true' && steps.existing_issue.outputs.existing == ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          LATEST="${{ steps.npm_version.outputs.latest }}"
+          STAMP="${{ steps.skill_version.outputs.stamp }}"
+          SKILL_URL="https://github.com/${{ github.repository }}/blob/main/providers/claude/plugin/skills/needle-engine/SKILL.md"
+          NPM_URL="https://www.npmjs.com/package/@needle-tools/engine?activeTab=versions"
+          CHANGELOG_URL="https://github.com/needle-tools/needle-tiny/releases"
+
+          gh issue create \
+            --repo ${{ github.repository }} \
+            --title "Skill review needed — @needle-tools/engine v${LATEST} released" \
+            --assignee "kaktus-klaus" \
+            --label "skill-review" \
+            --body "$(cat <<BODY
+          ## 🔔 New @needle-tools/engine version detected
+
+          **Previous reviewed-against version:** \`${STAMP}\`
+          **New version:** \`${LATEST}\`
+
+          ### Links
+          - 📦 [npm changelog](${NPM_URL})
+          - 📋 [GitHub Releases / Changelog](${CHANGELOG_URL})
+          - 📄 [SKILL.md](${SKILL_URL})
+
+          ### Review checklist
+
+          - [ ] Check release notes for new or removed exports
+          - [ ] Verify lifecycle method names are still accurate (\`awake\`, \`start\`, \`update\`, \`onEnable\`, \`onDisable\`, \`onDestroy\`, etc.)
+          - [ ] Check for new built-in components or helpers worth mentioning
+          - [ ] Verify \`Behaviour\`, \`GameObject\`, \`serializable\`, \`addComponent\` API hasn't changed
+          - [ ] Check if \`<needle-engine>\` web component attributes changed
+          - [ ] Review any deprecated APIs referenced in SKILL.md
+          - [ ] Check \`three\` version bump (Needle uses \`@needle-tools/three\`) — any breaking changes?
+          - [ ] Update the \`reviewed-against\` stamp in SKILL.md when done:
+            \`\`\`
+            reviewed-against: "@needle-tools/engine@${LATEST}"
+            \`\`\`
+          - [ ] Close this issue once the skill is updated and stamp is committed
+
+          ---
+          *Auto-generated by the [skill-review-check workflow](https://github.com/${{ github.repository }}/actions/workflows/skill-review-check.yml)*
+          BODY
+          )"
+
+          echo "✅ Review issue created for v${LATEST}"
+
+      - name: Summary
+        run: |
+          echo "## Skill Review Check Summary" >> $GITHUB_STEP_SUMMARY
+          echo "| | |" >> $GITHUB_STEP_SUMMARY
+          echo "|---|---|" >> $GITHUB_STEP_SUMMARY
+          echo "| Skill stamp | \`${{ steps.skill_version.outputs.stamp }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Latest npm  | \`${{ steps.npm_version.outputs.latest }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| New version | ${{ steps.compare.outputs.new_version }} |" >> $GITHUB_STEP_SUMMARY
