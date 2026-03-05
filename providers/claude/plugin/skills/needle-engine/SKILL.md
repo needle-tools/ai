@@ -1,7 +1,7 @@
 ---
 name: needle-engine
 description: Automatically provides Needle Engine context when working in a Needle Engine web project. Use this skill when editing TypeScript components, Vite config, GLB assets, or anything related to @needle-tools/engine.
-reviewed-against: "@needle-tools/engine@4.15.0"
+reviewed-against: "@needle-tools/engine@4.16.0"
 ---
 
 # Needle Engine
@@ -130,6 +130,18 @@ export default defineConfig(async ({ command }) => ({
 }));
 ```
 
+### `makeFilesLocal` — bundling all CDN dependencies
+
+Use the `makeFilesLocal` build option to download and bundle all CDN dependencies (Draco decoder, KTX2 transcoder, fonts, etc.) into the build output. This is essential for playable ads, app store submissions, and offline PWAs where external network requests are not allowed.
+
+```ts
+// Auto-detect and download all CDN dependencies at build time:
+needlePlugin({ makeFilesLocal: "auto" })
+
+// Fine-grained control over which features to localize:
+needlePlugin({ makeFilesLocal: { enabled: true, features: ["draco", "ktx2", "fonts"] } })
+```
+
 ## Deployment
 
 Projects can be deployed to:
@@ -174,3 +186,8 @@ Use the `needle_search` MCP tool to find relevant docs, forum posts, and communi
 ## Common gotchas
 - Components must use `@registerType` or they won't be instantiated from GLB (this is handled automatically when exporting from Unity or Blender, but must be added manually for hand-written components)
 - GLB assets are in `assets/`, static files in `include/` or `public/`
+- `showBalloonMessage` (since 4.16.0) accepts optional `duration`, `once`, and `key` options:
+  ```ts
+  showBalloonMessage("Hello!", { duration: 3, once: true, key: "my-message" })
+  ```
+  Use `once` + `key` to show a message only once per session even if called multiple times.
