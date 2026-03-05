@@ -1,32 +1,21 @@
 ---
 name: needle-engine
-description: Automatically provides Needle Engine context when working in a Needle Engine web project. Use this skill when editing TypeScript components, Vite config, GLB assets, or anything related to @needle-tools/engine.
-license: MIT
-compatibility: Designed for Claude Code and similar AI coding agents.
-metadata:
-  author: Needle Tools
-  reviewed-against: "@needle-tools/engine@4.15.0"
-  last-reviewed: "2026-03"
+description: >
+  Provides Needle Engine context for web-based 3D projects built on Three.js
+  with the @needle-tools/engine component system. Use this skill whenever the user
+  is working with Needle Engine components, GLB files exported from Unity or Blender,
+  Vite configs with needlePlugins, TypeScript classes extending Behaviour, or anything
+  involving @needle-tools/engine imports. Also trigger when the user mentions
+  "needle engine", "needle tools", serializable decorators (@serializable, @syncField,
+  @registerType), the <needle-engine> web component, or 3D scenes loaded from GLB
+  in a web context — even if they don't explicitly name the engine.
+compatibility:
+  - optional: needle_search MCP tool (search Needle Engine docs, forum posts, and community answers)
 ---
 
 # Needle Engine
 
 You are an expert in Needle Engine — a web-first 3D engine built on Three.js with a component system and Unity/Blender-based workflow.
-
-## When to Use This Skill
-
-**Use when the user is:**
-- Editing TypeScript files that import from `@needle-tools/engine`
-- Working on a project with `vite.config.ts` that uses `needlePlugins`
-- Loading or debugging `.glb` files exported from Unity or Blender
-- Using the Needle Engine Blender addon or Unity package
-- Asking about component lifecycle, serialization, XR, networking, or deployment
-
-**Do NOT use for:**
-- Pure Three.js projects with no Needle Engine
-- Non-web Unity/Blender work with no GLB export
-
----
 
 ## Quick Start
 
@@ -51,7 +40,7 @@ export class HelloWorld extends Behaviour {
 }
 ```
 
-> **TypeScript config required:** `tsconfig.json` must have `"experimentalDecorators": true` and `"useDefineForClassFields": false` for decorators to work.
+> ⚠️ **TypeScript config required:** `tsconfig.json` must have `"experimentalDecorators": true` and `"useDefineForClassFields": false` for decorators to work. Without `useDefineForClassFields: false`, TypeScript overwrites `@serializable()` properties with their default values *after* the decorator runs, silently breaking deserialization.
 
 ---
 
@@ -211,26 +200,26 @@ Use this *before* guessing at API details — the docs are the source of truth.
 
 ## Common Gotchas
 
-- `@registerType` is required or the component won't be instantiated from GLB (Unity/Blender export adds this automatically, but hand-written components need it)
-- GLB assets go in `assets/`, static files (fonts, images) in `public/` (configurable via `needle.config.json`)
-- `useDefineForClassFields: false` must be set in `tsconfig.json` — otherwise decorators silently break field initialization
-- `@syncField()` only triggers on reassignment — mutating an array/object in place won't sync; do `this.arr = this.arr`
-- Physics callbacks (`onCollisionEnter` etc.) require a Needle `Collider` component on the GameObject
-- `removeComponent()` does NOT call `onDestroy` — use `destroy(obj)` for full cleanup
-- Prefer `instantiate()` and `destroy()` functions over `GameObject.instantiate()` / `GameObject.destroy()`
+- `@registerType` is required or the component won't be instantiated from GLB — the engine creates a plain `Object3D` stub instead of your class. Unity/Blender export adds this automatically; hand-written components need it explicitly.
+- GLB assets go in `assets/`, static files (fonts, images, videos) in `public/` (configurable via `needle.config.json`)
+- `useDefineForClassFields: false` must be set in `tsconfig.json` — otherwise TypeScript overwrites decorated fields with their defaults after the decorator runs, silently breaking serialization
+- `@syncField()` only triggers on reassignment — mutating an array/object in place won't sync. Do `this.arr = this.arr` to force a sync event.
+- Physics callbacks (`onCollisionEnter` etc.) require a Rapier `Collider` component on the GameObject — they won't fire on mesh-only objects
+- `removeComponent()` does NOT call `onDestroy` — any cleanup logic in `onDestroy` (event listeners, timers, allocated resources) will be skipped. Use `destroy(obj)` for full cleanup.
+- Prefer the standalone `instantiate()` and `destroy()` functions over `GameObject.instantiate()` / `GameObject.destroy()` — the standalone versions are the current API
 - `loadAsset()` returns a model wrapper (not an Object3D) — use `.scene` to get the root Object3D
-- `AssetReference.getOrCreateFromUrl()` caches by URL — loading the same URL twice returns the same Object3D. Use `.instantiate()` or `loadAsset()` with `{ context }` for multiple copies
+- `AssetReference.getOrCreateFromUrl()` caches by URL — loading the same URL twice returns the same Object3D. Use `.instantiate()` or `loadAsset()` with `{ context }` for multiple independent copies
 
 ---
 
 ## References
 
-For detailed API usage, read these reference files:
+Read these **only when needed** — don't load them all upfront:
 
-- [Full API Reference](references/api.md) — lifecycle, decorators, context API, animation, networking, XR, physics
-- [Framework Integration](references/integration.md) — React, Svelte, Vue, vanilla JS examples + SSR patterns
-- [Troubleshooting](references/troubleshooting.md) — common errors and fixes
-- [Component Template](templates/my-component.ts) — annotated starter component
+- 📖 [Full API Reference](references/api.md) — read when writing component code (lifecycle, decorators, context API, animation, networking, XR, physics)
+- 🔗 [Framework Integration](references/integration.md) — read when integrating with React, Svelte, Vue, or vanilla JS
+- 🐛 [Troubleshooting](references/troubleshooting.md) — read when debugging errors or unexpected behavior
+- 🧩 [Component Template](templates/my-component.ts) — use as a starting point for new components
 
 ## Important URLs
 
