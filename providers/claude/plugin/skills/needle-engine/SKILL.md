@@ -1,7 +1,10 @@
 ---
 name: needle-engine
 description: Automatically provides Needle Engine context when working in a Needle Engine web project. Use this skill when editing TypeScript components, Vite config, GLB assets, or anything related to @needle-tools/engine.
+license: MIT
+compatibility: Designed for Claude Code and similar AI coding agents.
 metadata:
+  author: Needle Tools
   reviewed-against: "@needle-tools/engine@4.15.0"
   last-reviewed: "2026-03"
 ---
