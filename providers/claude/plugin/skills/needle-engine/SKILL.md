@@ -200,11 +200,11 @@ Use this *before* guessing at API details — the docs are the source of truth.
 
 ## Common Gotchas
 
-- `@registerType` is required or the component won't be instantiated from GLB — the engine creates a plain `Object3D` stub instead of your class. Unity/Blender export adds this automatically; hand-written components need it explicitly.
+- `@registerType` is required or the component won't be instantiated from GLB. Unity/Blender export adds this automatically via codegen; hand-written components need it explicitly.
 - GLB assets go in `assets/`, static files (fonts, images, videos) in `public/` (configurable via `needle.config.json`)
 - `useDefineForClassFields: false` must be set in `tsconfig.json` — otherwise TypeScript overwrites decorated fields with their defaults after the decorator runs, silently breaking serialization
 - `@syncField()` only triggers on reassignment — mutating an array/object in place won't sync. Do `this.arr = this.arr` to force a sync event.
-- Physics callbacks (`onCollisionEnter` etc.) require a Rapier `Collider` component on the GameObject — they won't fire on mesh-only objects
+- Physics callbacks (`onCollisionEnter` etc.) require a Needle `Collider` component (BoxCollider, SphereCollider ...) on the GameObject — they won't fire on mesh-only objects
 - `removeComponent()` does NOT call `onDestroy` — any cleanup logic in `onDestroy` (event listeners, timers, allocated resources) will be skipped. Use `destroy(obj)` for full cleanup.
 - Prefer the standalone `instantiate()` and `destroy()` functions over `GameObject.instantiate()` / `GameObject.destroy()` — the standalone versions are the current API
 - `loadAsset()` returns a model wrapper (not an Object3D) — use `.scene` to get the root Object3D
