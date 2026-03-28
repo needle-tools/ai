@@ -2,6 +2,18 @@
 
 AI provider plugins for [Needle Engine](https://needle.tools) — a web-first 3D engine built on Three.js.
 
+## Agent Skill
+
+Install the Needle Engine skill for any supported AI coding agent:
+
+```bash
+npx skills add needle-tools/ai
+```
+
+This works with Claude Code, Cursor, GitHub Copilot, Codex, Gemini CLI, Windsurf, and [40+ other agents](https://github.com/vercel-labs/skills).
+
+> **Already using `@needle-tools/engine`?** The Vite plugin auto-installs the skill for detected agents — no manual setup needed.
+
 ## Providers
 
 ### Claude Code
