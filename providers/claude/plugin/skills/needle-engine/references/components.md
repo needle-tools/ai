@@ -277,6 +277,25 @@ const ray = cam.screenPointToRay(screenX, screenY);
 
 Key properties: `fieldOfView`, `nearClipPlane`, `farClipPlane`, `backgroundColor`, `orthographic`, `orthographicSize`, `clearFlags`, `targetTexture`.
 
+### Custom camera control (first-person, etc.)
+For code-only scenes where you want full camera control (first-person, fly cam, etc.):
+
+1. Use `<needle-engine camera-controls="0">` to prevent auto-added OrbitControls
+2. If OrbitControls was already added (e.g. during default camera creation), remove it:
+```ts
+import { OrbitControls } from "@needle-tools/engine";
+
+onStart(ctx => {
+  const cam = ctx.mainCamera;
+  // Remove any existing OrbitControls so they don't fight your custom camera logic
+  const orbit = cam?.getComponent(OrbitControls);
+  if (orbit) orbit.destroy();
+
+  // Now control the camera yourself in onUpdate
+});
+```
+3. Use `onUpdate` (not `requestAnimationFrame`) for your camera loop — it's synchronized with the engine's frame timing.
+
 ---
 
 ## Scene Switching
