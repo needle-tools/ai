@@ -113,6 +113,31 @@ registerPrefabProvider("my-runtime-cube", async () => myPrefab);
 syncInstantiate(myPrefab, { parent: ctx.scene, deleteOnDisconnect: false });
 ```
 
+### PlayerSync with runtime-created avatars (no GLB)
+`PlayerSync.setupFrom(url)` uses `AssetReference` internally. For runtime-created meshes, register a prefab provider with the same URL key:
+```ts
+import { PlayerSync, PlayerState, registerPrefabProvider, ObjectUtils, GameObject } from "@needle-tools/engine";
+
+// Create your avatar template
+const avatarPrefab = ObjectUtils.createPrimitive("Sphere", { color: 0x4488ff });
+avatarPrefab.removeFromParent();
+GameObject.addComponent(avatarPrefab, PlayerState); // required!
+
+// Register it as a prefab provider
+const avatarKey = "runtime://player-avatar";
+registerPrefabProvider(avatarKey, async () => avatarPrefab);
+
+// Set up PlayerSync with this key — works the same as a GLB URL
+const ps = await PlayerSync.setupFrom(avatarKey);
+ctx.scene.add(ps.gameObject);
+
+// onPlayerSpawned fires for both local and remote players
+ps.onPlayerSpawned?.addEventListener((playerObj) => {
+  // playerObj is the spawned avatar Object3D
+  // Use PlayerState.isLocalPlayer(playerObj) to check if it's yours
+});
+```
+
 ### World-building pattern (first player seeds, late joiners receive)
 ```ts
 let shouldBuildWorld = false;
