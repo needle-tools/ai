@@ -220,7 +220,7 @@ myObject.addComponent(SyncedTransform);
 // The avatar prefab should have SyncedTransform on the root
 ```
 
-Do NOT manually replicate position with `connection.send("player-position", { x, y, z })` — use `SyncedTransform` instead. Custom events are for gameplay data (scores, actions, chat), not for transform replication.
+Do NOT manually replicate position with `connection.send("player-position", { x, y, z })` — use `SyncedTransform` instead. It uses efficient binary messages (flatbuffers) rather than JSON, making it much faster for high-frequency transform updates. Custom events are for gameplay data (scores, actions, chat), not for transform replication.
 
 ---
 
