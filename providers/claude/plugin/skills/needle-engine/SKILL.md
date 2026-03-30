@@ -324,15 +324,29 @@ Three.js objects work directly alongside these — `ObjectUtils.createPrimitive(
 
 ---
 
-## Progressive Loading (`@needle-tools/gltf-progressive`)
+## Built-in Extensions
 
+These ship with Needle Engine and work automatically — no setup needed:
+
+**[@needle-tools/gltf-progressive](https://github.com/needle-tools/gltf-progressive)** — Progressive LOD loading for meshes and textures. Stores multiple LOD levels inside GLB files, automatically swaps based on screen coverage at runtime. Configured in Unity/Blender via Compression & LOD Settings. Debug: `?debugprogressive`
+
+**[@needle-tools/three-animation-pointer](https://github.com/needle-tools/three-animation-pointer)** — Implements the `KHR_animation_pointer` glTF extension. Allows animating any property (material colors, light intensity, camera FOV, custom component properties) not just transforms and morph targets.
+
+**[@needle-tools/materialx](https://www.npmjs.com/package/@needle-tools/materialx)** — MaterialX material support via WASM. Loaded on-demand only when a GLB contains MaterialX materials. Can also load `.mtlx` files directly:
 ```ts
-import { useNeedleProgressive } from "@needle-tools/gltf-progressive";
-useNeedleProgressive(gltfLoader, renderer);
-gltfLoader.load(url, (gltf) => scene.add(gltf.scene));
+import { MaterialX } from "@needle-tools/engine";
+const material = await MaterialX.loadFromUrl("materials/wood.mtlx");
 ```
 
-In Needle Engine projects this is built in — configure via **Compression & LOD Settings** in Unity.
+**FastHDR / Environment maps** — Needle Engine supports ultra-fast preprocessed PMREM environment textures (KTX2-based FastHDR). Free HDRIs available at https://cloud.needle.tools/hdris
+```ts
+import { loadPMREM } from "@needle-tools/engine";
+
+// Load and apply as environment lighting
+const envTex = await loadPMREM("https://cloud.needle.tools/hdris/studio.ktx2", this.context.renderer);
+if (envTex) this.context.scene.environment = envTex;
+```
+Or set directly via HTML: `<needle-engine environment-image="https://cloud.needle.tools/hdris/studio.ktx2">`
 
 ---
 
@@ -363,6 +377,7 @@ Use this *before* guessing at API details — the docs are the source of truth.
 - `loadAsset()` returns a model wrapper (not an Object3D) — use `.scene` to get the root Object3D
 - `AssetReference.getOrCreateFromUrl()` caches by URL — loading the same URL twice returns the same Object3D. Use `.instantiate()` or `loadAsset()` with `{ context }` for multiple independent copies
 - Never use `setInterval` to poll for `context` — use `onStart(ctx => { ... })` or `await element.getContext()` instead. Polling is fragile and may access partially initialized state
+- There is NO `menu` attribute on `<needle-engine>` — to hide the menu, use `context.menu.setVisible(false)` from code (requires PRO license in production)
 
 ---
 
