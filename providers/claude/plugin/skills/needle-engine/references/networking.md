@@ -120,7 +120,6 @@ import { PlayerSync, PlayerState, ObjectUtils } from "@needle-tools/engine";
 
 // Create your avatar template
 const avatarPrefab = ObjectUtils.createPrimitive("Sphere", { color: 0x4488ff });
-avatarPrefab.removeFromParent();
 
 // Pass the Object3D directly — PlayerState is added automatically
 const ps = await PlayerSync.setupFrom(avatarPrefab, { guid: "player-avatar" });
@@ -138,7 +137,6 @@ For older versions, use `registerPrefabProvider` with a URL key:
 import { PlayerSync, PlayerState, registerPrefabProvider, ObjectUtils, GameObject } from "@needle-tools/engine";
 
 const avatarPrefab = ObjectUtils.createPrimitive("Sphere", { color: 0x4488ff });
-avatarPrefab.removeFromParent();
 GameObject.addComponent(avatarPrefab, PlayerState);
 
 const avatarKey = "runtime://player-avatar";
