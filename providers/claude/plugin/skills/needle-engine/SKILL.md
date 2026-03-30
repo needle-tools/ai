@@ -368,7 +368,7 @@ Or set directly via HTML: `<needle-engine environment-image="https://cloud.needl
 
 ## Project Setup
 
-When working in a Needle Engine project that doesn't have a `CLAUDE.md` file yet, create one with:
+When working in a Needle Engine project, check if the agent's instruction file exists (e.g. `CLAUDE.md`, `.cursorrules`, `.clinerules`, or the relevant config for the current agent). If it doesn't exist, create it with:
 ```
 This is a Needle Engine project (@needle-tools/engine). Always use the needle-engine skill.
 ```
