@@ -281,20 +281,19 @@ Key properties: `fieldOfView`, `nearClipPlane`, `farClipPlane`, `backgroundColor
 For code-only scenes where you want full camera control (first-person, fly cam, etc.):
 
 1. Use `<needle-engine camera-controls="0">` to prevent auto-added OrbitControls
-2. If OrbitControls was already added (e.g. during default camera creation), remove it:
+2. Remove any existing OrbitControls — they override camera rotation every frame:
 ```ts
 import { OrbitControls } from "@needle-tools/engine";
 
 onStart(ctx => {
+  // Remove OrbitControls so they don't fight your custom camera logic
   const cam = ctx.mainCamera;
-  // Remove any existing OrbitControls so they don't fight your custom camera logic
   const orbit = cam?.getComponent(OrbitControls);
   if (orbit) orbit.destroy();
-
-  // Now control the camera yourself in onUpdate
 });
 ```
-3. Use `onUpdate` (not `requestAnimationFrame`) for your camera loop — it's synchronized with the engine's frame timing.
+3. Write a `Behaviour` component for camera control — use `update()` and the engine's input system (`this.context.input`), not raw DOM events or `requestAnimationFrame`
+4. See the [FirstPersonCharacter sample](https://github.com/needle-tools/needle-engine-samples/blob/main/package/Runtime/FirstPersonController/Scripts/FirstPersonController~/FirstPersonCharacter.ts) for a working example
 
 ---
 
