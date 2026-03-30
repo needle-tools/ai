@@ -33,9 +33,18 @@ this.context.connection.stopListen("my-event", handler);  // always clean up in 
 // Room lifecycle events (import { RoomEvents } from "@needle-tools/engine")
 this.context.connection.beginListen(RoomEvents.JoinedRoom, () => { ... });
 this.context.connection.beginListen(RoomEvents.LeftRoom, () => { ... });
-this.context.connection.beginListen(RoomEvents.UserJoinedRoom, (evt) => { ... });
-this.context.connection.beginListen(RoomEvents.UserLeftRoom, (evt) => { ... });
+this.context.connection.beginListen(RoomEvents.UserJoinedRoom, (evt) => {
+  console.log("User joined:", evt.userId);   // evt: { userId: string }
+});
+this.context.connection.beginListen(RoomEvents.UserLeftRoom, (evt) => {
+  console.log("User left:", evt.userId);     // evt: { userId: string }
+});
 this.context.connection.beginListen(RoomEvents.RoomStateSent, () => { ... }); // all persisted state received
+
+// Always check connection state before sending:
+if (this.context.connection.isInRoom) {
+  this.context.connection.send("my-event", { data: 42 });
+}
 ```
 
 ---
