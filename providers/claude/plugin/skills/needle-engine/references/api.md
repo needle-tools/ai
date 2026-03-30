@@ -491,6 +491,18 @@ const room = getParam("room");                    // read ?room=xyz from URL
 setParamWithoutReload("room", "my-room");          // update URL without page reload
 ```
 
+### Debug messages (on-screen balloon)
+```ts
+import { showBalloonMessage, showBalloonWarning, showBalloonError } from "@needle-tools/engine";
+
+showBalloonMessage("Hello!");           // info message on screen
+showBalloonWarning("Watch out!");       // warning (yellow)
+showBalloonError("Something broke!");   // error (red)
+```
+
+### Debug console
+Append `?console` to the URL to show an on-screen debug console (uses vConsole). Useful for debugging on mobile devices where dev tools aren't available.
+
 ### Screenshots
 ```ts
 import { screenshot2, saveImage } from "@needle-tools/engine";
