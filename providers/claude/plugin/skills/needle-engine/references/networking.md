@@ -47,7 +47,7 @@ if (this.context.connection.isInRoom) {
 }
 ```
 
-**Important:** Custom messages do NOT automatically include a sender ID. If you need to know who sent a message, include `connectionId` yourself:
+**Important:** `send()` broadcasts to all users in the room **except yourself** — you won't receive your own messages. Custom messages also do NOT automatically include a sender ID. If you need to know who sent a message, include `connectionId` yourself:
 ```ts
 // Sending — include your own ID
 this.context.connection.send("player-position", {
