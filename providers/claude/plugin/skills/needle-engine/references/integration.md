@@ -125,9 +125,12 @@ These standalone functions from `@needle-tools/engine` mirror the component life
 
 | Hook | When it fires |
 |---|---|
+| `onInitialized(cb)` | Once after context creation and first content load |
 | `onStart(cb)` | Once when the context/scene is ready |
 | `onUpdate(cb)` | Every frame (before rendering) |
 | `onBeforeRender(cb)` | Just before Three.js renders |
+| `onAfterRender(cb)` | Just after Three.js renders |
+| `onClear(cb)` | Before context is cleared (e.g. when `src` changes) |
 | `onDestroy(cb)` | When the context is torn down |
 
 All callbacks receive `(ctx: Context)` as their argument.

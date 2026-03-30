@@ -246,8 +246,24 @@ Lives in the web project root. Configures asset paths and build output for the V
 
 ## Deployment
 
-- **Needle Cloud** — `npx needle-cloud deploy`
-- **Vercel / Netlify / any static host** — `npm run build` produces a standard `dist` folder
+All Needle Engine projects are standard Vite web apps — `npm run build` produces a `dist` folder deployable anywhere.
+
+**Needle Cloud** (recommended):
+```bash
+# CLI deployment (run `npx needle-cloud login` first, or set NEEDLE_CLOUD_TOKEN env var)
+npx needle-cloud deploy dist                          # deploy the dist folder
+npx needle-cloud deploy dist --name my-project        # with a project name
+npx needle-cloud deploy dist --team my-team-name      # deploy to a specific team
+
+# GitHub Actions for continuous deployment:
+# uses: needle-tools/deploy-to-needle-cloud-action@v1
+# with: { token: ${{ secrets.NEEDLE_CLOUD_TOKEN }}, dir: ./dist, name: my-project }
+```
+Needle Cloud provides instant deployment, built-in networking server, automatic HTTPS, and version management.
+
+**Other platforms:** Vercel, Netlify, GitHub Pages, itch.io, FTP — all work as standard static site deployments. From Unity/Blender, built-in deployment components provide one-click deploy to these platforms.
+
+See the [deployment docs](https://engine.needle.tools/docs/how-to-guides/deployment/) for platform-specific guides.
 
 ---
 
@@ -330,7 +346,7 @@ Use this *before* guessing at API details — the docs are the source of truth.
 
 - `@registerType` is required or the component won't be instantiated from GLB. Unity/Blender export adds this automatically via codegen; hand-written components need it explicitly.
 - GLB assets go in `assets/`, static files (fonts, images, videos) in `public/` (configurable via `needle.config.json`)
-- `useDefineForClassFields: false` must be set in `tsconfig.json` — otherwise TypeScript overwrites decorated fields with their defaults after the decorator runs, silently breaking serialization
+- `useDefineForClassFields: false` in `tsconfig.json` — see the warning in Quick Start above
 - `@syncField()` only triggers on reassignment — mutating an array/object in place won't sync. Do `this.arr = this.arr` to force a sync event.
 - Physics callbacks (`onCollisionEnter` etc.) require a Needle `Collider` component (BoxCollider, SphereCollider ...) on the GameObject — they won't fire on mesh-only objects
 - `removeComponent()` does NOT call `onDestroy` — any cleanup logic in `onDestroy` (event listeners, timers, allocated resources) will be skipped. Use `destroy(obj)` for full cleanup.

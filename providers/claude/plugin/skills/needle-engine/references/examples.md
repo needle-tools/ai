@@ -82,8 +82,8 @@ export class SyncedCounter extends Behaviour {
   @syncField(SyncedCounter.prototype.onCountChanged)
   count: number = 0;
 
-  private onCountChanged() {
-    console.log("Count is now:", this.count);
+  private onCountChanged(newValue: number, oldValue: number) {
+    console.log(`Count changed: ${oldValue} → ${newValue}`);
   }
 
   increment() {
@@ -181,6 +181,7 @@ export class KeyboardMover extends Behaviour {
     const dt = this.context.time.deltaTime;
     const input = this.context.input;
 
+    // Key codes: use KeyCode values ("KeyW", "Space", "ArrowLeft") or lowercase letters ("w")
     if (input.getKeyPressed("KeyW")) this.gameObject.position.z -= this.speed * dt;
     if (input.getKeyPressed("KeyS")) this.gameObject.position.z += this.speed * dt;
     if (input.getKeyPressed("KeyA")) this.gameObject.position.x -= this.speed * dt;

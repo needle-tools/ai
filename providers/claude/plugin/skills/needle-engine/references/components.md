@@ -67,8 +67,8 @@ onTriggerExit(col: Collision)
 // Visual raycast (hits any visible geometry, no collider needed, BVH-accelerated)
 const hits = this.context.physics.raycast();
 
-// Physics raycast (hits Rapier colliders only)
-const hits = this.context.physics.raycastPhysics();
+// Physics engine raycast (hits Rapier colliders only)
+const hit = this.context.physics.engine?.raycast(origin, direction);
 ```
 
 ---

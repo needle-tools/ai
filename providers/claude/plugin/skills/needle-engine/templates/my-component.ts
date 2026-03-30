@@ -5,7 +5,7 @@
  * Remove any lifecycle methods you don't need.
  */
 
-import { Behaviour, serializable, registerType, GameObject } from "@needle-tools/engine";
+import { Behaviour, serializable, registerType, WaitForSeconds } from "@needle-tools/engine";
 import { Object3D } from "three";
 
 // @registerType — required for GLB deserialization.
@@ -64,8 +64,8 @@ export class MyComponent extends Behaviour {
   }
 
   onDestroy() {
-    // Called when this component/object is destroyed (via GameObject.destroy()).
-    // Note: NOT called by removeComponent() — only by destroy().
+    // Called when this component/object is destroyed (via destroy(obj)).
+    // Note: NOT called by removeComponent() — only by the standalone destroy() function.
     // Clean up event listeners, timers, or external references here.
   }
 
