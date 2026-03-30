@@ -78,7 +78,8 @@ import { Behaviour, serializable, registerType, syncField } from "@needle-tools/
 
 @registerType
 export class SyncedCounter extends Behaviour {
-  // Automatically synced to all users in the room
+  // @syncField handles networking sync; add @serializable() too if the field should also
+  // deserialize from GLB (when set in Unity/Blender). For code-only components, @syncField alone is fine.
   @syncField(SyncedCounter.prototype.onCountChanged)
   count: number = 0;
 

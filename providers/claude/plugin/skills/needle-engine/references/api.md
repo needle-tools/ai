@@ -35,7 +35,7 @@ class MyComponent extends Behaviour {
 
   // Deactivation / cleanup
   onDisable()    // when component/GO becomes inactive
-  onDestroy()    // called by GameObject.destroy() — NOT by removeComponent()
+  onDestroy()    // called by destroy(obj) — NOT by removeComponent()
 
   // Pointer events (requires an EventSystem + Raycaster in the scene)
   onPointerEnter?(args: PointerEventData)   // pointer enters this object

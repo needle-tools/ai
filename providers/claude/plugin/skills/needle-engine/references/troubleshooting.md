@@ -77,7 +77,7 @@ export class MyComponent extends Behaviour { ... }
 
 ## `onDestroy` Not Called When Removing Component
 
-**By design:** `this.gameObject.removeComponent(comp)` removes the component from update loops but does **not** call `onDestroy`. This is consistent with Unity's `DestroyImmediate` on a component (vs the object).
+**By design:** `removeComponent(comp)` detaches the component from update loops but does **not** call `onDestroy`. Think of it as detaching without cleanup.
 
 **Fix:** Use `destroy(myComponent)` to fully clean up an object and all its components. If you need cleanup on component removal specifically, call `destroy` manually before `removeComponent()`.
 

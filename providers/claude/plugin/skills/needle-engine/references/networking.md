@@ -63,7 +63,6 @@ this.context.connection.beginListen("player-position", (msg) => {
 ```
 
 `userId` is only available in room lifecycle events (`UserJoinedRoom`, `UserLeftRoom`), not in custom messages.
-```
 
 ---
 

@@ -24,9 +24,9 @@ function ScoreDisplay() {
 ```tsx
 function GameControls() {
   const addScore = async () => {
-    const { GameManager } = await import("@needle-tools/engine");
-    const ctx = (document.querySelector("needle-engine") as any)?.context;
-    ctx?.scene.getComponentInChildren(GameManager)?.addScore(10);
+    const { findObjectOfType } = await import("@needle-tools/engine");
+    const { MyScoreManager } = await import("./scripts/MyScoreManager.js");
+    findObjectOfType(MyScoreManager)?.addScore(10);
   };
   return <button onClick={addScore}>+10</button>;
 }
@@ -70,9 +70,9 @@ useEffect(() => {
   });
 
   async function addScore() {
-    const { findObjectOfType } = await import("@needle-tools/engine");
+    const { findObjectOfType, Context } = await import("@needle-tools/engine");
     const { MyScoreManager } = await import("../scripts/MyScoreManager.js");
-    findObjectOfType(MyScoreManager)?.addScore(10);
+    findObjectOfType(MyScoreManager, Context.Current)?.addScore(10);
   }
 </script>
 
