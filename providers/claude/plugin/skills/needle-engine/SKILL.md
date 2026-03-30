@@ -360,6 +360,7 @@ Use this *before* guessing at API details — the docs are the source of truth.
 - Prefer the standalone `instantiate()` and `destroy()` functions over `GameObject.instantiate()` / `GameObject.destroy()` — the standalone versions are the current API
 - `loadAsset()` returns a model wrapper (not an Object3D) — use `.scene` to get the root Object3D
 - `AssetReference.getOrCreateFromUrl()` caches by URL — loading the same URL twice returns the same Object3D. Use `.instantiate()` or `loadAsset()` with `{ context }` for multiple independent copies
+- Never use `setInterval` to poll for `context` — use `onStart(ctx => { ... })` or `await element.getContext()` instead. Polling is fragile and may access partially initialized state
 
 ---
 

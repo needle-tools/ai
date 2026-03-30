@@ -132,6 +132,8 @@ export class ColorChanger extends Behaviour {
 
 ## Set up a scene from code (no Unity/Blender)
 
+Use `onStart` to safely access the context — never poll with `setInterval`.
+
 ```ts
 import { onStart, ObjectUtils, PrimitiveType, ContactShadows, SyncedRoom } from "@needle-tools/engine";
 import { DirectionalLight, AmbientLight } from "three";

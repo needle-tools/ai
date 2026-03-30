@@ -52,7 +52,17 @@ useEffect(() => {
   import { onMount } from "svelte";
   let score = 0;
 
-  onMount(() => {
+  onMount(async () => {
+    // Dynamic import required for SSR — engine needs browser APIs
+    const { onStart } = await import("@needle-tools/engine");
+
+    // onStart fires once when the context/scene is ready — never poll with setInterval
+    onStart(ctx => {
+      // Safe to access components, add components, etc.
+      console.log("Scene ready:", ctx.scene);
+    });
+
+    // Listen for custom events from 3D components
     const ne = document.querySelector("needle-engine");
     const handler = (e) => (score = e.detail.score);
     ne?.addEventListener("score-changed", handler);
@@ -60,9 +70,9 @@ useEffect(() => {
   });
 
   async function addScore() {
-    const { GameManager } = await import("@needle-tools/engine");
-    const ctx = document.querySelector("needle-engine")?.context;
-    ctx?.scene.getComponentInChildren(GameManager)?.addScore(10);
+    const { findObjectOfType } = await import("@needle-tools/engine");
+    const { MyScoreManager } = await import("../scripts/MyScoreManager.js");
+    findObjectOfType(MyScoreManager)?.addScore(10);
   }
 </script>
 
