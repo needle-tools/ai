@@ -256,6 +256,8 @@ All Needle Engine projects are standard Vite web apps — `npm run build` produc
 npx needle-cloud deploy dist                          # deploy the dist folder
 npx needle-cloud deploy dist --name my-project        # with a project name
 npx needle-cloud deploy dist --team my-team-name      # deploy to a specific team
+npx needle-cloud deploy dist --token                  # prompts to paste an access token interactively
+npx needle-cloud deploy dist --token <token>          # pass token directly (CI/CD scripts)
 
 # GitHub Actions for continuous deployment:
 # uses: needle-tools/deploy-to-needle-cloud-action@v1
