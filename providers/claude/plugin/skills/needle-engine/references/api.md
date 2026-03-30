@@ -9,6 +9,9 @@
 - [Coroutines](#coroutines)
 - [Asset Loading at Runtime](#asset-loading-at-runtime)
 - [Renderer and Materials](#renderer-and-materials)
+- [Object3D Extensions](#object3d-extensions)
+- [Utilities](#utilities)
+- [Vite Plugin Options](#vite-plugin-options)
 
 ---
 
@@ -341,4 +344,203 @@ MaterialPropertyBlock.hasOverrides(myMesh);
 Overrides are registered on the **Object3D**, not on the material — if you swap the material, overrides still apply to the new one. Use `dispose()` or `clearAllOverrides()` to remove them.
 
 Common use cases: per-object colors/tinting, lightmaps, reflection probes, see-through/x-ray effects.
+
+---
+
+## Object3D Extensions
+
+Needle Engine patches Three.js `Object3D.prototype` with convenience properties. These work on **any** Object3D in the scene.
+
+### World transforms (getter + setter)
+```ts
+// GET — returns a temporary Vector3/Quaternion (don't store references, copy if needed)
+obj.worldPosition       // Vector3 — world-space position
+obj.worldQuaternion     // Quaternion — world-space rotation
+obj.worldRotation       // Vector3 — world-space euler (degrees)
+obj.worldScale          // Vector3 — world-space scale
+
+// SET — must assign to apply (mutating the returned vector won't update the transform)
+obj.worldPosition = new Vector3(1, 2, 3);     // sets world position
+obj.worldQuaternion = myQuat;                  // sets world rotation
+obj.worldScale = new Vector3(2, 2, 2);         // sets world scale
+
+// Direction vectors (read-only)
+obj.worldForward        // Vector3 — forward direction in world space (0,0,1 rotated)
+obj.worldRight          // Vector3 — right direction
+obj.worldUp             // Vector3 — up direction
+
+// worldForward also has a setter — point an object in a direction:
+obj.worldForward = targetDirection;
+```
+
+The getters return **temporary vectors** from an internal pool — they're overwritten on the next call. If you need to store a value, copy it: `const pos = obj.worldPosition.clone()`.
+
+### Component access
+```ts
+obj.getComponent(MyComponent)           // first component of type
+obj.getComponentInChildren(MyComponent) // search children recursively
+obj.getComponentInParent(MyComponent)   // search parents recursively
+obj.getComponents(MyComponent)          // all of type on this object
+obj.getComponentsInChildren(MyComponent)
+obj.addComponent(MyComponent)           // add a new component
+```
+
+### Other extensions
+```ts
+obj.contains(otherObj)    // true if otherObj is a descendant
+obj.activeSelf            // get/set active state (same as GameObject.setActive)
+```
+
+---
+
+## Utilities
+
+All imported from `@needle-tools/engine`.
+
+### Math (`Mathf`)
+```ts
+import { Mathf } from "@needle-tools/engine";
+
+Mathf.lerp(a, b, t)                    // linear interpolation
+Mathf.clamp(value, min, max)            // clamp to range
+Mathf.clamp01(value)                    // clamp to [0, 1]
+Mathf.remap(value, inMin, inMax, outMin, outMax)  // remap between ranges
+Mathf.moveTowards(current, target, step)           // step toward target
+Mathf.inverseLerp(a, b, value)          // find t given value
+Mathf.toDegrees(radians)
+Mathf.toRadians(degrees)
+Mathf.random(min, max)                  // random in range (or random from array)
+Mathf.easeInOutCubic(t)                 // easing function
+```
+
+### Temporary objects (avoid per-frame allocations)
+```ts
+import { getTempVector, getTempQuaternion } from "@needle-tools/engine";
+
+// Returns reusable objects from a circular buffer — no GC pressure
+const v = getTempVector(1, 0, 0);       // temporary Vector3
+const q = getTempQuaternion();           // temporary Quaternion
+// Don't store references — they get reused. Clone if you need to keep them.
+```
+
+### Device detection (`DeviceUtilities`)
+```ts
+import { DeviceUtilities } from "@needle-tools/engine";
+
+DeviceUtilities.isDesktop()         // Windows/Mac (not headsets)
+DeviceUtilities.isMobileDevice()    // phone or tablet
+DeviceUtilities.isiOS()             // iPhone, iPad, Vision Pro
+DeviceUtilities.isAndroidDevice()
+DeviceUtilities.isQuest()           // Meta Quest
+DeviceUtilities.isVisionOS()        // Apple Vision Pro
+DeviceUtilities.isSafari()
+DeviceUtilities.supportsQuickLookAR()  // USDZ/QuickLook support
+```
+
+### Timing and delays
+```ts
+import { delay, delayForFrames, WaitForSeconds, WaitForFrames, WaitForPromise } from "@needle-tools/engine";
+
+// Async
+await delay(1000);                       // wait 1 second
+await delayForFrames(5);                 // wait 5 frames
+
+// In coroutines
+yield WaitForSeconds(0.5);
+yield WaitForFrames(10);
+yield WaitForPromise(fetch("/api"));     // wait for a promise to resolve
+```
+
+### User interaction
+```ts
+import { awaitInputAsync } from "@needle-tools/engine";
+
+// Wait for the first user interaction (useful for audio autoplay policy)
+await awaitInputAsync();
+audioSource.play();
+```
+
+### URL parameters
+```ts
+import { getParam, setParamWithoutReload } from "@needle-tools/engine";
+
+const room = getParam("room");                    // read ?room=xyz from URL
+setParamWithoutReload("room", "my-room");          // update URL without page reload
+```
+
+### Screenshots
+```ts
+import { screenshot2, saveImage } from "@needle-tools/engine";
+
+// Simple screenshot (returns data URL)
+const dataUrl = screenshot2({ width: 1920, height: 1080 });
+saveImage(dataUrl, "screenshot.png");
+
+// Screenshot as texture (apply to a material)
+const tex = screenshot2({ type: "texture", width: 512, height: 512 });
+
+// Screenshot as blob
+const blob = await screenshot2({ type: "blob" });
+
+// Share via Web Share API
+await screenshot2({ type: "share", title: "My Scene" });
+
+// Transparent background
+screenshot2({ transparent: true, trim: true });
+
+// XR screenshot (composites 3D scene over camera feed — requires "camera-access" feature)
+// Works in AR sessions when camera-access has been requested via onBeforeXR
+const xrScreenshot = screenshot2({ width: 1080, height: 1920 });
+```
+
+### QR Code
+```ts
+import { generateQRCode } from "@needle-tools/engine";
+const qr = generateQRCode({ text: "https://mysite.com" });
+```
+
+---
+
+## Vite Plugin Options
+
+The `needlePlugins` function accepts user settings as the third argument. These control build behavior, optimization, and features.
+
+```ts
+import { defineConfig } from "vite";
+import { needlePlugins } from "@needle-tools/engine/vite";
+
+export default defineConfig(async ({ command }) => ({
+  plugins: [
+    ...(await needlePlugins(command, {}, {
+      // Key options:
+
+      // Make all external CDN URLs local for offline/self-contained deployments
+      makeFilesLocal: true,          // download everything
+      // or: makeFilesLocal: "auto", // auto-detect which features to include
+      // or: makeFilesLocal: { enabled: true, features: ["draco", "ktx2"] },
+
+      // PWA support (also install vite-plugin-pwa)
+      pwa: true,                     // enable with defaults
+      // or: pwa: { /* VitePWAOptions */ },
+
+      // Physics engine — set to false to tree-shake Rapier and reduce bundle size
+      useRapier: false,
+
+      // Build pipeline — compression and optimization of glTF files
+      noBuildPipeline: false,        // default: runs optimization
+      buildPipeline: {
+        accessToken: process.env.NEEDLE_CLOUD_TOKEN,  // use Needle Cloud for compression
+      },
+
+      // Other options:
+      // noAsap: true,              // disable glTF preload links
+      // noPoster: true,            // disable poster image generation
+      // openBrowser: true,         // auto-open browser on local network IP
+    })),
+  ],
+}));
+```
+
+### `makeFilesLocal` features
+Downloads external CDN URLs at build time for fully self-contained deployments. Available features: `draco`, `ktx2`, `materialx`, `xr`, `skybox`, `fonts`, `needle-fonts`, `needle-models`, `needle-avatars`, `polyhaven`, `cdn-scripts`, `github-content`, `threejs-models`, `needle-uploads`.
 

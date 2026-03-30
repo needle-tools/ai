@@ -183,7 +183,9 @@ Boolean attributes can be disabled with `="0"` (e.g. `camera-controls="0"`).
 | `clock.getDelta()` | `this.context.time.deltaTime` |
 | `new GLTFLoader().load(url)` | `AssetReference.getOrCreate(base, url)` then `.instantiate()`, or `loadAsset(url)` |
 
-Needle Engine extends `Object3D` with component methods (`getComponent`, `addComponent`, `worldPosition`, `worldQuaternion`, `worldScale`, `worldForward`, `worldRight`, `worldUp`, `contains`, etc.). `this.gameObject` is the `Object3D` a component is attached to. The underlying Three.js API still works directly.
+Needle Engine patches `Object3D.prototype` with component methods and world-space transforms. `this.gameObject` is the `Object3D` a component is attached to. The underlying Three.js API still works directly.
+
+**Object3D extensions:** `getComponent`, `addComponent`, `worldPosition` (get/set), `worldQuaternion` (get/set), `worldScale` (get/set), `worldForward` (get/set), `worldRight`, `worldUp`, `contains`, `activeSelf`. World transform setters must be assigned (`obj.worldPosition = vec`) — mutating the returned vector won't apply.
 
 **Materials & Renderer:**
 ```ts
