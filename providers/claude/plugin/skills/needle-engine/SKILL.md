@@ -273,6 +273,7 @@ jobs:
         with:
           token: ${{ secrets.NEEDLE_CLOUD_TOKEN }}
           dir: ./dist
+          # name: my-project  # optional — defaults to the repo name
 ```
 Create a `NEEDLE_CLOUD_TOKEN` secret in your repo settings (get the token from https://cloud.needle.tools/team with read/write permissions).
 
