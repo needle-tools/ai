@@ -213,8 +213,9 @@ Syncs an object's position, rotation, and scale across clients. Ownership is aut
 ```ts
 import { SyncedTransform } from "@needle-tools/engine";
 
-// Add to any object that should have its transform synced
+// Add to ANY Object3D — cameras, player objects, scene objects, anything
 myObject.addComponent(SyncedTransform);
+camera.addComponent(SyncedTransform);  // works on cameras too
 
 // For player objects: combine with PlayerSync for automatic spawn/despawn
 // The avatar prefab should have SyncedTransform on the root
