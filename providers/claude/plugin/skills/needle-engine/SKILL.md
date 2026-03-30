@@ -332,11 +332,7 @@ These ship with Needle Engine and work automatically — no setup needed:
 
 **[@needle-tools/three-animation-pointer](https://github.com/needle-tools/three-animation-pointer)** — Implements the `KHR_animation_pointer` glTF extension. Allows animating any property (material colors, light intensity, camera FOV, custom component properties) not just transforms and morph targets.
 
-**[@needle-tools/materialx](https://www.npmjs.com/package/@needle-tools/materialx)** — MaterialX material support via WASM. Loaded on-demand only when a GLB contains MaterialX materials. Can also load `.mtlx` files directly:
-```ts
-import { MaterialX } from "@needle-tools/engine";
-const material = await MaterialX.loadFromUrl("materials/wood.mtlx");
-```
+**[@needle-tools/materialx](https://www.npmjs.com/package/@needle-tools/materialx)** — MaterialX material support via WASM. Unity ShaderGraph shaders are exported as MaterialX and embedded in the GLB file. Automatically detected and loaded lazily at runtime when a GLB contains the `NEEDLE_materials_mtlx` extension — no user setup needed.
 
 **FastHDR / Environment maps** — Needle Engine supports ultra-fast preprocessed PMREM environment textures (KTX2-based FastHDR). Free HDRIs available at https://cloud.needle.tools/hdris
 ```ts
