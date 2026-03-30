@@ -250,7 +250,9 @@ All Needle Engine projects are standard Vite web apps — `npm run build` produc
 
 **Needle Cloud** (recommended):
 ```bash
-# CLI deployment (run `npx needle-cloud login` first, or set NEEDLE_CLOUD_TOKEN env var)
+# CLI deployment
+# Auth: run `npx needle-cloud login`, or set NEEDLE_CLOUD_TOKEN env var
+# For CI/CD: create an access token at https://cloud.needle.tools/team (read/write permissions)
 npx needle-cloud deploy dist                          # deploy the dist folder
 npx needle-cloud deploy dist --name my-project        # with a project name
 npx needle-cloud deploy dist --team my-team-name      # deploy to a specific team
