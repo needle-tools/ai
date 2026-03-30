@@ -172,6 +172,84 @@ From Unity, built-in deployment components (e.g. `DeployToNetlify`) require a PR
 
 ---
 
+## Networking
+
+Needle Engine networking has three layers — use the highest-level one that fits your needs:
+
+### Layer 1: `context.connection` (low-level)
+The core API for WebSocket rooms and messaging. Everything else builds on this.
+```ts
+this.context.connection.connect();
+this.context.connection.joinRoom("my-room");
+
+// Send and receive custom messages
+this.context.connection.send("my-event", { data: 42 });
+this.context.connection.beginListen("my-event", (msg) => { console.log(msg.data); });
+this.context.connection.stopListen("my-event", handler);  // clean up in onDisable/onDestroy
+```
+
+**Persistent vs ephemeral messages:** If the message data includes a `guid` field, the server stores it as room state — new users joining later will receive it. Without a `guid`, messages are fire-and-forget (only delivered to currently connected users).
+```ts
+// Ephemeral — only current users receive this
+this.context.connection.send("chat", { text: "hello" });
+
+// Persistent — stored on server, sent to users who join later
+this.context.connection.send("object-color", { guid: this.guid, color: "#ff0000" });
+
+// Delete persisted state when no longer needed
+this.context.connection.sendDeleteRemoteState(this.guid);
+```
+
+### Layer 2: `SyncedRoom` (convenience component)
+Wraps `context.connection` with auto-join (via URL params), random room names, auto-reconnect, and a join/leave UI button. Add it to any object in the scene — no code needed for basic room management.
+```ts
+// In Unity/Blender: add SyncedRoom component to a GameObject
+// Or create at runtime:
+import { SyncedRoom } from "@needle-tools/engine";
+myObject.addComponent(SyncedRoom, { roomName: "my-room" });
+// or join a random room:
+myObject.addComponent(SyncedRoom, { joinRandomRoom: true });
+```
+
+### Layer 3: `PlayerSync` + `PlayerState` (player management)
+Automatically instantiates a prefab for each player that joins, and destroys it when they leave. The prefab must have a `PlayerState` component. Used for WebXR avatars and multiplayer player objects.
+```ts
+import { PlayerSync, PlayerState } from "@needle-tools/engine";
+
+// In Unity/Blender: add PlayerSync component, assign a player prefab asset
+// The prefab should have PlayerState + any synced components (SyncedTransform, etc.)
+
+// Or set up at runtime:
+const ps = await PlayerSync.setupFrom("assets/player-avatar.glb");
+scene.add(ps.gameObject);
+
+// Check if an object belongs to the local player:
+if (PlayerState.isLocalPlayer(someObject)) { /* this is ours */ }
+```
+
+### Syncing object transforms: `SyncedTransform`
+Add `SyncedTransform` to any object that should have its position/rotation synced across clients. Ownership is automatic — when a user interacts (e.g. via `DragControls`), they take ownership and their changes broadcast to others.
+
+### Syncing custom state: `@syncField()`
+```ts
+@syncField() score: number = 0;          // auto-syncs on reassignment
+@syncField(MyClass.prototype.onHealthChange)
+health: number = 100;                     // sync + callback
+
+// Arrays/objects: mutation doesn't trigger sync — must reassign
+this.items.push("sword");
+this.items = this.items;   // ← forces sync
+```
+
+### Typical multiplayer setup
+1. `npm create needle my-app` — scaffold the project
+2. Add `SyncedRoom` to an object (or call `context.connection.joinRoom()`)
+3. For player avatars: add `PlayerSync` with a prefab that has `PlayerState`
+4. For synced objects: add `SyncedTransform` to movable objects
+5. For custom state: use `@syncField()` on component properties
+
+---
+
 ## Progressive Loading (`@needle-tools/gltf-progressive`)
 
 ```ts
@@ -206,6 +284,7 @@ Use this *before* guessing at API details — the docs are the source of truth.
 - `@syncField()` only triggers on reassignment — mutating an array/object in place won't sync. Do `this.arr = this.arr` to force a sync event.
 - Physics callbacks (`onCollisionEnter` etc.) require a Needle `Collider` component (BoxCollider, SphereCollider ...) on the GameObject — they won't fire on mesh-only objects
 - `removeComponent()` does NOT call `onDestroy` — any cleanup logic in `onDestroy` (event listeners, timers, allocated resources) will be skipped. Use `destroy(obj)` for full cleanup.
+- `PlayerSync` prefab must have a `PlayerState` component — without it, the spawned instance will be immediately destroyed with an error. In Unity/Blender, add PlayerState to the prefab root.
 - Prefer the standalone `instantiate()` and `destroy()` functions over `GameObject.instantiate()` / `GameObject.destroy()` — the standalone versions are the current API
 - `loadAsset()` returns a model wrapper (not an Object3D) — use `.scene` to get the root Object3D
 - `AssetReference.getOrCreateFromUrl()` caches by URL — loading the same URL twice returns the same Object3D. Use `.instantiate()` or `loadAsset()` with `{ context }` for multiple independent copies
