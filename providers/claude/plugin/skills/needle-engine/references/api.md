@@ -401,9 +401,12 @@ obj.addComponent(MyComponent)           // add a new component
 
 ### Other extensions
 ```ts
+obj.guid                  // get/set — unique identifier for networking (string | undefined)
 obj.contains(otherObj)    // true if otherObj is a descendant
 obj.activeSelf            // get/set active state (same as GameObject.setActive)
 ```
+
+`guid` is used by the networking system to identify objects across clients. Objects exported from Unity/Blender have guids automatically. For runtime-created objects, set `obj.guid = "my-id"` if they need to participate in networking (e.g. `syncInstantiate`, `SyncedTransform`).
 
 ### Bounding box and fitting
 ```ts
