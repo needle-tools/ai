@@ -365,6 +365,25 @@ Or set directly via HTML: `<needle-engine environment-image="https://cloud.needl
 
 ---
 
+## Looking Up API Types
+
+Use the bundled lookup script to search the actual `.d.ts` type definitions from the installed `@needle-tools/engine` package. This gives accurate, up-to-date API signatures and JSDoc docs.
+
+```bash
+# Search for a class, method, or property
+node <skill-path>/scripts/lookup-api.mjs <project-path> ContactShadows
+node <skill-path>/scripts/lookup-api.mjs <project-path> syncInstantiate
+node <skill-path>/scripts/lookup-api.mjs <project-path> "physics.raycast"
+
+# List all available type definition files
+node <skill-path>/scripts/lookup-api.mjs <project-path> --list
+
+# Show full contents of a specific file
+node <skill-path>/scripts/lookup-api.mjs <project-path> --file PlayerSync
+```
+
+Use this when you need exact method signatures, constructor parameters, or property types that aren't covered in the reference docs.
+
 ## Searching the Documentation
 
 Use the `needle_search` MCP tool to find relevant docs, forum posts, and community answers:

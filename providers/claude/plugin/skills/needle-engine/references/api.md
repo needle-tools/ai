@@ -146,7 +146,7 @@ this.context.input.removeEventListener("pointerdown", callback);
 const hits = this.context.physics.raycast();
 
 // With options:
-this.context.physics.raycast({ maxDistance, layerMask, ignore })
+this.context.physics.raycast({ maxDistance: 100, layerMask: 0xff, ignore: [this.gameObject] })
 
 // From a specific pixel position (e.g. in a raw pointerdown handler):
 // IMPORTANT: screenPoint is in normalized device coordinates (-1 to 1), NOT pixels!
