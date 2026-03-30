@@ -47,6 +47,24 @@ if (this.context.connection.isInRoom) {
 }
 ```
 
+**Important:** Custom messages do NOT automatically include a sender ID. If you need to know who sent a message, include `connectionId` yourself:
+```ts
+// Sending — include your own ID
+this.context.connection.send("player-position", {
+  senderId: this.context.connection.connectionId,
+  x: pos.x, y: pos.y, z: pos.z,
+});
+
+// Receiving — filter out your own messages
+this.context.connection.beginListen("player-position", (msg) => {
+  if (msg.senderId === this.context.connection.connectionId) return; // ignore self
+  // handle remote player position...
+});
+```
+
+`userId` is only available in room lifecycle events (`UserJoinedRoom`, `UserLeftRoom`), not in custom messages.
+```
+
 ---
 
 ## Persistent vs ephemeral messages (guid)
