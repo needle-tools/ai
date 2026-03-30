@@ -138,6 +138,8 @@ Boolean attributes can be disabled with `="0"` (e.g. `camera-controls="0"`).
 | `poster` | Placeholder image URL shown while loading |
 | `loadstart` / `progress` / `loadfinished` | Callback functions for loading lifecycle |
 
+HTML attributes on `<needle-engine>` **override** the equivalent settings from the scene/Camera component. For example, `background-color="#222"` overrides whatever `Camera.backgroundColor` is set to in Unity/Blender. Remove the attribute to let the scene settings take effect.
+
 ---
 
 ## Unity → Needle Cheat Sheet

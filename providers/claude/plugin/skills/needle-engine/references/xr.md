@@ -281,6 +281,8 @@ onPointerClick(args: PointerEventData) {
 }
 ```
 
+**Screen coordinates:** `args.event.clientX` / `args.event.clientY` give the screen position of the pointer (for mouse/touch). For world-to-screen projection, use Three.js standard: `worldPos.clone().project(camera)` then convert to pixels.
+
 Use `args.event.mode` to distinguish between mouse, touch, and XR controllers:
 - `"screen"` — mouse or touch
 - `"tracked-pointer"` — XR controller ray

@@ -352,6 +352,15 @@ For a full first-person controller example, see the [FirstPersonCharacter sample
 
 For clickable hotspot labels on 3D objects (common in product configurators), see the [Hotspot sample](https://github.com/needle-tools/needle-engine-samples/blob/main/package/Runtime/Hotspots/Scripts/Needle.Hotspots~/Hotspot.ts).
 
+### needle-menu (built-in UI menu)
+The `<needle-menu>` web component provides a built-in hamburger menu that components like `SyncedRoom` and `Voip` add buttons to. You can add custom buttons from code:
+```ts
+const button = document.createElement("button");
+button.textContent = "My Action";
+button.onclick = () => { /* ... */ };
+this.context.menu.appendChild(button);
+```
+
 ---
 
 ## Splines
