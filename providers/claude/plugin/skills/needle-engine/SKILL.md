@@ -46,12 +46,65 @@ export class HelloWorld extends Behaviour {
 
 ## Key Concepts
 
-**Needle Engine** ships 3D scenes from Unity or Blender as GLB files and renders them in the browser using Three.js. TypeScript components attached to objects are serialized into the GLB and re-hydrated at runtime.
+**Needle Engine** is a web-first 3D engine built on Three.js. All code is TypeScript — Unity and Blender are optional visual editors, not required. There are three ways to work:
 
-- **Unity workflow:** C# MonoBehaviours → auto-generated TypeScript stubs → GLB export on play/build
-- **Blender workflow:** Components added via the Needle Engine Blender addon → GLB export with component data embedded
-- **Embedding:** `<needle-engine src="assets/scene.glb">` web component creates and manages a 3D context
-- **Context access:** use `onStart(ctx => { ... })` or `onInitialize(ctx => { ... })` lifecycle hooks (preferred); `document.querySelector("needle-engine").context` works but only from UI event handlers
+### Workflows
+
+**Code-only (no Unity/Blender):**
+Scaffold a project with `npm create needle`, write TypeScript components, and build scenes entirely from code. Use `onStart`, `onUpdate`, and other lifecycle hooks to set up scenes, or create components extending `Behaviour`. This is a fully supported first-class workflow.
+
+**Unity or Blender as visual editors:**
+Unity and Blender act as scene editors — they manage a local Vite dev server, export scenes as GLB files into the web project's `assets/` folder (configured via `needle.config.json`), and serialize component data into glTF extensions. At runtime the engine deserializes this data and creates the corresponding TypeScript components with their configured values. The editors also run a **component compiler** (`@needle-tools/needle-component-compiler`) that watches your `src/scripts/` directory and auto-generates C# stubs (for Unity) or JSON files (for Blender, which the addon loads to generate UI) so your custom TypeScript components appear as editable components in the editor's inspector — this is a convenience feature for visual editing, not a requirement.
+
+Everything exported from Unity/Blender is accessible from code afterwards. The editors are tools for visual scene setup; the runtime is pure web/TypeScript.
+
+### Accessing the engine from code
+
+**Lifecycle hooks** — standalone functions that work outside of any component class:
+```ts
+import { onStart, onUpdate, onBeforeRender, onDestroy } from "@needle-tools/engine";
+
+// Each returns an unsubscribe function
+const unsub = onStart(ctx => {
+  console.log("Scene ready:", ctx.scene);
+  // Access components, create objects, set up logic here
+});
+
+onUpdate(ctx => {
+  // Runs every frame
+});
+
+// For SSR frameworks (Next.js, SvelteKit, Nuxt), use dynamic import:
+import("@needle-tools/engine").then(({ onStart }) => {
+  onStart(ctx => { /* ... */ });
+});
+```
+
+Available hooks: `onInitialized`, `onStart`, `onUpdate`, `onBeforeRender`, `onAfterRender`, `onClear`, `onDestroy`
+
+**From the `<needle-engine>` HTML element:**
+```ts
+// Synchronous (may be undefined if not yet loaded)
+const ctx = document.querySelector("needle-engine")?.context;
+
+// Async (waits for loading to finish)
+const ctx = await document.querySelector("needle-engine")?.getContext();
+
+// Event-based
+document.querySelector("needle-engine")?.addEventListener("loadfinished", (ev) => {
+  const ctx = ev.detail.context;
+});
+```
+
+**From a framework component (React, Svelte, Vue):**
+Use lifecycle hooks with dynamic imports to avoid SSR issues — see [Framework Integration](references/integration.md) for patterns.
+
+### How data flows
+
+1. **Scene setup** — either in Unity/Blender (visual) or in code (programmatic)
+2. **Export** (if using editors) — scene → GLB with component data in glTF extensions → `assets/` folder
+3. **Runtime** — `<needle-engine src="scene.glb">` loads the GLB, deserializes components, and starts the frame loop
+4. **Code access** — hooks, `context` property, or components' lifecycle methods (`start`, `update`, etc.)
 
 ### `<needle-engine>` Attributes
 
@@ -241,12 +294,26 @@ this.items.push("sword");
 this.items = this.items;   // ← forces sync
 ```
 
+### Voice & video: `Voip` and `ScreenCapture`
+Both require an active networked room (via `SyncedRoom` or manual connection) and HTTPS.
+```ts
+import { Voip, ScreenCapture } from "@needle-tools/engine";
+
+// Voice chat — add to any object, auto-connects when joining a room
+myObject.addComponent(Voip, { autoConnect: true, createMenuButton: true });
+
+// Screen/camera/microphone sharing — click the object or call share()
+const sc = myObject.addComponent(ScreenCapture);
+sc.share({ device: "Screen" });  // or "Camera", "Microphone"
+```
+
 ### Typical multiplayer setup
 1. `npm create needle my-app` — scaffold the project
 2. Add `SyncedRoom` to an object (or call `context.connection.joinRoom()`)
 3. For player avatars: add `PlayerSync` with a prefab that has `PlayerState`
 4. For synced objects: add `SyncedTransform` to movable objects
 5. For custom state: use `@syncField()` on component properties
+6. For voice chat: add `Voip` — for screen sharing: add `ScreenCapture`
 
 ---
 

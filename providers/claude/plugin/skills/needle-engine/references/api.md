@@ -418,12 +418,38 @@ PlayerState.addEventListener(PlayerStateEvent.OwnerChanged, (evt) => {
 });
 ```
 
+### Voice & Video: Voip and ScreenCapture
+Both require an active networked room and HTTPS.
+
+```ts
+import { Voip, ScreenCapture } from "@needle-tools/engine";
+
+// Voice chat — auto-connects when joining a room
+const voip = myObject.addComponent(Voip, { autoConnect: true, createMenuButton: true });
+voip.connect();       // manual start
+voip.disconnect();    // manual stop
+voip.setMuted(true);  // mute mic
+
+// Screen/camera/microphone sharing
+const sc = myObject.addComponent(ScreenCapture);
+sc.share({ device: "Screen" });    // "Screen", "Camera", "Microphone", "Canvas"
+sc.close();                         // stop sharing
+// Receiving clients see the video on a VideoPlayer component on the same object
+```
+
+| Voip property | Default | Description |
+|---|---|---|
+| `autoConnect` | `true` | Start when joining a room |
+| `runInBackground` | `true` | Stay connected when tab loses focus |
+| `createMenuButton` | `true` | Show mute/unmute button in menu |
+
 ### Typical multiplayer setup
 1. Add `SyncedRoom` to an object (or call `context.connection.joinRoom()` manually)
 2. For player avatars: add `PlayerSync` with a prefab that has `PlayerState`
 3. For synced objects: add `SyncedTransform` to movable objects
 4. For custom state: use `@syncField()` on component properties
 5. For custom events: use `context.connection.send()` / `beginListen()`
+6. For voice chat: add `Voip` — for screen sharing: add `ScreenCapture`
 
 ---
 
