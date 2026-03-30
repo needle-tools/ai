@@ -138,16 +138,24 @@ this.context.input.removeEventListener("pointerdown", callback);
 
 // Physics — two raycast systems for different purposes:
 // 1. Visual raycast: hits rendered geometry (no collider needed)
-//    Automatically builds MeshBVH (three-mesh-bvh) on web workers on first raycast per object
+//    Automatically builds MeshBVH (three-mesh-bvh) on web workers — falls back to standard
+//    three.js raycasting until BVH is ready. Works with procedural geometry too.
 //    Use for: UI interaction, picking visible objects, click detection
-this.context.physics.raycast()               // from current mouse/pointer position (default)
+
+// Simplest usage — uses current pointer position, works in pointer event handlers:
+const hits = this.context.physics.raycast();
+
+// With options:
 this.context.physics.raycast({ maxDistance, layerMask, ignore })
 
+// From a specific pixel position (e.g. in a raw pointerdown handler):
 // IMPORTANT: screenPoint is in normalized device coordinates (-1 to 1), NOT pixels!
-// To raycast from a pixel position, use the options helper:
 const opts = new RaycastOptions();
 opts.screenPointFromOffset(e.clientX, e.clientY);  // converts pixels → NDC
 const hits = this.context.physics.raycast(opts);
+
+// DO NOT pass raw pixel coords as screenPoint — this is wrong:
+// ctx.physics.raycast({ screenPoint: new Vector2(e.clientX, e.clientY) }) // WRONG!
 
 // 2. Physics engine raycast: hits Rapier colliders only
 //    Use for: ground detection, line-of-sight, physics-based queries
