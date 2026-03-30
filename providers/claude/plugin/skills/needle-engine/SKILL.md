@@ -276,6 +276,7 @@ jobs:
           token: ${{ secrets.NEEDLE_CLOUD_TOKEN }}
           dir: ./dist
           # name: my-project  # optional — defaults to the repo name
+          # webhookUrl: ${{ secrets.DISCORD_WEBHOOK_URL }}  # optional — Discord/Slack deploy notifications
 ```
 Create a `NEEDLE_CLOUD_TOKEN` secret in your repo settings (get the token from https://cloud.needle.tools/team with read/write permissions).
 
