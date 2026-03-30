@@ -345,9 +345,10 @@ Use this *before* guessing at API details — the docs are the source of truth.
 
 Read these **only when needed** — don't load them all upfront:
 
-- 📖 [Core API](references/api.md) — lifecycle, decorators, context, gameobject, coroutines, asset loading, renderer/materials, WebXR
-- 🧩 [Components](references/components.md) — animation, audio, video, lighting, post-processing, camera, scene switching, interaction, splines, particles, debug tools, utilities
+- 📖 [Core API](references/api.md) — lifecycle, decorators, context (input, physics, time), gameobject, coroutines, asset loading, renderer/materials
+- 🧩 [Components](references/components.md) — physics, animation, audio, video, lighting, post-processing, camera, scene switching, interaction, splines, particles, debug tools, utilities
 - 🌐 [Networking](references/networking.md) — connection API, SyncedRoom, PlayerSync, @syncField, SyncedTransform, Voip, ScreenCapture, guid persistence
+- 🥽 [WebXR](references/xr.md) — VR/AR sessions, XRRig, controllers, pointer events in XR, image tracking, depth sensing, camera access, mesh detection, DOM overlay, iOS AR, multiplayer avatars
 - 🔗 [Framework Integration](references/integration.md) — React, Svelte, Vue, Next.js, SvelteKit patterns
 - 💡 [Component Examples](references/examples.md) — practical examples: click handling, runtime loading, networking, materials, code-only scenes, input, coroutines
 - 🐛 [Troubleshooting](references/troubleshooting.md) — error messages, unexpected behavior, build failures

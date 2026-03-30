@@ -9,7 +9,6 @@
 - [Coroutines](#coroutines)
 - [Asset Loading at Runtime](#asset-loading-at-runtime)
 - [Renderer and Materials](#renderer-and-materials)
-- [WebXR](#webxr)
 
 ---
 
@@ -343,46 +342,3 @@ Overrides are registered on the **Object3D**, not on the material — if you swa
 
 Common use cases: per-object colors/tinting, lightmaps, reflection probes, see-through/x-ray effects.
 
----
-
-## WebXR
-
-```ts
-import { Behaviour, NeedleXREventArgs, NeedleXRControllerEventArgs, registerType } from "@needle-tools/engine";
-
-@registerType
-class MyXRComponent extends Behaviour {
-
-  // Check XR state anytime
-  // this.context.xr?.isInXR
-  // this.context.xr?.session  // XRSession
-
-  onEnterXR(args: NeedleXREventArgs) {
-    console.log("Entered XR, mode:", args.xr.mode);
-  }
-
-  onUpdateXR(args: NeedleXREventArgs) {
-    const controllers = args.xr.controllers;
-    for (const ctrl of controllers) {
-      // ctrl.gamepad, ctrl.raycastHit, ctrl.grip, ctrl.hand, etc.
-    }
-  }
-
-  onLeaveXR(args: NeedleXREventArgs) {
-    console.log("Left XR");
-  }
-
-  onXRControllerAdded(args: NeedleXRControllerEventArgs) {
-    console.log("Controller added:", args.controller);
-  }
-}
-```
-
-### USDZ Export (iOS AR)
-`USDZExporter` enables Quick Look AR on iOS — exports the scene as a `.usdz` file that opens in AR. Can also be configured via the `WebXR` component (which includes USDZ export settings for the AR button on iOS).
-```ts
-import { USDZExporter } from "@needle-tools/engine";
-// Add to an object in Unity/Blender, or create from code
-// Triggers automatically on iOS when the AR button is tapped
-// Also configurable via WebXR component's USDZ settings
-```
