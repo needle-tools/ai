@@ -66,6 +66,78 @@ this.context.connection.beginListen("player-position", (msg) => {
 
 ---
 
+## Networked Instantiation and Destruction
+
+For spawning objects that should appear on all clients, use `syncInstantiate` / `instantiateSynced` instead of manually sending custom events.
+
+```ts
+import { instantiate, syncInstantiate, syncDestroy, registerPrefabProvider } from "@needle-tools/engine";
+
+// Local clone (only on this client)
+const clone = instantiate(prefabObject, { parent: this.gameObject });
+
+// Networked spawn (appears on all connected clients)
+const networked = syncInstantiate(prefabObject, {
+  parent: this.gameObject,
+  position: [x, y, z],
+  deleteOnDisconnect: true,    // removed when the spawning user disconnects
+});
+
+// Persistent networked spawn (survives disconnects, replayed to late joiners)
+const persistent = syncInstantiate(prefabObject, {
+  parent: this.gameObject,
+  deleteOnDisconnect: false,
+});
+
+// Via AssetReference
+const synced = await myAssetRef.instantiateSynced({
+  parent: this.gameObject,
+  deleteOnDisconnect: false,
+});
+
+// Networked destroy (removed on all clients)
+syncDestroy(obj, this.context.connection, true);
+```
+
+### Runtime prefabs with `registerPrefabProvider`
+When creating prefabs at runtime (not loaded from GLB), register them so `syncInstantiate` can recreate them on other clients:
+```ts
+import { registerPrefabProvider, ObjectUtils } from "@needle-tools/engine";
+
+const myPrefab = ObjectUtils.createPrimitive("Cube", { color: 0xff8c00 });
+myPrefab.guid = "my-runtime-cube";
+myPrefab.removeFromParent(); // don't add to scene — it's a template
+registerPrefabProvider("my-runtime-cube", async () => myPrefab);
+
+// Now syncInstantiate will work across clients
+syncInstantiate(myPrefab, { parent: ctx.scene, deleteOnDisconnect: false });
+```
+
+### World-building pattern (first player seeds, late joiners receive)
+```ts
+let shouldBuildWorld = false;
+
+connection.beginListen(RoomEvents.JoinedRoom, () => {
+  const inRoom = connection.usersInRoom();
+  shouldBuildWorld = inRoom.length === 1; // I'm the only one here
+});
+
+connection.beginListen(RoomEvents.RoomStateSent, () => {
+  // State replay complete — only build if we're first AND no objects exist yet
+  if (!shouldBuildWorld) return;
+
+  for (let i = 0; i < 100; i++) {
+    syncInstantiate(cookiePrefab, {
+      parent: ctx.scene,
+      position: [x, 0, z],
+      deleteOnDisconnect: false, // persists for late joiners
+    });
+  }
+});
+```
+
+---
+
 ## Persistent vs ephemeral messages (guid)
 When a message's `data` contains a `guid` field, the server stores it as room state. New users joining later receive all stored state via `RoomStateSent`. Messages without a `guid` are fire-and-forget — only currently connected users see them.
 
