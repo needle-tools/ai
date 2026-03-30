@@ -140,6 +140,8 @@ Boolean attributes can be disabled with `="0"` (e.g. `camera-controls="0"`).
 
 HTML attributes on `<needle-engine>` **override** the equivalent settings from the scene/Camera component. For example, `background-color="#222"` overrides whatever `Camera.backgroundColor` is set to in Unity/Blender. Remove the attribute to let the scene settings take effect.
 
+**Auto camera-controls:** If no GLB is loaded, or no component implementing `ICameraController` (e.g. `OrbitControls`) exists in the scene, `<needle-engine>` automatically adds OrbitControls with auto-fit. Use `camera-controls="0"` to disable this and manage camera input yourself.
+
 ---
 
 ## Unity → Needle Cheat Sheet

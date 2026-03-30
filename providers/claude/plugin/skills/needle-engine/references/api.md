@@ -140,8 +140,14 @@ this.context.input.removeEventListener("pointerdown", callback);
 // 1. Visual raycast: hits rendered geometry (no collider needed)
 //    Automatically builds MeshBVH (three-mesh-bvh) on web workers on first raycast per object
 //    Use for: UI interaction, picking visible objects, click detection
-this.context.physics.raycast()               // from mouse position by default
-this.context.physics.raycast({ screenPoint, maxDistance, layerMask, ignore })
+this.context.physics.raycast()               // from current mouse/pointer position (default)
+this.context.physics.raycast({ maxDistance, layerMask, ignore })
+
+// IMPORTANT: screenPoint is in normalized device coordinates (-1 to 1), NOT pixels!
+// To raycast from a pixel position, use the options helper:
+const opts = new RaycastOptions();
+opts.screenPointFromOffset(e.clientX, e.clientY);  // converts pixels → NDC
+const hits = this.context.physics.raycast(opts);
 
 // 2. Physics engine raycast: hits Rapier colliders only
 //    Use for: ground detection, line-of-sight, physics-based queries
