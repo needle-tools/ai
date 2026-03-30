@@ -114,21 +114,16 @@ syncInstantiate(myPrefab, { parent: ctx.scene, deleteOnDisconnect: false });
 ```
 
 ### PlayerSync with runtime-created avatars (no GLB)
-`PlayerSync.setupFrom(url)` uses `AssetReference` internally. For runtime-created meshes, register a prefab provider with the same URL key:
+Since Needle Engine 5.0.1, `PlayerSync.setupFrom` accepts an Object3D directly — no GLB URL needed:
 ```ts
-import { PlayerSync, PlayerState, registerPrefabProvider, ObjectUtils, GameObject } from "@needle-tools/engine";
+import { PlayerSync, PlayerState, ObjectUtils } from "@needle-tools/engine";
 
 // Create your avatar template
 const avatarPrefab = ObjectUtils.createPrimitive("Sphere", { color: 0x4488ff });
 avatarPrefab.removeFromParent();
-GameObject.addComponent(avatarPrefab, PlayerState); // required!
 
-// Register it as a prefab provider
-const avatarKey = "runtime://player-avatar";
-registerPrefabProvider(avatarKey, async () => avatarPrefab);
-
-// Set up PlayerSync with this key — works the same as a GLB URL
-const ps = await PlayerSync.setupFrom(avatarKey);
+// Pass the Object3D directly — PlayerState is added automatically
+const ps = await PlayerSync.setupFrom(avatarPrefab, { guid: "player-avatar" });
 ctx.scene.add(ps.gameObject);
 
 // onPlayerSpawned fires for both local and remote players
@@ -136,6 +131,20 @@ ps.onPlayerSpawned?.addEventListener((playerObj) => {
   // playerObj is the spawned avatar Object3D
   // Use PlayerState.isLocalPlayer(playerObj) to check if it's yours
 });
+```
+
+For older versions, use `registerPrefabProvider` with a URL key:
+```ts
+import { PlayerSync, PlayerState, registerPrefabProvider, ObjectUtils, GameObject } from "@needle-tools/engine";
+
+const avatarPrefab = ObjectUtils.createPrimitive("Sphere", { color: 0x4488ff });
+avatarPrefab.removeFromParent();
+GameObject.addComponent(avatarPrefab, PlayerState);
+
+const avatarKey = "runtime://player-avatar";
+registerPrefabProvider(avatarKey, async () => avatarPrefab);
+const ps = await PlayerSync.setupFrom(avatarKey);
+ctx.scene.add(ps.gameObject);
 ```
 
 ### World-building pattern (first player seeds, late joiners receive)
