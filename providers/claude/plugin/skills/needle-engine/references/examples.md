@@ -199,6 +199,53 @@ export class KeyboardMover extends Behaviour {
 
 ---
 
+## First-person camera movement
+
+Three.js cameras look down `-Z`, so `getWorldDirection` returns the negated forward. Use `worldForward` from Needle's Object3D extensions instead — it handles this correctly.
+
+```ts
+import { Behaviour, registerType } from "@needle-tools/engine";
+import { Vector3 } from "three";
+
+@registerType
+export class FirstPersonMove extends Behaviour {
+  speed: number = 5;
+  private _forward = new Vector3();
+  private _right = new Vector3();
+
+  update() {
+    const dt = this.context.time.deltaTime;
+    const input = this.context.input;
+    const cam = this.context.mainCamera;
+    if (!cam) return;
+
+    // Use Needle's worldForward/worldRight — correctly handles Three.js -Z convention
+    this._forward.copy(cam.worldForward);
+    this._forward.y = 0;
+    this._forward.normalize();
+
+    this._right.copy(cam.worldRight);
+    this._right.y = 0;
+    this._right.normalize();
+
+    let moveX = 0, moveZ = 0;
+
+    if (input.getKeyPressed("KeyW")) { moveX += this._forward.x; moveZ += this._forward.z; }
+    if (input.getKeyPressed("KeyS")) { moveX -= this._forward.x; moveZ -= this._forward.z; }
+    if (input.getKeyPressed("KeyA")) { moveX -= this._right.x; moveZ -= this._right.z; }
+    if (input.getKeyPressed("KeyD")) { moveX += this._right.x; moveZ += this._right.z; }
+
+    const len = Math.sqrt(moveX * moveX + moveZ * moveZ);
+    if (len > 0) {
+      cam.position.x += (moveX / len) * this.speed * dt;
+      cam.position.z += (moveZ / len) * this.speed * dt;
+    }
+  }
+}
+```
+
+---
+
 ## Coroutine (timed sequence)
 
 ```ts
