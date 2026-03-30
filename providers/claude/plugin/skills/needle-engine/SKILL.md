@@ -255,7 +255,7 @@ Lives in the web project root. Configures asset paths and build output for the V
 All Needle Engine projects are standard Vite web apps — `npm run build` produces a `dist` folder deployable anywhere.
 
 **Needle Cloud** (recommended):
-**For deploy-on-push (recommended):** Set up a GitHub Action — this is the standard workflow:
+**For deploy-on-push (recommended):** Use the official GitHub Action — do NOT use `npx needle-cloud deploy` in CI (there is no `--non-interactive` flag):
 ```yaml
 # .github/workflows/deploy.yml
 name: Deploy to Needle Cloud
