@@ -391,17 +391,20 @@ obj.contains(otherObj)    // true if otherObj is a descendant
 obj.activeSelf            // get/set active state (same as GameObject.setActive)
 ```
 
-### Scene bounds
+### Bounding box and fitting
 ```ts
-import { getBoundingBox } from "@needle-tools/engine";
+import { getBoundingBox, fitObjectIntoVolume } from "@needle-tools/engine";
 
-// Get the bounding box of the whole scene or specific objects — useful for understanding scene scale
-const box = getBoundingBox([this.context.scene]);
+// Get the bounding box of one or more objects
+const box = getBoundingBox(myObject);                          // single object
+const box = getBoundingBox([obj1, obj2, obj3]);                // multiple objects
+const box = getBoundingBox(myObject, [ignoreThisChild]);       // with objects to ignore
+const box = getBoundingBox(myObject, undefined, camera.layers); // filter by layer
+
 const size = box.getSize(new Vector3());
-console.log("Scene size:", size.x, size.y, size.z);
+const center = box.getCenter(new Vector3());
 
-// Fit an object into a volume
-import { fitObjectIntoVolume } from "@needle-tools/engine";
+// Fit an object into a target volume (scale + position)
 fitObjectIntoVolume(myObject, targetVolume);
 ```
 

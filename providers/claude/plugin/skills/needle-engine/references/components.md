@@ -217,6 +217,21 @@ catcher.mode = 0;  // 0=ShadowMask, 1=Additive, 2=Occluder
 
 ContactShadows = soft ambient-style, no lights needed, better performance. ShadowCatcher = accurate shadows from real lights, higher cost.
 
+### ReflectionProbe
+Provides per-object environment reflections using cubemap or HDR textures. Objects can reference a specific probe as their reflection source, producing more accurate localized reflections than a single global environment map.
+
+```ts
+import { ReflectionProbe } from "@needle-tools/engine";
+
+// Typically set up in Unity/Blender: add ReflectionProbe to an object, assign a cubemap texture,
+// then on Renderer components set the probe as "anchor override"
+
+// Check if a material is using a reflection probe:
+ReflectionProbe.isUsingReflectionProbe(material);
+```
+
+Debug: `?debugreflectionprobe` URL param. Disable all: `?noreflectionprobe`.
+
 ---
 
 ## Post-Processing
