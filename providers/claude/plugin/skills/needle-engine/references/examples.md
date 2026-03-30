@@ -1,0 +1,225 @@
+# Needle Engine — Component Examples
+
+Practical examples of common component patterns. All components extend `Behaviour` from `@needle-tools/engine`.
+
+---
+
+## Rotate an object
+
+```ts
+import { Behaviour, serializable, registerType } from "@needle-tools/engine";
+
+@registerType
+export class Rotate extends Behaviour {
+  @serializable() speed: number = 1;
+
+  update() {
+    this.gameObject.rotation.y += this.speed * this.context.time.deltaTime;
+  }
+}
+```
+
+---
+
+## Respond to clicks
+
+```ts
+import { Behaviour, registerType } from "@needle-tools/engine";
+import type { PointerEventData } from "@needle-tools/engine";
+
+@registerType
+export class ClickHandler extends Behaviour {
+
+  onPointerClick(args: PointerEventData) {
+    console.log("Clicked:", this.gameObject.name);
+    // Scale up briefly on click
+    this.gameObject.scale.multiplyScalar(1.2);
+    setTimeout(() => this.gameObject.scale.multiplyScalar(1 / 1.2), 200);
+  }
+
+  // Other pointer events: onPointerEnter, onPointerExit, onPointerDown, onPointerUp, onPointerMove
+}
+```
+
+Pointer events require an `EventSystem` and a `Raycaster` component in the scene (both are included by default in Unity/Blender exports).
+
+---
+
+## Load a GLB at runtime
+
+```ts
+import { Behaviour, AssetReference, serializable, registerType } from "@needle-tools/engine";
+import { Object3D } from "three";
+
+@registerType
+export class RuntimeLoader extends Behaviour {
+  // Set in Unity/Blender inspector, or assign from code
+  @serializable(AssetReference) model?: AssetReference;
+
+  async start() {
+    // Option 1: From a serialized AssetReference
+    if (this.model) {
+      const instance = await this.model.instantiate({ parent: this.gameObject });
+    }
+
+    // Option 2: From a URL (code-only)
+    const ref = AssetReference.getOrCreate(this.context.domElement.baseURI, "assets/chair.glb");
+    const chair = await ref.instantiate({ parent: this.gameObject });
+  }
+}
+```
+
+---
+
+## Synced multiplayer state
+
+```ts
+import { Behaviour, serializable, registerType, syncField } from "@needle-tools/engine";
+
+@registerType
+export class SyncedCounter extends Behaviour {
+  // Automatically synced to all users in the room
+  @syncField(SyncedCounter.prototype.onCountChanged)
+  count: number = 0;
+
+  private onCountChanged() {
+    console.log("Count is now:", this.count);
+  }
+
+  increment() {
+    this.count += 1; // reassignment triggers sync
+  }
+
+  // For arrays/objects: must reassign to trigger sync
+  @syncField() tags: string[] = [];
+
+  addTag(tag: string) {
+    this.tags.push(tag);
+    this.tags = this.tags; // force sync
+  }
+}
+```
+
+---
+
+## Change materials at runtime
+
+```ts
+import { Behaviour, Renderer, registerType } from "@needle-tools/engine";
+import { MeshStandardMaterial, Color } from "three";
+
+@registerType
+export class ColorChanger extends Behaviour {
+
+  onPointerClick() {
+    // Option 1: Via Renderer component (if available, e.g. from Unity/Blender export)
+    const renderer = this.gameObject.getComponent(Renderer);
+    if (renderer?.sharedMaterial) {
+      (renderer.sharedMaterial as MeshStandardMaterial).color = new Color(Math.random(), Math.random(), Math.random());
+    }
+
+    // Option 2: Direct Three.js access (always works)
+    this.gameObject.traverse(child => {
+      if ((child as any).material) {
+        (child as any).material.color = new Color(Math.random(), Math.random(), Math.random());
+      }
+    });
+  }
+}
+```
+
+---
+
+## Set up a scene from code (no Unity/Blender)
+
+```ts
+import { onStart, ObjectUtils, PrimitiveType, ContactShadows, SyncedRoom } from "@needle-tools/engine";
+import { DirectionalLight, AmbientLight } from "three";
+
+onStart(ctx => {
+  // Lighting
+  const dirLight = new DirectionalLight(0xffffff, 2);
+  dirLight.position.set(5, 10, 5);
+  dirLight.castShadow = true;
+  ctx.scene.add(dirLight);
+  ctx.scene.add(new AmbientLight(0xffffff, 0.5));
+
+  // Ground
+  const ground = ObjectUtils.createPrimitive(PrimitiveType.Cube, {
+    color: 0x888888,
+    scale: { x: 10, y: 0.1, z: 10 }
+  });
+  ctx.scene.add(ground);
+
+  // Some objects
+  for (let i = 0; i < 5; i++) {
+    const sphere = ObjectUtils.createPrimitive(PrimitiveType.Sphere, {
+      color: Math.random() * 0xffffff,
+      position: { x: (i - 2) * 2, y: 1, z: 0 }
+    });
+    ctx.scene.add(sphere);
+  }
+
+  // Shadows
+  ContactShadows.auto(ctx);
+});
+```
+
+---
+
+## Keyboard input
+
+```ts
+import { Behaviour, registerType } from "@needle-tools/engine";
+import { Vector3 } from "three";
+
+@registerType
+export class KeyboardMover extends Behaviour {
+  speed: number = 5;
+
+  update() {
+    const dt = this.context.time.deltaTime;
+    const input = this.context.input;
+
+    if (input.getKeyPressed("KeyW")) this.gameObject.position.z -= this.speed * dt;
+    if (input.getKeyPressed("KeyS")) this.gameObject.position.z += this.speed * dt;
+    if (input.getKeyPressed("KeyA")) this.gameObject.position.x -= this.speed * dt;
+    if (input.getKeyPressed("KeyD")) this.gameObject.position.x += this.speed * dt;
+
+    if (input.getKeyDown("Space")) {
+      console.log("Jump!");
+    }
+  }
+}
+```
+
+---
+
+## Coroutine (timed sequence)
+
+```ts
+import { Behaviour, registerType, WaitForSeconds } from "@needle-tools/engine";
+
+@registerType
+export class TrafficLight extends Behaviour {
+
+  start() {
+    this.startCoroutine(this.cycle());
+  }
+
+  *cycle() {
+    while (true) {
+      this.setColor("green");
+      yield WaitForSeconds(5);
+      this.setColor("yellow");
+      yield WaitForSeconds(2);
+      this.setColor("red");
+      yield WaitForSeconds(5);
+    }
+  }
+
+  private setColor(color: string) {
+    console.log("Light:", color);
+  }
+}
+```

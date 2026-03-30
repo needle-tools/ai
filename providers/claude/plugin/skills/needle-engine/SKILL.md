@@ -7,8 +7,9 @@ description: >
   Vite configs with needlePlugins, TypeScript classes extending Behaviour, or anything
   involving @needle-tools/engine imports. Also trigger when the user mentions
   "needle engine", "needle tools", serializable decorators (@serializable, @syncField,
-  @registerType), the <needle-engine> web component, or 3D scenes loaded from GLB
-  in a web context — even if they don't explicitly name the engine.
+  @registerType), the <needle-engine> web component, 3D web apps using a component
+  system on Three.js, or 3D scenes loaded from GLB in a web context — even if they
+  don't explicitly name the engine.
 compatibility:
   - optional: needle_search MCP tool (search Needle Engine docs, forum posts, and community answers)
 ---
@@ -184,6 +185,22 @@ Boolean attributes can be disabled with `="0"` (e.g. `camera-controls="0"`).
 
 Needle Engine extends `Object3D` with component methods (`getComponent`, `addComponent`, `worldPosition`, `worldQuaternion`, `worldScale`, `worldForward`, `worldRight`, `worldUp`, `contains`, etc.). `this.gameObject` is the `Object3D` a component is attached to. The underlying Three.js API still works directly.
 
+**Materials & Renderer:**
+```ts
+// Option 1: Renderer component (available on objects exported from Unity/Blender, or add manually)
+const renderer = obj.getComponent(Renderer);
+renderer.sharedMaterial;           // first material
+renderer.sharedMaterials[0] = mat; // assign by index
+
+// Option 2: Direct Three.js access (always works)
+const mesh = obj as THREE.Mesh;
+mesh.material = new MeshStandardMaterial({ color: 0xff0000 });
+
+// Per-object overrides without cloning materials:
+const block = MaterialPropertyBlock.get(mesh);
+block.setOverride("color", new Color(1, 0, 0));
+```
+
 ---
 
 ## Creating a New Project
@@ -214,106 +231,72 @@ export default defineConfig(async ({ command }) => ({
 
 ---
 
+## `needle.config.json`
+
+Lives in the web project root. Configures asset paths and build output for the Vite plugin and Unity/Blender integration.
+
+```json
+{
+  "assetsDirectory": "assets",       // where GLB files are exported to (default: "assets")
+  "buildDirectory": "dist",          // build output (default: "dist")
+  "scriptsDirectory": "src/scripts", // where user components live
+  "codegenDirectory": "src/generated" // auto-generated code from export
+}
+```
+
 ## Deployment
 
 - **Needle Cloud** — `npx needle-cloud deploy`
-- **Vercel / Netlify** — standard Vite web app
-- **itch.io** — for games
-- **Any static host / FTP** — `npm run build` (or `npm run build:production`) produces a standard dist folder
-
-From Unity, built-in deployment components (e.g. `DeployToNetlify`) require a PRO license. Needle Cloud deployment works with the free tier.
+- **Vercel / Netlify / any static host** — `npm run build` produces a standard `dist` folder
 
 ---
 
 ## Networking
 
-Needle Engine networking has three layers — use the highest-level one that fits your needs:
+Needle Engine networking has three layers — use the highest-level one that fits:
 
-### Layer 1: `context.connection` (low-level)
-The core API for WebSocket rooms and messaging. Everything else builds on this.
-```ts
-this.context.connection.connect();
-this.context.connection.joinRoom("my-room");
+| Layer | Component | Purpose |
+|---|---|---|
+| Low-level | `context.connection` | WebSocket rooms, send/listen custom messages, guid-based persistence |
+| Convenience | `SyncedRoom` | Auto-join rooms via URL params, reconnect, join/leave UI button |
+| Player management | `PlayerSync` + `PlayerState` | Auto-spawn/destroy player prefabs on join/leave (used for avatars) |
 
-// Send and receive custom messages
-this.context.connection.send("my-event", { data: 42 });
-this.context.connection.beginListen("my-event", (msg) => { console.log(msg.data); });
-this.context.connection.stopListen("my-event", handler);  // clean up in onDisable/onDestroy
-```
+Additional networking components: `SyncedTransform` (sync position/rotation), `@syncField()` (sync custom state), `Voip` (voice chat), `ScreenCapture` (screen/camera sharing).
 
-**Persistent vs ephemeral messages:** If the message data includes a `guid` field, the server stores it as room state — new users joining later will receive it. Without a `guid`, messages are fire-and-forget (only delivered to currently connected users).
-```ts
-// Ephemeral — only current users receive this
-this.context.connection.send("chat", { text: "hello" });
+**Key concept — guid persistence:** Messages with a `guid` field are stored on the server as room state and sent to late joiners. Messages without `guid` are ephemeral (fire-and-forget). This is how `@syncField` and `SyncedTransform` work under the hood.
 
-// Persistent — stored on server, sent to users who join later
-this.context.connection.send("object-color", { guid: this.guid, color: "#ff0000" });
+For full networking API, code examples, and details on each layer, read [references/networking.md](references/networking.md).
 
-// Delete persisted state when no longer needed
-this.context.connection.sendDeleteRemoteState(this.guid);
-```
+---
 
-### Layer 2: `SyncedRoom` (convenience component)
-Wraps `context.connection` with auto-join (via URL params), random room names, auto-reconnect, and a join/leave UI button. Add it to any object in the scene — no code needed for basic room management.
-```ts
-// In Unity/Blender: add SyncedRoom component to a GameObject
-// Or create at runtime:
-import { SyncedRoom } from "@needle-tools/engine";
-myObject.addComponent(SyncedRoom, { roomName: "my-room" });
-// or join a random room:
-myObject.addComponent(SyncedRoom, { joinRandomRoom: true });
-```
+## Built-in Components (Quick Reference)
 
-### Layer 3: `PlayerSync` + `PlayerState` (player management)
-Automatically instantiates a prefab for each player that joins, and destroys it when they leave. The prefab must have a `PlayerState` component. Used for WebXR avatars and multiplayer player objects.
-```ts
-import { PlayerSync, PlayerState } from "@needle-tools/engine";
+These are commonly used components — all imported from `@needle-tools/engine`. See [api.md](references/api.md) for full details.
 
-// In Unity/Blender: add PlayerSync component, assign a player prefab asset
-// The prefab should have PlayerState + any synced components (SyncedTransform, etc.)
+| Component | Purpose |
+|---|---|
+| `Animation` / `Animator` | Play animation clips or state machines |
+| `AudioSource` / `AudioListener` | Spatial audio playback (use `registerWaitForAllowAudio` for autoplay policy) |
+| `VideoPlayer` | Video on 3D objects (mp4, webm, HLS) |
+| `Light` | Directional, Point, Spot lights with shadows |
+| `ContactShadows` | Soft ground shadows without lights |
+| `Volume` | Post-processing (Bloom, SSAO, DoF, Vignette, etc.) |
+| `Camera` | Camera control, field of view, switching active camera |
+| `SceneSwitcher` | Load/unload multiple GLB scenes |
+| `DragControls` | Drag objects in 3D (auto-ownership in multiplayer) |
+| `Duplicatable` | Drag to clone objects |
+| `DropListener` | Drag-and-drop files from desktop into scene |
+| `SplineContainer` / `SplineWalker` | Paths and motion along curves |
+| `ParticleSystem` | Particle effects (best configured via Unity/Blender) |
+| `USDZExporter` | iOS AR Quick Look export |
+| `Gizmos` | Debug drawing (lines, spheres, labels) |
+| `ObjectUtils` | Create primitives and text from code |
+| `BoxCollider` / `SphereCollider` | Physics colliders (`BoxCollider.add(mesh, { rigidbody: true })` for quick setup) |
+| `Rigidbody` | Physics body (forces, impulses, gravity, kinematic mode) |
+| `CharacterController` | Capsule collider + rigidbody for character movement |
+| `EventList` | Unity Events — `@serializable(EventList)` + `.invoke()` |
 
-// Or set up at runtime:
-const ps = await PlayerSync.setupFrom("assets/player-avatar.glb");
-scene.add(ps.gameObject);
-
-// Check if an object belongs to the local player:
-if (PlayerState.isLocalPlayer(someObject)) { /* this is ours */ }
-```
-
-### Syncing object transforms: `SyncedTransform`
-Add `SyncedTransform` to any object that should have its position/rotation synced across clients. Ownership is automatic — when a user interacts (e.g. via `DragControls`), they take ownership and their changes broadcast to others.
-
-### Syncing custom state: `@syncField()`
-```ts
-@syncField() score: number = 0;          // auto-syncs on reassignment
-@syncField(MyClass.prototype.onHealthChange)
-health: number = 100;                     // sync + callback
-
-// Arrays/objects: mutation doesn't trigger sync — must reassign
-this.items.push("sword");
-this.items = this.items;   // ← forces sync
-```
-
-### Voice & video: `Voip` and `ScreenCapture`
-Both require an active networked room (via `SyncedRoom` or manual connection) and HTTPS.
-```ts
-import { Voip, ScreenCapture } from "@needle-tools/engine";
-
-// Voice chat — add to any object, auto-connects when joining a room
-myObject.addComponent(Voip, { autoConnect: true, createMenuButton: true });
-
-// Screen/camera/microphone sharing — click the object or call share()
-const sc = myObject.addComponent(ScreenCapture);
-sc.share({ device: "Screen" });  // or "Camera", "Microphone"
-```
-
-### Typical multiplayer setup
-1. `npm create needle my-app` — scaffold the project
-2. Add `SyncedRoom` to an object (or call `context.connection.joinRoom()`)
-3. For player avatars: add `PlayerSync` with a prefab that has `PlayerState`
-4. For synced objects: add `SyncedTransform` to movable objects
-5. For custom state: use `@syncField()` on component properties
-6. For voice chat: add `Voip` — for screen sharing: add `ScreenCapture`
+Three.js objects work directly alongside these — `ObjectUtils.createPrimitive()` is a convenience, not a requirement. Use `new THREE.Mesh(geometry, material)` anytime.
 
 ---
 
@@ -362,14 +345,18 @@ Use this *before* guessing at API details — the docs are the source of truth.
 
 Read these **only when needed** — don't load them all upfront:
 
-- 📖 [Full API Reference](references/api.md) — read when writing component code (lifecycle, decorators, context API, animation, networking, XR, physics)
-- 🔗 [Framework Integration](references/integration.md) — read when integrating with React, Svelte, Vue, or vanilla JS
-- 🐛 [Troubleshooting](references/troubleshooting.md) — read when debugging errors or unexpected behavior
-- 🧩 [Component Template](templates/my-component.ts) — use as a starting point for new components
+- 📖 [Core API](references/api.md) — lifecycle, decorators, context, gameobject, coroutines, asset loading, renderer/materials, WebXR
+- 🧩 [Components](references/components.md) — animation, audio, video, lighting, post-processing, camera, scene switching, interaction, splines, particles, debug tools, utilities
+- 🌐 [Networking](references/networking.md) — connection API, SyncedRoom, PlayerSync, @syncField, SyncedTransform, Voip, ScreenCapture, guid persistence
+- 🔗 [Framework Integration](references/integration.md) — React, Svelte, Vue, Next.js, SvelteKit patterns
+- 💡 [Component Examples](references/examples.md) — practical examples: click handling, runtime loading, networking, materials, code-only scenes, input, coroutines
+- 🐛 [Troubleshooting](references/troubleshooting.md) — error messages, unexpected behavior, build failures
+- 🧩 [Component Template](templates/my-component.ts) — annotated starting point for new components
 
 ## Important URLs
 
 - Docs: https://engine.needle.tools/docs/
 - Samples: https://engine.needle.tools/samples/
+- Samples index (all official samples with source): https://github.com/needle-tools/needle-engine-samples/blob/main/samples.json
 - GitHub: https://github.com/needle-tools/needle-engine-support
 - npm: https://www.npmjs.com/package/@needle-tools/engine
