@@ -208,12 +208,19 @@ this.items = this.items;   // ← triggers sync
 ---
 
 ## SyncedTransform (sync position/rotation)
-Syncs an object's position, rotation, and scale across clients. Ownership is automatic — when a user interacts (e.g. via DragControls), they take ownership.
+Syncs an object's position, rotation, and scale across clients. Ownership is automatic — when a user interacts (e.g. via DragControls), they take ownership. **Always prefer `SyncedTransform` over manually sending position via custom events** — it handles interpolation, ownership, and late-joiner state automatically.
+
 ```ts
 import { SyncedTransform } from "@needle-tools/engine";
-// Add to any object that should be movable by networked users
+
+// Add to any object that should have its transform synced
 myObject.addComponent(SyncedTransform);
+
+// For player objects: combine with PlayerSync for automatic spawn/despawn
+// The avatar prefab should have SyncedTransform on the root
 ```
+
+Do NOT manually replicate position with `connection.send("player-position", { x, y, z })` — use `SyncedTransform` instead. Custom events are for gameplay data (scores, actions, chat), not for transform replication.
 
 ---
 
