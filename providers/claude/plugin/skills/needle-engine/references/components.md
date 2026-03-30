@@ -353,12 +353,31 @@ For a full first-person controller example, see the [FirstPersonCharacter sample
 For clickable hotspot labels on 3D objects (common in product configurators), see the [Hotspot sample](https://github.com/needle-tools/needle-engine-samples/blob/main/package/Runtime/Hotspots/Scripts/Needle.Hotspots~/Hotspot.ts).
 
 ### needle-menu (built-in UI menu)
-The `<needle-menu>` web component provides a built-in hamburger menu that components like `SyncedRoom` and `Voip` add buttons to. You can add custom buttons from code:
+The `<needle-menu>` web component provides a built-in hamburger menu. Components like `SyncedRoom` and `Voip` add buttons to it automatically. Access via `this.context.menu`.
+
 ```ts
+// Add a button using ButtonInfo object (recommended)
+this.context.menu.appendChild({
+  label: "My Action",
+  icon: "settings",            // Google Material Icons name
+  onClick: () => { /* ... */ },
+  priority: 50,                // higher = further right, always visible
+});
+
+// Or add a raw HTML button
 const button = document.createElement("button");
-button.textContent = "My Action";
+button.textContent = "Click me";
 button.onclick = () => { /* ... */ };
 this.context.menu.appendChild(button);
+
+// Control visibility (hiding requires Needle Engine PRO license in production)
+this.context.menu.setVisible(false);
+
+// Hide the Needle logo (requires license)
+this.context.menu.showNeedleLogo(false);
+
+// Set button priority (controls ordering and which buttons stay visible when space is limited)
+NeedleMenu.setElementPriority(button, 90);
 ```
 
 ---
