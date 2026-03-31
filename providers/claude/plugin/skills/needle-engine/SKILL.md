@@ -61,7 +61,7 @@ Scaffold a project with `npm create needle`, write TypeScript components, and bu
 **Unity or Blender as visual editors:**
 Unity and Blender act as scene editors — they manage a local Vite dev server, export scenes as GLB files into the web project's `assets/` folder (configured via `needle.config.json`), and serialize component data into glTF extensions. At runtime the engine deserializes this data and creates the corresponding TypeScript components with their configured values. The editors also run a **component compiler** (`@needle-tools/needle-component-compiler`) that watches your `src/scripts/` directory and auto-generates C# stubs (for Unity) or JSON files (for Blender, which the addon loads to generate UI) so your custom TypeScript components appear as editable components in the editor's inspector — this is a convenience feature for visual editing, not a requirement.
 
-Everything exported from Unity/Blender is accessible from code afterwards. The editors are tools for visual scene setup; the runtime is pure web/TypeScript.
+Everything exported from Unity/Blender is accessible from code afterwards. The editors are tools for visual scene setup; the runtime is pure web/TypeScript. Note: the Unity/Blender editor controls the engine version in `package.json`. To force a specific version, use the npm alias syntax: `"@needle-tools/engine": "npm:@needle-tools/engine@5.0.1"`.
 
 ### Accessing the engine from code
 
