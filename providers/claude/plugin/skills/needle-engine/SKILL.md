@@ -215,6 +215,8 @@ block.setOverride("color", new Color(1, 0, 0));
 
 ## Creating a New Project
 
+**Always use `npm create needle` to scaffold new projects.** Do NOT manually create package.json, vite.config, or install dependencies — the scaffolder sets up everything correctly including the Vite plugin, tsconfig, and project structure.
+
 ```bash
 npm create needle my-app                  # Vite (default)
 npm create needle my-app -t react         # React + Vite
