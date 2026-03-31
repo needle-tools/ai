@@ -277,6 +277,8 @@ camera.addComponent(SyncedTransform);  // works on cameras too
 // The avatar prefab should have SyncedTransform on the root
 ```
 
+**Timing:** Set up `PlayerSync` (add to scene) **before** `SyncedRoom` connects. If `SyncedRoom` joins a room before `PlayerSync` is enabled, the join events fire before `PlayerSync` is listening — `onPlayerSpawned` will never be called. Either add `PlayerSync` to the scene first, or set up `SyncedRoom` after `PlayerSync` is ready.
+
 Do NOT manually replicate position with `connection.send("player-position", { x, y, z })` — use `SyncedTransform` instead. It uses efficient binary messages (flatbuffers) rather than JSON, making it much faster for high-frequency transform updates. Custom events are for gameplay data (scores, actions, chat), not for transform replication.
 
 ---
