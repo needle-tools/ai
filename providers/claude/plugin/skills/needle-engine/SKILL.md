@@ -381,6 +381,7 @@ Use this *before* guessing at API details — the docs are the source of truth.
 - `AssetReference.getOrCreate()` caches by URL — loading the same URL twice returns the same Object3D. Use `.instantiate()` for multiple independent copies
 - Never use `setInterval` to poll for `context` — use `onStart(ctx => { ... })` or `await element.getContext()` instead. Polling is fragile and may access partially initialized state
 - There is NO `menu` attribute on `<needle-engine>` — to hide the menu, use `context.menu.setVisible(false)` from code (requires PRO license in production)
+- Use `onUpdate` for setting object positions that SyncedTransform should broadcast. Frame order is: component `onBeforeRender` → global `onBeforeRender` hooks → render. If you set position in a global `onBeforeRender` hook, SyncedTransform's component method already ran and read the old position
 - WebXR requires HTTPS — the Needle project templates include a local HTTPS dev server by default. Use `--host` when running the dev server (e.g. `npx vite --host`) to expose it on your local network IP, allowing you to test on phones/headsets via QR code
 
 ---
