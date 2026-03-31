@@ -358,6 +358,25 @@ const voip = myObject.addComponent(Voip, { autoConnect: true, createMenuButton: 
 voip.connect();       // manual start
 voip.disconnect();    // manual stop
 voip.setMuted(true);  // mute mic
+voip.volume = 0.5;    // set incoming audio volume (0–1)
+
+// Access raw audio elements for spatial audio / Web Audio API routing
+const audioEl = voip.getAudioElement(userId);
+if (audioEl) {
+  const audioCtx = new AudioContext();
+  const source = audioCtx.createMediaElementSource(audioEl);
+  const panner = audioCtx.createPanner();
+  source.connect(panner).connect(audioCtx.destination);
+}
+
+// Speaking detection — fires when a user starts/stops speaking
+voip.onSpeakingChanged.addEventListener((evt) => {
+  console.log(evt.userId, evt.isSpeaking, evt.volume); // volume: 0–1
+});
+voip.speakingThreshold = 30;  // amplitude threshold (0–255, default 30)
+
+// Iterate all incoming streams
+for (const [userId, audioEl] of voip.incomingStreams) { /* ... */ }
 
 // Screen/camera/microphone sharing
 const sc = myObject.addComponent(ScreenCapture);
@@ -371,6 +390,8 @@ sc.close();                         // stop sharing
 | `autoConnect` | `true` | Start when joining a room |
 | `runInBackground` | `true` | Stay connected when tab loses focus |
 | `createMenuButton` | `true` | Show mute/unmute button in menu |
+| `volume` | `1` | Incoming audio volume (0–1, applies to all streams) |
+| `speakingThreshold` | `30` | Amplitude threshold for speaking detection (0–255) |
 
 ---
 
