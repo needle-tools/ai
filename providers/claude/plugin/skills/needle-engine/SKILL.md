@@ -424,6 +424,7 @@ Use this *before* guessing at API details — the docs are the source of truth.
 - Never use `setInterval` to poll for `context` — use `onStart(ctx => { ... })` or `await element.getContext()` instead. Polling is fragile and may access partially initialized state
 - There is NO `menu` attribute on `<needle-engine>` — to hide the menu, use `context.menu.setVisible(false)` from code (requires PRO license in production)
 - WebXR requires HTTPS — the Needle project templates include a local HTTPS dev server by default. Use `--host` when running the dev server (e.g. `npx vite --host`) to expose it on your local network IP, allowing you to test on phones/headsets via QR code
+- Setting `obj.visible = false` on a parent disables the entire hierarchy including component lifecycle (like Unity's `setActive`). If you need to hide an object visually but keep components running (e.g. SyncedTransform on a local player avatar), hide the child meshes instead: `obj.traverse(c => { if (c.isMesh) c.visible = false; })`
 
 ---
 
