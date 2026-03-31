@@ -190,6 +190,16 @@ this.context.connection.sendDeleteRemoteState(this.guid);
 this.context.connection.sendDeleteRemoteStateAll();
 ```
 
+Any JSON message with a `guid` can also include these optional fields:
+```ts
+this.context.connection.send("my-state", {
+  guid: this.guid,                // persists on server
+  dontSave: false,                // set true to prevent server storage (ephemeral but with guid for identity)
+  deleteOnDisconnect: true,       // auto-delete when sender disconnects
+  // ...your data
+});
+```
+
 This is how `@syncField()` and `SyncedTransform` work under the hood — they send messages with the component's `guid`, so state persists for late joiners. Understanding this lets you build custom networking that also persists correctly.
 
 ---
