@@ -279,14 +279,32 @@ sync?.requestOwnership();
 myObject.worldPosition = newPos;  // now this gets broadcast
 
 // For interactive objects (e.g. DragControls), ownership is taken automatically on interaction.
-// For player avatars, request ownership once after spawning:
+```
+
+**Critical: add SyncedTransform to the prefab BEFORE networking, not after spawning.**
+`SyncedTransform` uses its component guid to match state across clients. When added via `addComponent` independently on each client, each gets a random guid — they'll never match. Add it to the prefab before `syncInstantiate` or `PlayerSync.setupFrom` so the seeded `InstantiateIdProvider` generates matching deterministic guids on all clients.
+
+```ts
+// CORRECT — add SyncedTransform to the prefab before networking
+const avatarPrefab = ObjectUtils.createPrimitive("Sphere");
+avatarPrefab.guid = "player-avatar";
+avatarPrefab.addComponent(SyncedTransform);  // part of the prefab — guid will be deterministic
+
+const ps = await PlayerSync.setupFrom(avatarPrefab);
+ctx.scene.add(ps.gameObject);
+
 ps.onPlayerSpawned?.addEventListener((avatar) => {
   const state = PlayerState.getFor(avatar);
-  avatar.addComponent(SyncedTransform);
   if (state?.isLocalPlayer) {
+    // Request ownership so our position updates get broadcast
     avatar.getComponent(SyncedTransform)?.requestOwnership();
   }
 });
+
+// WRONG — adding SyncedTransform after spawn gives each client a random component guid
+// ps.onPlayerSpawned?.addEventListener((avatar) => {
+//   avatar.addComponent(SyncedTransform);  // DON'T DO THIS — guids won't match
+// });
 ```
 
 **Timing:** Set up `PlayerSync` (add to scene) **before** `SyncedRoom` connects. If `SyncedRoom` joins a room before `PlayerSync` is enabled, the join events fire before `PlayerSync` is listening — `onPlayerSpawned` will never be called. Either add `PlayerSync` to the scene first, or set up `SyncedRoom` after `PlayerSync` is ready.
