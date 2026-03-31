@@ -268,8 +268,8 @@ myObject.addComponent(SyncedTransform);
 // IMPORTANT: SyncedTransform only sends updates if you have ownership.
 // Request ownership before modifying the transform:
 const sync = myObject.getComponent(SyncedTransform);
-sync?.requestOwnership();
-myObject.worldPosition = newPos;  // now this gets broadcast
+sync?.requestOwnership();           // fire-and-forget (ownership arrives async ~100ms)
+myObject.worldPosition = newPos;    // may not broadcast immediately — ownership is async
 
 // For interactive objects (e.g. DragControls), ownership is taken automatically on interaction.
 ```
