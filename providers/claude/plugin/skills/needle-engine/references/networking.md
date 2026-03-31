@@ -104,6 +104,13 @@ const synced = await myAssetRef.instantiateSynced({
 
 // Networked destroy (removed on all clients)
 syncDestroy(obj, this.context.connection, true);
+
+// Listen for remote syncInstantiate events (get references to objects spawned by other users)
+import { onSyncInstantiate } from "@needle-tools/engine";
+const unsub = onSyncInstantiate((instance, model) => {
+  console.log("Remote object created:", instance.name, model.originalGuid);
+});
+// later: unsub();
 ```
 
 ### Runtime prefabs with `registerPrefabProvider`
