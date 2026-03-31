@@ -411,6 +411,7 @@ Use this *before* guessing at API details — the docs are the source of truth.
 
 ## Common Gotchas
 
+- **`obj.visible = false` disables components!** Setting `visible = false` on a parent disables the entire hierarchy including component lifecycle (SyncedTransform, etc.) — like Unity's `setActive`. To hide visually but keep components running, hide child meshes instead: `obj.traverse(c => { if (c.isMesh) c.visible = false; })`. Or use `Renderer.setVisible(obj, false)` which only affects rendering.
 - `@registerType` is required or the component won't be instantiated from GLB. Unity/Blender export adds this automatically via codegen; hand-written components need it explicitly.
 - GLB assets go in `assets/`, static files (fonts, images, videos) in `public/` (configurable via `needle.config.json`)
 - `useDefineForClassFields: false` in `tsconfig.json` — see the warning in Quick Start above
@@ -424,7 +425,6 @@ Use this *before* guessing at API details — the docs are the source of truth.
 - Never use `setInterval` to poll for `context` — use `onStart(ctx => { ... })` or `await element.getContext()` instead. Polling is fragile and may access partially initialized state
 - There is NO `menu` attribute on `<needle-engine>` — to hide the menu, use `context.menu.setVisible(false)` from code (requires PRO license in production)
 - WebXR requires HTTPS — the Needle project templates include a local HTTPS dev server by default. Use `--host` when running the dev server (e.g. `npx vite --host`) to expose it on your local network IP, allowing you to test on phones/headsets via QR code
-- Setting `obj.visible = false` on a parent disables the entire hierarchy including component lifecycle (like Unity's `setActive`). If you need to hide an object visually but keep components running (e.g. SyncedTransform on a local player avatar), hide the child meshes instead: `obj.traverse(c => { if (c.isMesh) c.visible = false; })`
 
 ---
 
