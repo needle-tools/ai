@@ -271,10 +271,22 @@ import { SyncedTransform } from "@needle-tools/engine";
 
 // Add to ANY Object3D — cameras, player objects, scene objects, anything
 myObject.addComponent(SyncedTransform);
-camera.addComponent(SyncedTransform);  // works on cameras too
 
-// For player objects: combine with PlayerSync for automatic spawn/despawn
-// The avatar prefab should have SyncedTransform on the root
+// IMPORTANT: SyncedTransform only sends updates if you have ownership.
+// Request ownership before modifying the transform:
+const sync = myObject.getComponent(SyncedTransform);
+sync?.requestOwnership();
+myObject.worldPosition = newPos;  // now this gets broadcast
+
+// For interactive objects (e.g. DragControls), ownership is taken automatically on interaction.
+// For player avatars, request ownership once after spawning:
+ps.onPlayerSpawned?.addEventListener((avatar) => {
+  const state = PlayerState.getFor(avatar);
+  avatar.addComponent(SyncedTransform);
+  if (state?.isLocalPlayer) {
+    avatar.getComponent(SyncedTransform)?.requestOwnership();
+  }
+});
 ```
 
 **Timing:** Set up `PlayerSync` (add to scene) **before** `SyncedRoom` connects. If `SyncedRoom` joins a room before `PlayerSync` is enabled, the join events fire before `PlayerSync` is listening — `onPlayerSpawned` will never be called. Either add `PlayerSync` to the scene first, or set up `SyncedRoom` after `PlayerSync` is ready.
