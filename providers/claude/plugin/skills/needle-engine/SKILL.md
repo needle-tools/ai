@@ -236,7 +236,7 @@ import { needlePlugins } from "@needle-tools/engine/vite";
 
 export default defineConfig(async ({ command }) => ({
   plugins: [
-    ...(await needlePlugins(command, {}, {})),
+    ...(await needlePlugins(command)),
   ],
 }));
 ```
