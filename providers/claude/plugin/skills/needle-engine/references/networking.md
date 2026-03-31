@@ -11,6 +11,8 @@
 
 ---
 
+> Some APIs documented here (e.g. Voip volume/speaking detection, PlayerSync.setupFrom with Object3D) may require the latest pre-release version of `@needle-tools/engine`.
+
 Needle Engine networking is layered. The lowest level is `this.context.connection` (WebSocket rooms + messages). Higher-level components build on it.
 
 ## Core: `this.context.connection`
