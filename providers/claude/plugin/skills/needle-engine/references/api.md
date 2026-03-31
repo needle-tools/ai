@@ -150,9 +150,12 @@ this.context.physics.raycast({ maxDistance: 100, layerMask: 0xff, ignore: [this.
 
 // From a specific pixel position (e.g. in a raw pointerdown handler):
 // IMPORTANT: screenPoint is in normalized device coordinates (-1 to 1), NOT pixels!
-const opts = new RaycastOptions();
-opts.screenPointFromOffset(e.clientX, e.clientY);  // converts pixels → NDC
-const hits = this.context.physics.raycast(opts);
+const hits = this.context.physics.raycast({
+  screenPoint: new Vector2(
+    (e.clientX / window.innerWidth) * 2 - 1,
+    -(e.clientY / window.innerHeight) * 2 + 1
+  ),
+});
 
 // DO NOT pass raw pixel coords as screenPoint — this is wrong:
 // ctx.physics.raycast({ screenPoint: new Vector2(e.clientX, e.clientY) }) // WRONG!
@@ -288,7 +291,7 @@ obj.traverse(n => { /* ... */ });
 
 > **`loadAsset()` returns a model wrapper** (with `.scene`, `.animations`, etc.) — not an Object3D directly. The wrapper type is universal regardless of format (GLB, FBX, OBJ, USDZ). Use `model.scene` to get the root Object3D.
 
-> **Caching:** `AssetReference.getOrCreateFromUrl()` caches by URL and returns the **same Object3D** on repeated calls. Adding a cached object to the scene again just moves it. Use `.instantiate()` or call `loadAsset()` with `{ context }` for independent copies.
+> **Caching:** `AssetReference.getOrCreate()` caches by URL and returns the **same Object3D** on repeated calls. Adding a cached object to the scene again just moves it. Use `.instantiate()` for independent copies.
 
 > **Note:** Needle Engine automatically handles KTX, Draco, and meshopt decompression — no loader setup needed.
 

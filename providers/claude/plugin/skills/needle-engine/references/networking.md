@@ -25,17 +25,12 @@ this.context.connection.isInRoom         // boolean
 this.context.connection.connectionId     // this client's ID
 this.context.connection.usersInRoom()    // all user IDs in current room
 
-// Send and receive custom messages — use generics for type safety
-type MyEvent = { score: number; name: string };
-this.context.connection.send<string>("my-event", { score: 10, name: "Alice" } as any);
-this.context.connection.beginListen<"my-event">("my-event", (msg: MyEvent) => {
-  console.log(msg.score, msg.name);  // fully typed
+// Send and receive custom messages
+this.context.connection.send("my-event", { score: 10, name: "Alice" });
+this.context.connection.beginListen("my-event", (msg: { score: number; name: string }) => {
+  console.log(msg.score, msg.name);
 });
 this.context.connection.stopListen("my-event", handler);  // always clean up in onDisable/onDestroy
-
-// Simple untyped usage also works:
-this.context.connection.send("my-event", { data: 42 });
-this.context.connection.beginListen("my-event", (msg) => { console.log(msg.data); });
 
 // Room lifecycle events (import { RoomEvents } from "@needle-tools/engine")
 this.context.connection.beginListen(RoomEvents.JoinedRoom, () => { ... });
@@ -54,18 +49,16 @@ if (this.context.connection.isInRoom) {
 }
 ```
 
-**Important:** `send()` broadcasts to all users in the room **except yourself** — you won't receive your own messages. Custom messages also do NOT automatically include a sender ID. If you need to know who sent a message, include `connectionId` yourself:
+**Important:** `send()` broadcasts to all users in the room **except yourself** — you won't receive your own messages. Custom messages do NOT automatically include a sender ID. If you need to identify who sent a message (e.g. to map data to a specific player), include `connectionId` yourself:
 ```ts
-// Sending — include your own ID
-this.context.connection.send("player-position", {
+this.context.connection.send("player-score", {
   senderId: this.context.connection.connectionId,
-  x: pos.x, y: pos.y, z: pos.z,
+  score: 42,
 });
 
-// Receiving — filter out your own messages
-this.context.connection.beginListen("player-position", (msg) => {
-  if (msg.senderId === this.context.connection.connectionId) return; // ignore self
-  // handle remote player position...
+this.context.connection.beginListen("player-score", (msg) => {
+  // msg.senderId tells you which player sent this
+  playerScores.set(msg.senderId, msg.score);
 });
 ```
 

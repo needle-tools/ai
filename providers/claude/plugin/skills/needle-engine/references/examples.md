@@ -201,7 +201,7 @@ export class KeyboardMover extends Behaviour {
 
 ## First-person camera movement
 
-Three.js cameras look down `-Z`, so `getWorldDirection` returns the negated forward. Use `worldForward` from Needle's Object3D extensions instead — it handles this correctly.
+Three.js cameras look down `-Z`, so `getWorldDirection` returns the negated forward. Use `worldForward` from Needle's Object3D extensions instead — it handles this correctly. Note: `worldForward` works on `ctx.mainCamera` because Needle patches all Object3D instances, including Three.js cameras.
 
 ```ts
 import { Behaviour, registerType } from "@needle-tools/engine";
