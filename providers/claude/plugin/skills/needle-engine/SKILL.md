@@ -176,7 +176,7 @@ HTML attributes on `<needle-engine>` **override** the equivalent settings from t
 
 | Three.js | Needle Engine |
 |---|---|
-| `new Mesh(geo, mat)` | Works directly (it's Three.js underneath), or use `ObjectUtils.createPrimitive()` for quick primitives. For Unity/Blender scenes, access existing meshes via `Renderer.sharedMesh` |
+| `new Mesh(geo, mat)` | Works directly (it's Three.js underneath), or use `ObjectUtils.createPrimitive()` for quick primitives. For Unity/Blender scenes, access existing meshes via `getComponent(Renderer).sharedMesh` |
 | `scene.add(obj)` | `this.gameObject.add(obj)` or `instantiate(prefab)` |
 | `scene.remove(obj)` | `obj.removeFromParent()` (re-parent) or `destroy(obj)` (permanent) |
 | `obj.position` | `obj.position` (local) / `obj.worldPosition` (world — Needle extension) |
