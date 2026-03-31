@@ -234,6 +234,8 @@ npm create needle my-app -t react-three-fiber  # R3F
 import { defineConfig } from "vite";
 import { needlePlugins } from "@needle-tools/engine/vite";
 
+// For code-only projects: omit the config args (or pass undefined)
+// For Unity/Blender projects: the scaffolder sets this up automatically
 export default defineConfig(async ({ command }) => ({
   plugins: [
     ...(await needlePlugins(command)),
