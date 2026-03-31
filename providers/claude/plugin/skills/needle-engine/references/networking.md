@@ -25,10 +25,17 @@ this.context.connection.isInRoom         // boolean
 this.context.connection.connectionId     // this client's ID
 this.context.connection.usersInRoom()    // all user IDs in current room
 
-// Send and receive custom messages
+// Send and receive custom messages — use generics for type safety
+type MyEvent = { score: number; name: string };
+this.context.connection.send<string>("my-event", { score: 10, name: "Alice" } as any);
+this.context.connection.beginListen<"my-event">("my-event", (msg: MyEvent) => {
+  console.log(msg.score, msg.name);  // fully typed
+});
+this.context.connection.stopListen("my-event", handler);  // always clean up in onDisable/onDestroy
+
+// Simple untyped usage also works:
 this.context.connection.send("my-event", { data: 42 });
 this.context.connection.beginListen("my-event", (msg) => { console.log(msg.data); });
-this.context.connection.stopListen("my-event", handler);  // always clean up in onDisable/onDestroy
 
 // Room lifecycle events (import { RoomEvents } from "@needle-tools/engine")
 this.context.connection.beginListen(RoomEvents.JoinedRoom, () => { ... });
