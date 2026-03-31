@@ -286,18 +286,21 @@ avatarPrefab.addComponent(SyncedTransform);  // part of the prefab — guid will
 const ps = await PlayerSync.setupFrom(avatarPrefab);
 ctx.scene.add(ps.gameObject);
 
-ps.onPlayerSpawned?.addEventListener((avatar) => {
-  const state = PlayerState.getFor(avatar);
-  if (state?.isLocalPlayer) {
-    // Request ownership so our position updates get broadcast
+// onPlayerSpawned only fires for the LOCAL player's avatar.
+// To detect ALL players (local + remote), use PlayerState.OwnerChanged:
+PlayerState.addEventListener(PlayerStateEvent.OwnerChanged, (evt) => {
+  const { playerState } = evt.detail;
+  const avatar = playerState.gameObject;
+  if (playerState.isLocalPlayer) {
+    avatar.visible = false; // hide own avatar (we see through the camera)
     avatar.getComponent(SyncedTransform)?.requestOwnership();
+  } else {
+    // Remote player — color/customize their avatar
   }
 });
 
 // WRONG — adding SyncedTransform after spawn gives each client a random component guid
-// ps.onPlayerSpawned?.addEventListener((avatar) => {
-//   avatar.addComponent(SyncedTransform);  // DON'T DO THIS — guids won't match
-// });
+// avatar.addComponent(SyncedTransform);  // DON'T DO THIS — guids won't match
 ```
 
 **Timing:** Set up `PlayerSync` (add to scene) **before** `SyncedRoom` connects. If `SyncedRoom` joins a room before `PlayerSync` is enabled, the join events fire before `PlayerSync` is listening — `onPlayerSpawned` will never be called. Either add `PlayerSync` to the scene first, or set up `SyncedRoom` after `PlayerSync` is ready.
