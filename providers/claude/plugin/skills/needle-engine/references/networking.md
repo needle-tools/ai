@@ -107,18 +107,21 @@ const unsub = onSyncInstantiate((instance, model) => {
 ```
 
 ### Runtime prefabs with `registerPrefabProvider`
-When creating prefabs at runtime (not loaded from GLB), register them so `syncInstantiate` can recreate them on other clients:
+For runtime-created prefabs (not loaded from GLB), **every client** must register the prefab in their setup code — not just the client that calls `syncInstantiate`. This is because late joiners receive state replay and need to resolve the prefab by guid locally.
+
 ```ts
-import { registerPrefabProvider, ObjectUtils } from "@needle-tools/engine";
+import { registerPrefabProvider, ObjectUtils, syncInstantiate } from "@needle-tools/engine";
 
-const myPrefab = ObjectUtils.createPrimitive("Cube", { color: 0xff8c00 });
-myPrefab.guid = "my-runtime-cube";
-myPrefab.removeFromParent(); // don't add to scene — it's a template
-registerPrefabProvider("my-runtime-cube", async () => myPrefab);
+// ALL clients run this setup code:
+const cookiePrefab = ObjectUtils.createPrimitive("Cube", { color: 0xff8c00 });
+cookiePrefab.guid = "cookie-prefab";
+registerPrefabProvider("cookie-prefab", async () => cookiePrefab);
 
-// Now syncInstantiate will work across clients
-syncInstantiate(myPrefab, { parent: ctx.scene, deleteOnDisconnect: false });
+// Only the first player calls syncInstantiate — late joiners get state replay
+syncInstantiate(cookiePrefab, { parent: ctx.scene, deleteOnDisconnect: false });
 ```
+
+Note: `syncInstantiate` auto-registers the prefab on the calling client, but **remote clients and late joiners** still need the explicit `registerPrefabProvider` call in their setup code.
 
 ### PlayerSync with runtime-created avatars (no GLB)
 Since Needle Engine 5.0.1, `PlayerSync.setupFrom` accepts an Object3D directly — no GLB URL needed:
