@@ -1,16 +1,23 @@
 # Needle Engine — Physics Reference
 
-Needle Engine uses Rapier (WASM) for physics. **Rapier loads asynchronously** — the WASM binary is fetched and initialized lazily on first use. This means Rigidbody physics bodies are not available immediately after `start()`. Methods like `applyImpulse`, `applyForce`, `setVelocity`, `getVelocity` silently do nothing until the WASM is ready and the physics body is created. On localhost this is near-instant, but **on deployed servers it can take multiple frames**.
+Needle Engine uses Rapier (WASM) for physics. Rapier is a lazy-loaded async module — it is NOT automatically imported when you import `Rigidbody`, `BoxCollider`, or other physics component classes.
 
-If you need to ensure physics is ready (e.g. to apply a one-shot impulse at startup), await the module:
+**In code-only projects (no GLB with colliders), you MUST explicitly load Rapier before creating any physics objects:**
 ```ts
 import { NEEDLE_ENGINE_MODULES } from "@needle-tools/engine";
-await NEEDLE_ENGINE_MODULES.RAPIER_PHYSICS.ready();  // wait without triggering load
-// or
-await NEEDLE_ENGINE_MODULES.RAPIER_PHYSICS.load();   // trigger load + wait
+
+onStart(async ctx => {
+    // Load Rapier WASM — without this, physics silently does nothing in code-only projects
+    await NEEDLE_ENGINE_MODULES.RAPIER_PHYSICS.load();
+
+    // NOW create rigidbodies, colliders, apply forces, etc.
+    const rb = myObject.addComponent(Rigidbody);
+    myObject.addComponent(SphereCollider);
+    rb.applyImpulse(new Vector3(0, 5, 0));
+});
 ```
 
-For continuous input in `update()` (WASD movement), no await is needed — forces simply have no effect until Rapier is ready, then kick in automatically.
+In GLB-based projects (Unity/Blender export), Rapier loads automatically when the deserializer creates collider components. But in code-only projects, nothing triggers the load — `addComponent(Rigidbody)` and `addComponent(SphereCollider)` just silently fail to create physics bodies, `applyImpulse`/`applyForce` do nothing, and there are no errors. This is the #1 cause of "physics don't work on deploy" bugs.
 
 ## Colliders
 
