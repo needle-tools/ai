@@ -21,18 +21,32 @@
 Needle Engine uses Rapier (WASM) for physics. Rapier is loaded lazily on first use.
 
 ### Colliders
+
+Pick the shape that best fits the object — don't default to BoxCollider for everything.
+
 ```ts
-import { BoxCollider, SphereCollider, MeshCollider } from "@needle-tools/engine";
+import { BoxCollider, SphereCollider, CapsuleCollider, MeshCollider } from "@needle-tools/engine";
 
-// Add a box collider from code (auto-fits to mesh bounds, optionally adds rigidbody):
+// Quick setup — auto-fits to mesh bounds, optionally adds rigidbody:
 BoxCollider.add(myMesh, { rigidbody: true });
+SphereCollider.add(myMesh, { rigidbody: true });
 
-// Or add manually:
-myObject.addComponent(BoxCollider);
-myObject.addComponent(SphereCollider);
+// Or add manually and configure:
+const box = myObject.addComponent(BoxCollider);
+// box.size, box.center
+
+const sphere = myObject.addComponent(SphereCollider);
+// sphere.radius (default: 0.5), sphere.center
+
+const capsule = myObject.addComponent(CapsuleCollider);
+// capsule.radius (default: 0.5), capsule.height (default: 2) — use for characters, poles, bottles
+
+const mesh = myObject.addComponent(MeshCollider);
+// mesh.convex = true for dynamic objects (required with Rigidbody)
+// mesh.convex = false for static concave geometry (walls, terrain)
 ```
 
-Collider types: `BoxCollider`, `SphereCollider`, `CapsuleCollider`, `MeshCollider`. Set `isTrigger = true` for trigger volumes.
+Use `SphereCollider` for balls, `CapsuleCollider` for characters/cylinders, `MeshCollider` for complex static geometry. Set `isTrigger = true` for trigger volumes.
 
 ### Rigidbody
 ```ts
@@ -365,7 +379,6 @@ bloom.intensity.value = 5;  // takes effect next frame, no rebuild needed
 
 // Enable/disable individual effects
 bloom.enabled = false;       // removes from pipeline
-bloom.active = false;        // also removes from pipeline
 
 // Enable/disable entire Volume
 volume.enabled = false;      // removes all its effects from core stack
