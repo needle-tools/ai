@@ -18,7 +18,19 @@
 
 ## Physics
 
-Needle Engine uses Rapier (WASM) for physics. Rapier is loaded lazily on first use.
+Needle Engine uses Rapier (WASM) for physics. **Rapier loads asynchronously** — the WASM binary is fetched and initialized lazily on first use. This means Rigidbody physics bodies are not available immediately after `start()`. Methods like `applyImpulse`, `applyForce`, `setVelocity`, `getVelocity` silently do nothing until the WASM is ready and the physics body is created. On localhost this is near-instant, but **on deployed servers it can take multiple frames**.
+
+If you need to ensure physics is ready (e.g. to apply a one-shot impulse at startup), await the module:
+```ts
+import { NEEDLE_ENGINE_MODULES } from "@needle-tools/engine";
+await NEEDLE_ENGINE_MODULES.RAPIER_PHYSICS.ready();  // wait without triggering load
+// or
+await NEEDLE_ENGINE_MODULES.RAPIER_PHYSICS.load();   // trigger load + wait
+```
+
+For continuous input in `update()` (WASD movement), no await is needed — forces simply have no effect until Rapier is ready, then kick in automatically.
+
+Postprocessing uses the same async module pattern via `NEEDLE_ENGINE_MODULES.POSTPROCESSING`. See [Async Modules](#async-modules-needle_engine_modules) in the API reference.
 
 ### Colliders
 
