@@ -237,6 +237,7 @@ import { needlePlugins } from "@needle-tools/engine/vite";
 // For code-only projects: omit the config args (or pass undefined)
 // For Unity/Blender projects: the scaffolder sets this up automatically
 export default defineConfig(async ({ command }) => ({
+  base: './',  // REQUIRED — without this, Needle Cloud deploys break (assets use absolute /paths/)
   plugins: [
     ...(await needlePlugins(command)),
   ],
@@ -287,6 +288,8 @@ jobs:
 ```
 
 The user needs a `NEEDLE_CLOUD_TOKEN` secret in their repo settings (get from https://cloud.needle.tools/team). For manual CLI deployment, always pass `--name`: `npx needle-cloud deploy dist --name my-project`. See [references/deployment.md](references/deployment.md) for more options.
+
+**Important:** `vite.config.ts` must have `base: './'` or Needle Cloud deploys will break — assets get absolute `/assets/...` paths that don't resolve when the app is served from a subdirectory.
 
 ---
 
