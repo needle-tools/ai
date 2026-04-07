@@ -162,6 +162,50 @@ Needle Engine projects require **Node.js** to be installed. If `npm` commands fa
 
 ---
 
+## Reading Runtime Logs (Dev Server)
+
+During development, Needle Engine's vite plugin automatically captures browser console output and writes it to disk. **When a user is playtesting and reports an issue, read these log files instead of asking them to copy-paste console output.**
+
+**Log location:** `node_modules/.needle/logs/`
+
+**File naming:** `<TIMESTAMP>.<PROCESS>.needle.log`
+- `server` — vite dev server output
+- `client` — browser console logs (log, warn, error, debug) forwarded via WebSocket
+
+```bash
+# Read the most recent client log
+ls -t node_modules/.needle/logs/*.client.needle.log | head -1 | xargs cat
+```
+
+The client log includes:
+- All `console.log/warn/error` calls from the browser
+- Device info (resolution, GPU, memory) logged on page load
+- Unhandled errors and promise rejections
+- Page lifecycle events (visibility, focus, navigation)
+
+Logs are auto-rotated (last 30 files kept). Logging is disabled when browser DevTools are open (use `?needle-debug` URL param to force it).
+
+---
+
+## Build Info (`needle.buildinfo.json`)
+
+After `npm run build`, a `needle.buildinfo.json` file is written to the `dist/` folder. It's also included in Needle Cloud deployments. Read it to understand the build output:
+
+```json
+{
+  "time": "2026-04-07T12:34:56.000Z",
+  "totalsize": 5242880,
+  "files": [
+    { "path": "assets/scene.glb", "hash": "abc123...", "size": 3145728 },
+    { "path": "index.html", "hash": "def456...", "size": 1024 }
+  ]
+}
+```
+
+Useful for: checking total build size, verifying assets are included, comparing builds (via file hashes), debugging missing files in deployments.
+
+---
+
 ## Getting More Help
 
 - Search docs: `needle_search("your question here")`

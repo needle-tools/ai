@@ -426,7 +426,7 @@ Read these **only when needed** — don't load them all upfront:
 - 🚀 [Deployment](references/deployment.md) — Needle Cloud (GitHub Actions, CLI), Vercel, Netlify, other platforms
 - 🔗 [Framework Integration](references/integration.md) — React, Svelte, Vue, Next.js, SvelteKit patterns
 - 💡 [Component Examples](references/examples.md) — practical examples: click handling, runtime loading, networking, materials, code-only scenes, input, coroutines
-- 🐛 [Troubleshooting](references/troubleshooting.md) — error messages, unexpected behavior, build failures
+- 🐛 [Troubleshooting](references/troubleshooting.md) — error messages, unexpected behavior, build failures, **runtime logs at `node_modules/.needle/logs/`**, build info
 - 🧩 [Component Template](templates/my-component.ts) — annotated starting point for new components
 
 ## Important URLs
