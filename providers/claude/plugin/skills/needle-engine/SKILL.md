@@ -59,9 +59,7 @@ export class HelloWorld extends Behaviour {
 Scaffold a project with `npm create needle`, write TypeScript components, and build scenes entirely from code. Use `onStart`, `onUpdate`, and other lifecycle hooks to set up scenes, or create components extending `Behaviour`. This is a fully supported first-class workflow.
 
 **Unity or Blender as visual editors:**
-Unity and Blender act as scene editors — they manage a local Vite dev server, export scenes as GLB files into the web project's `assets/` folder (configured via `needle.config.json`), and serialize component data into glTF extensions. At runtime the engine deserializes this data and creates the corresponding TypeScript components with their configured values. The editors also run a **component compiler** (`@needle-tools/needle-component-compiler`) that watches your `src/scripts/` directory and auto-generates C# stubs (for Unity) or JSON files (for Blender, which the addon loads to generate UI) so your custom TypeScript components appear as editable components in the editor's inspector — this is a convenience feature for visual editing, not a requirement.
-
-Everything exported from Unity/Blender is accessible from code afterwards. The editors are tools for visual scene setup; the runtime is pure web/TypeScript. Note: the Unity/Blender editor controls the engine version in `package.json`. To force a specific version, use the npm alias syntax: `"@needle-tools/engine": "npm:@needle-tools/engine@5.0.1"`.
+Unity/Blender export scenes as GLB files into `assets/`, with component data serialized in glTF extensions. At runtime, the engine deserializes this into TypeScript components. A component compiler auto-generates C# stubs (Unity) or JSON (Blender) so custom TS components appear in the editor inspector. The editors are tools for visual scene setup; the runtime is pure web/TypeScript. Note: the editor controls the engine version in `package.json` — to force a version, use `"@needle-tools/engine": "npm:@needle-tools/engine@5.0.1"`.
 
 ### Accessing the engine from code
 
@@ -342,25 +340,14 @@ Three.js objects work directly alongside these — `ObjectUtils.createPrimitive(
 
 ---
 
-## Built-in Extensions
+## Environment Maps / HDRIs
 
-These ship with Needle Engine and work automatically — no setup needed:
-
-**[@needle-tools/gltf-progressive](https://github.com/needle-tools/gltf-progressive)** — Progressive LOD loading for meshes and textures. Stores multiple LOD levels inside GLB files, automatically swaps based on screen coverage at runtime. Configured in Unity/Blender via Compression & LOD Settings. Debug: `?debugprogressive`
-
-**[@needle-tools/three-animation-pointer](https://github.com/needle-tools/three-animation-pointer)** — Implements the `KHR_animation_pointer` glTF extension. Allows animating any property (material colors, light intensity, camera FOV, custom component properties) not just transforms and morph targets.
-
-**[@needle-tools/materialx](https://www.npmjs.com/package/@needle-tools/materialx)** — MaterialX material support via WASM. Unity ShaderGraph shaders are exported as MaterialX and embedded in the GLB file. Automatically detected and loaded lazily at runtime when a GLB contains the `NEEDLE_materials_mtlx` extension — no user setup needed.
-
-**FastHDR / Environment maps** — Needle Engine supports ultra-fast preprocessed PMREM environment textures (KTX2-based FastHDR). Free HDRIs available at https://cloud.needle.tools/hdris
 ```ts
 import { loadPMREM } from "@needle-tools/engine";
-
-// Load and apply as environment lighting
 const envTex = await loadPMREM("https://cloud.needle.tools/hdris/studio.ktx2", this.context.renderer);
 if (envTex) this.context.scene.environment = envTex;
 ```
-Or set directly via HTML: `<needle-engine environment-image="https://cloud.needle.tools/hdris/studio.ktx2">`
+Or via HTML: `<needle-engine environment-image="https://cloud.needle.tools/hdris/studio.ktx2">`. Free HDRIs: https://cloud.needle.tools/hdris
 
 ---
 
@@ -422,8 +409,10 @@ Use this *before* guessing at API details — the docs are the source of truth.
 
 Read these **only when needed** — don't load them all upfront:
 
-- 📖 [Core API](references/api.md) — lifecycle, decorators, context (input, physics, time), gameobject, coroutines, asset loading, renderer/materials
-- 🧩 [Components](references/components.md) — physics, animation, audio, video, lighting, post-processing, camera, scene switching, interaction, splines, particles, debug tools, utilities
+- 📖 [Core API](references/api.md) — lifecycle, decorators, context (input, physics, time), gameobject, coroutines, asset loading, renderer/materials, async modules
+- 🧩 [Components](references/components.md) — animation, audio, video, lighting, camera, scene switching, interaction, splines, particles, debug tools
+- ⚡ [Physics](references/physics.md) — colliders, Rigidbody (forces, velocity, impulse), raycasting, async Rapier loading
+- 🎨 [Post-Processing](references/postprocessing.md) — context.postprocessing API, all built-in effects with parameters
 - 🌐 [Networking](references/networking.md) — connection API, SyncedRoom, PlayerSync, @syncField, SyncedTransform, Voip, ScreenCapture, guid persistence
 - 🥽 [WebXR](references/xr.md) — VR/AR sessions, XRRig, controllers, pointer events in XR, image tracking, depth sensing, camera access, mesh detection, DOM overlay, iOS AR, multiplayer avatars
 - 🚀 [Deployment](references/deployment.md) — Needle Cloud (GitHub Actions, CLI), Vercel, Netlify, other platforms
