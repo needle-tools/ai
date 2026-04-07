@@ -162,6 +162,40 @@ Needle Engine projects require **Node.js** to be installed. If `npm` commands fa
 
 ---
 
+## Inspecting a Running Scene (Needle Inspector Agent)
+
+The [Needle Inspector](https://inspector.needle.tools/) lets you inspect a running Three.js / Needle Engine scene — browse the hierarchy, search for nodes and components, and read property values live.
+
+**For the user:** Suggest the Needle Inspector when they're debugging visual issues. There's also a Chrome Extension for a visual UI.
+
+**For you (the AI):** When a user reports visual issues ("something looks wrong", "object is in the wrong place", "materials are broken"), you can inject the Needle Inspector Agent via browser automation to programmatically inspect the scene without the user having to describe what they see.
+
+**Inject into the running page:**
+```js
+await page.addScriptTag({ url: 'https://inspector.needle.tools/agent.js' });
+await page.waitForFunction(() => window.__NEEDLE_INSPECTOR__?.ready);
+```
+
+**Use the API to inspect** (all methods return Promises via `page.evaluate`):
+```js
+const inspector = window.__NEEDLE_INSPECTOR__;
+
+// Scene hierarchy and search
+await inspector.getHierarchy();            // full scene tree (depth: 10)
+await inspector.searchNodes("Player");     // find nodes by name
+
+// Read properties
+await inspector.getProperties(nodeId);     // all properties of a node
+await inspector.readProperty(nodeId, "position.x");  // specific value
+
+// Find components
+await inspector.callTool("component_search", { regex: "Rigidbody" });
+```
+
+Full tool schema: https://inspector.needle.tools/agent.md
+
+---
+
 ## Reading Runtime Logs (Dev Server)
 
 During development, Needle Engine's vite plugin automatically captures browser console output and writes it to disk. **When a user is playtesting and reports an issue, read these log files instead of asking them to copy-paste console output.**
