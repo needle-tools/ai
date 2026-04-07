@@ -43,13 +43,40 @@ rb.useGravity = true;
 rb.mass = 2.0;
 rb.isKinematic = false;        // true = not affected by forces
 
-// Apply forces
-rb.applyForce(new Vector3(0, 10, 0));     // continuous force
-rb.applyImpulse(new Vector3(5, 0, 0));    // instant velocity change
-rb.teleport({ x: 0, y: 5, z: 0 });       // move without physics
+// Forces and impulses
+rb.applyForce(new Vector3(0, 10, 0));     // continuous force (acceleration, applied over time)
+rb.setForce(new Vector3(0, 10, 0));       // reset + apply new force in one call
+rb.applyImpulse(new Vector3(5, 0, 0));    // instant velocity change (use for jumps, hits, explosions)
+
+// Velocity — read and write directly (ALWAYS use these instead of accessing internals)
+const vel = rb.getVelocity();              // current linear velocity (Vector3)
+rb.setVelocity(new Vector3(0, 0, 0));     // set linear velocity directly
+rb.setVelocity(0, 0, 0);                  // also accepts x, y, z args
+const angVel = rb.getAngularVelocity();    // current angular velocity
+rb.setAngularVelocity(new Vector3(0, 0, 0));
+rb.smoothedVelocity;                       // averaged over ~10 frames (useful for UI/predictions)
+
+// Stopping / resetting motion
+rb.resetVelocities();                      // zero out both linear and angular velocity
+rb.resetForces();                          // cancel all applied forces
+rb.resetTorques();                         // cancel all applied torques
+rb.resetForcesAndTorques();                // cancel both forces and torques
+
+// Positioning
+rb.teleport({ x: 0, y: 5, z: 0 });       // move without physics (resets velocities/forces)
+
+// Sleep state
+rb.wakeUp();                               // wake a sleeping body
+rb.isSleeping;                             // check if body is asleep
 ```
 
-Key properties: `mass`, `autoMass`, `useGravity`, `drag`, `angularDrag`, `isKinematic`, `freezePositionX/Y/Z`, `freezeRotationX/Y/Z`.
+**Force vs Impulse:** `applyForce()` is for continuous effects (thrusters, wind) — call every frame. `applyImpulse()` is for instant one-shot velocity changes (jumps, hits, button press) — call once.
+
+**Never access `rb._body` or internal Rapier handles directly.** All velocity and force control is available through the public methods above. For example, to brake a rolling ball on key release, use `rb.getVelocity()` + `rb.setVelocity()` — not `(rb as any)._body.linvel()`.
+
+Key properties: `mass`, `autoMass`, `useGravity`, `gravityScale` (multiplier, 0 = no gravity), `drag` (linear damping), `angularDrag`, `isKinematic`, `lockPositionX/Y/Z`, `lockRotationX/Y/Z`, `sleepThreshold`, `dominanceGroup`, `collisionDetectionMode` (Discrete or Continuous).
+
+API reference: https://engine.needle.tools/docs/api/Rigidbody
 
 ### Physics callbacks
 Defined on components (require a Collider on the same GameObject):
