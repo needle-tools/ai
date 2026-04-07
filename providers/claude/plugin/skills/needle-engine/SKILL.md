@@ -283,9 +283,10 @@ jobs:
         with:
           token: ${{ secrets.NEEDLE_CLOUD_TOKEN }}
           dir: ./dist
+          name: my-project  # IMPORTANT: set a project name, otherwise defaults to "index"
 ```
 
-The user needs a `NEEDLE_CLOUD_TOKEN` secret in their repo settings (get from https://cloud.needle.tools/team). See [references/deployment.md](references/deployment.md) for CLI deployment and other platforms.
+The user needs a `NEEDLE_CLOUD_TOKEN` secret in their repo settings (get from https://cloud.needle.tools/team). For manual CLI deployment, always pass `--name`: `npx needle-cloud deploy dist --name my-project`. See [references/deployment.md](references/deployment.md) for more options.
 
 ---
 

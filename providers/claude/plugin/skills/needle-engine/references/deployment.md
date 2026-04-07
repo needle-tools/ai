@@ -34,8 +34,8 @@ Create a `NEEDLE_CLOUD_TOKEN` secret in your repo settings (get the token from h
 ```bash
 # Auth: run `npx needle-cloud login`, or set NEEDLE_CLOUD_TOKEN env var
 # For CI/CD: create an access token at https://cloud.needle.tools/team (read/write permissions)
-npx needle-cloud deploy dist                          # deploy the dist folder
-npx needle-cloud deploy dist --name my-project        # with a project name
+npx needle-cloud deploy dist --name my-project        # ALWAYS pass --name (defaults to "index" otherwise)
+npx needle-cloud deploy dist                          # ⚠️ avoid: project will be named "index"
 npx needle-cloud deploy dist --team my-team-name      # deploy to a specific team
 npx needle-cloud deploy dist --token                  # prompts to paste an access token
 ```
