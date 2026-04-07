@@ -432,7 +432,7 @@ fitObjectIntoVolume(myObject, targetVolume);
 
 ## Async Modules (`NEEDLE_ENGINE_MODULES`)
 
-Heavy dependencies (physics, postprocessing, etc.) are loaded on demand, not bundled into the main entry point. Use `NEEDLE_ENGINE_MODULES` to load or wait for them.
+Heavy dependencies (physics, postprocessing, etc.) are loaded on demand, not bundled into the main entry point. **You do NOT need to call these for normal usage** — physics and postprocessing initialize automatically when their components are used. These are for advanced use cases like accessing the raw Rapier API or pmndrs postprocessing module directly.
 
 ```ts
 import { NEEDLE_ENGINE_MODULES } from "@needle-tools/engine";
@@ -450,8 +450,6 @@ await module.ready();   // wait for load (doesn't trigger one)
 module.MODULE           // the loaded module (undefined until loaded)
 module.MAYBEMODULE      // null until loaded, then same as MODULE
 ```
-
-This matters most for **physics on deployed servers**: Rapier WASM takes longer to load remotely than on localhost. If you apply forces in `start()` or early frames, the physics body may not exist yet and calls silently do nothing. Either await the module first or use `update()` where the delay is harmless.
 
 ---
 

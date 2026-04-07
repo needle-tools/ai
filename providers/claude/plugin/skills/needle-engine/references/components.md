@@ -20,7 +20,7 @@
 
 See [physics.md](physics.md) for the full physics reference (colliders, Rigidbody API, raycasting, async loading).
 
-**Critical: In code-only projects, you MUST call `await NEEDLE_ENGINE_MODULES.RAPIER_PHYSICS.load()` before creating any physics objects** — otherwise Rapier never loads and all physics silently fails. See the reference for details. Use `SphereCollider` for balls, `CapsuleCollider` for characters/cylinders, not BoxCollider for everything. Use `applyImpulse` for one-shot actions, `applyForce` for continuous. Never access `rb._body` internals.
+Rapier initializes automatically — just add collider and rigidbody components. Use `SphereCollider` for balls, `CapsuleCollider` for characters/cylinders, not BoxCollider for everything. Use `applyImpulse` for one-shot actions, `applyForce` for continuous. Never access `rb._body` internals.
 
 ---
 

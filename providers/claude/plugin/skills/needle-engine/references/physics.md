@@ -1,23 +1,8 @@
 # Needle Engine — Physics Reference
 
-Needle Engine uses Rapier (WASM) for physics. Rapier is a lazy-loaded async module — it is NOT automatically imported when you import `Rigidbody`, `BoxCollider`, or other physics component classes.
+Needle Engine uses Rapier (WASM) for physics. The Rapier physics backend is registered automatically at engine startup — no manual initialization needed. The WASM binary loads lazily on first use (when a collider or rigidbody component is created), so there's no upfront cost if physics aren't used.
 
-**In code-only projects (no GLB with colliders), you MUST explicitly load Rapier before creating any physics objects:**
-```ts
-import { NEEDLE_ENGINE_MODULES } from "@needle-tools/engine";
-
-onStart(async ctx => {
-    // Load Rapier WASM — without this, physics silently does nothing in code-only projects
-    await NEEDLE_ENGINE_MODULES.RAPIER_PHYSICS.load();
-
-    // NOW create rigidbodies, colliders, apply forces, etc.
-    const rb = myObject.addComponent(Rigidbody);
-    myObject.addComponent(SphereCollider);
-    rb.applyImpulse(new Vector3(0, 5, 0));
-});
-```
-
-In GLB-based projects (Unity/Blender export), Rapier loads automatically when the deserializer creates collider components. But in code-only projects, nothing triggers the load — `addComponent(Rigidbody)` and `addComponent(SphereCollider)` just silently fail to create physics bodies, `applyImpulse`/`applyForce` do nothing, and there are no errors. This is the #1 cause of "physics don't work on deploy" bugs.
+`NEEDLE_ENGINE_MODULES.RAPIER_PHYSICS.load()` and `.ready()` exist for advanced use cases (e.g. accessing the raw Rapier API directly) but are **not required** for normal physics usage — just add `Rigidbody` and collider components and they work.
 
 ## Colliders
 
