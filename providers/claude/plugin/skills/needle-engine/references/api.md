@@ -390,7 +390,7 @@ obj.worldUp             // Vector3 — up direction
 obj.worldForward = targetDirection;
 ```
 
-The getters return **temporary vectors** from an internal pool — they're overwritten on the next call. If you need to store a value, copy it: `const pos = obj.worldPosition.clone()`.
+The getters return **temporary vectors** from an internal pool — they're overwritten on the next call. You can read and re-assign them directly (`obj.worldPosition = other.worldPosition`). For temporary math use `getTempVector()`. Only use `.clone()` when you must store a value across frames — never in per-frame code.
 
 ### Component access
 ```ts

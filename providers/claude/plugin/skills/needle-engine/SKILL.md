@@ -387,6 +387,7 @@ Use this *before* guessing at API details — the docs are the source of truth.
 - There is NO `menu` attribute on `<needle-engine>` — to hide the menu, use `context.menu.setVisible(false)` from code (requires PRO license in production)
 - Use `onUpdate` for setting object positions that SyncedTransform should broadcast. Frame order is: component `onBeforeRender` → global `onBeforeRender` hooks → render. If you set position in a global `onBeforeRender` hook, SyncedTransform's component method already ran and read the old position
 - WebXR requires HTTPS — the Needle project templates include a local HTTPS dev server by default. Use `--host` when running the dev server (e.g. `npx vite --host`) to expose it on your local network IP, allowing you to test on phones/headsets via QR code
+- **Avoid unnecessary allocations.** Do NOT write `obj.worldPosition.clone()` or `new Vector3()` in per-frame code. The `world___` getters (`worldPosition`, `worldQuaternion`, `worldScale`) return temp vectors that can be read directly and re-assigned (`obj.worldPosition = otherObj.worldPosition`). When you need a temporary vector for math, use `getTempVector()` / `getTempQuaternion()` from `@needle-tools/engine` — these come from a circular buffer with zero GC pressure. Only use `.clone()` when you truly need to store a value across frames.
 
 ---
 
