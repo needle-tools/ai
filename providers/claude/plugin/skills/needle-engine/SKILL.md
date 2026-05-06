@@ -58,6 +58,9 @@ export class HelloWorld extends Behaviour {
 **Code-only (no Unity/Blender):**
 Scaffold a project with `npm create needle`, write TypeScript components, and build scenes entirely from code. Use `onStart`, `onUpdate`, and other lifecycle hooks to set up scenes, or create components extending `Behaviour`. This is a fully supported first-class workflow.
 
+**CDN with import maps (no bundler):**
+For quick prototypes, embedding in existing sites, or projects without a build pipeline. Use `<script type="importmap">` to map bare specifiers to CDN URLs, then write standard ES module code with `import` statements — no Vite, no npm, no `node_modules` required. **Important:** three.js must come from `@needle-tools/engine/dist/three.min.js`, not a standalone three.js CDN. See [CDN & Import Maps](references/integration.md) for full examples and rules.
+
 **Unity or Blender as visual editors:**
 Unity/Blender export scenes as GLB files into `assets/`, with component data serialized in glTF extensions. At runtime, the engine deserializes this into TypeScript components. A component compiler auto-generates C# stubs (Unity) or JSON (Blender) so custom TS components appear in the editor inspector. The editors are tools for visual scene setup; the runtime is pure web/TypeScript. Note: the editor controls the engine version in `package.json` — to force a version, use `"@needle-tools/engine": "npm:@needle-tools/engine@5.0.1"`.
 
@@ -417,7 +420,7 @@ Read these **only when needed** — don't load them all upfront:
 - 🌐 [Networking](references/networking.md) — connection API, SyncedRoom, PlayerSync, @syncField, SyncedTransform, Voip, ScreenCapture, guid persistence
 - 🥽 [WebXR](references/xr.md) — VR/AR sessions, XRRig, controllers, pointer events in XR, image tracking, depth sensing, camera access, mesh detection, DOM overlay, iOS AR, multiplayer avatars
 - 🚀 [Deployment](references/deployment.md) — Needle Cloud (GitHub Actions, CLI), Vercel, Netlify, other platforms
-- 🔗 [Framework Integration](references/integration.md) — React, Svelte, Vue, Next.js, SvelteKit patterns
+- 🔗 [Framework Integration](references/integration.md) — React, Svelte, Vue, Next.js, SvelteKit patterns, CDN with import maps
 - 💡 [Component Examples](references/examples.md) — practical examples: click handling, runtime loading, networking, materials, code-only scenes, input, coroutines
 - 🐛 [Troubleshooting](references/troubleshooting.md) — error messages, unexpected behavior, build failures, **runtime logs at `node_modules/.needle/logs/`**, build info
 - 🧩 [Component Template](templates/my-component.ts) — annotated starting point for new components
