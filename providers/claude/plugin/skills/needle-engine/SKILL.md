@@ -395,6 +395,7 @@ Use this *before* guessing at API details — the docs are the source of truth.
 - `useDefineForClassFields: false` in `tsconfig.json` — see the warning in Quick Start above
 - `@syncField()` only triggers on reassignment — mutating an array/object in place won't sync. Do `this.arr = this.arr` to force a sync event.
 - Physics callbacks (`onCollisionEnter` etc.) require a Needle `Collider` component (BoxCollider, SphereCollider ...) on the GameObject — they won't fire on mesh-only objects
+- **Pointer/click events need NO collider.** `onPointerClick`, `onPointerEnter`, etc. raycast against the object's **visible mesh geometry** — just add the component to a mesh. A `Collider` is only for physics raycasts (`context.physics.engine.raycast()`), never for clicks. There is also **no `EventSystem` to add manually**: the engine auto-creates the `EventSystem` (one per scene) and an `ObjectRaycaster` for you. If clicks don't fire, check that the object is a visible mesh and not on layer 2 ("Ignore Raycast") — not that it's missing a collider
 - `removeComponent()` does NOT call `onDestroy` — any cleanup logic in `onDestroy` (event listeners, timers, allocated resources) will be skipped. Use `destroy(obj)` for full cleanup.
 - `PlayerSync` prefab must have a `PlayerState` component — without it, the spawned instance will be immediately destroyed with an error. In Unity/Blender, add PlayerState to the prefab root.
 - Prefer the standalone `instantiate()` and `destroy()` functions over `GameObject.instantiate()` / `GameObject.destroy()` — the standalone versions are the current API
@@ -411,7 +412,16 @@ Use this *before* guessing at API details — the docs are the source of truth.
 
 ## References
 
-Read these **only when needed** — don't load them all upfront:
+These files are **not loaded yet** — each is a separate fetch. To read one, call the
+`load_needle_engine_skill` tool again with its path in the `file` argument:
+
+```
+load_needle_engine_skill({ file: "references/api.md" })
+load_needle_engine_skill({ file: "references/troubleshooting.md" })
+```
+
+Load a reference **whenever the question touches its topic** (don't answer from prior
+knowledge first) — but only the one(s) you need, not all of them upfront:
 
 - 📖 [Core API](references/api.md) — lifecycle, decorators, context (input, physics, time), gameobject, coroutines, asset loading, renderer/materials, async modules
 - 🧩 [Components](references/components.md) — animation, audio, video, lighting, camera, scene switching, interaction, splines, particles, debug tools
