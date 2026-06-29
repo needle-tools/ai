@@ -41,7 +41,7 @@ export class ClickHandler extends Behaviour {
 }
 ```
 
-Pointer events require an `EventSystem` and a `Raycaster` component in the scene (both are included by default in Unity/Blender exports).
+Pointer events work out of the box — just add a component with `onPointerClick` (or another pointer method) to an object with a **visible mesh**. The `EventSystem` and an `ObjectRaycaster` are created **automatically** by the engine (in every workflow, including code-only); you do not add them manually. A `Collider` is **not** required for clicks — colliders are only used for physics raycasts (`context.physics.engine.raycast()`).
 
 ---
 

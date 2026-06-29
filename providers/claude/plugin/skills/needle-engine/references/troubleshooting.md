@@ -73,6 +73,24 @@ export class MyComponent extends Behaviour { ... }
 - For trigger events, the collider must be set to **Is Trigger** in Unity
 - Both objects need collider components — mesh-only objects don't participate in physics events
 
+> ⚠️ This applies to **physics** callbacks only. **Pointer/click events do NOT need a collider** — see below.
+
+---
+
+## `onPointerClick` / Pointer Events Not Firing
+
+**Symptom:** `onPointerClick`, `onPointerEnter`, etc. are never called.
+
+**A `Collider` is NOT the fix.** Pointer events raycast against **visible mesh geometry**, and the `EventSystem` + `ObjectRaycaster` are created automatically — there is nothing to add manually. Check instead:
+
+1. **Is the component on (or above) a visible mesh?** Pointer events hit rendered geometry. Put the component on the object that has the mesh, or a parent of it.
+2. **Is the object visible?** Only visible objects receive input by default (`visible = true`). (Note: `visible = false` also disables the whole component hierarchy.)
+3. **Is the layer raycastable?** The object must not be on layer **2** ("Ignore Raycast"), which the raycaster skips.
+4. **Is the method named exactly `onPointerClick`?** Names are case-sensitive and take a single `PointerEventData` argument.
+5. **Is the component enabled and the GameObject active?**
+
+A `Collider` is only relevant for physics raycasts (`context.physics.engine.raycast()`), not for these callbacks.
+
 ---
 
 ## `onDestroy` Not Called When Removing Component

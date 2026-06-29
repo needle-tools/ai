@@ -37,7 +37,8 @@ class MyComponent extends Behaviour {
   onDisable()    // when component/GO becomes inactive
   onDestroy()    // called by destroy(obj) — NOT by removeComponent()
 
-  // Pointer events (requires an EventSystem + Raycaster in the scene)
+  // Pointer events — raycast visible mesh geometry (no Collider needed).
+  // The EventSystem + ObjectRaycaster are auto-created; no manual setup.
   onPointerEnter?(args: PointerEventData)   // pointer enters this object
   onPointerMove?(args: PointerEventData)    // pointer moves over this object
   onPointerExit?(args: PointerEventData)    // pointer leaves this object
@@ -132,7 +133,8 @@ this.context.input.addEventListener("pointermove", callback);
 this.context.input.addEventListener("keydown", callback);
 this.context.input.removeEventListener("pointerdown", callback);
 
-// Component pointer callbacks (require EventSystem + Raycaster in the scene):
+// Component pointer callbacks (EventSystem + ObjectRaycaster are auto-created — no manual setup;
+// they raycast visible mesh geometry, so no Collider is needed):
 // onPointerEnter, onPointerMove, onPointerExit, onPointerDown, onPointerUp, onPointerClick
 // These fire on the specific object the pointer interacts with (see Lifecycle Methods)
 
