@@ -260,7 +260,8 @@ Useful for: checking total build size, verifying assets are included, comparing 
 
 ## Getting More Help
 
-- Search docs: `needle_search("your question here")`
+- Search docs: `needle_search("your question here")`, or without MCP:
+  `curl -s "https://search.needle.tools/api/semantic-search?q=your+question+here"` — see [MCP & Search API](mcp.md)
 - [Needle Engine Docs](https://engine.needle.tools/docs/)
 - [Community Forum](https://forum.needle.tools)
 - [Discord](https://discord.needle.tools)

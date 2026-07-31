@@ -23,6 +23,14 @@ The Claude Code plugin provides:
 - **MCP server** — documentation search (`needle_search`) and user/project tools via `npx needle-cloud mcp`
 - **Needle Engine skill** — component lifecycle, serialization, input, physics, networking, WebXR, deployment, and progressive loading reference
 
+Agents without the MCP server can search the same corpus over HTTP — no key required:
+
+```bash
+curl -s "https://search.needle.tools/api/semantic-search?q=how+to+add+a+rigidbody&limit=5"
+```
+
+See [`references/mcp.md`](providers/claude/plugin/skills/needle-engine/references/mcp.md) for the full MCP tool inventory and search API reference.
+
 #### Install
 
 ```
@@ -42,7 +50,10 @@ providers/claude/plugin/
 ├── .claude-plugin/plugin.json   # Plugin metadata
 ├── .mcp.json                    # MCP server config (npx needle-cloud mcp)
 └── skills/needle-engine/
-    └── SKILL.md                 # Needle Engine skill
+    ├── SKILL.md                 # Needle Engine skill
+    ├── references/              # Loaded on demand (api, physics, networking, xr, mcp, ...)
+    ├── scripts/lookup-api.mjs   # Search the installed package's .d.ts files
+    └── templates/               # Component starting points
 ```
 
 ## Links

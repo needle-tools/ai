@@ -13,7 +13,10 @@ description: >
   or error without mentioning Needle Engine — check if @needle-tools/engine is in
   package.json or imports. If the project uses Needle Engine, always load this skill.
 compatibility:
-  - optional: needle_search MCP tool (search Needle Engine docs, forum posts, and community answers)
+  - optional: >
+      needle_search MCP tool (search Needle Engine docs, forum posts, and community answers).
+      Without it, the same corpus is reachable over HTTP at
+      https://search.needle.tools/api/semantic-search?q=... (public, no key) — see references/mcp.md
 ---
 
 # Needle Engine
@@ -375,7 +378,9 @@ Use this when you need exact method signatures, constructor parameters, or prope
 
 ## Searching the Documentation
 
-Use the `needle_search` MCP tool to find relevant docs, forum posts, and community answers:
+Search the docs *before* guessing at API details — they are the source of truth. The corpus covers Needle Engine documentation, the API reference, the community forum, Discord, and Needle source code.
+
+**If the `needle_search` MCP tool is available, use it:**
 
 ```
 needle_search("how to play animation clip from code")
@@ -383,7 +388,18 @@ needle_search("SyncedTransform multiplayer")
 needle_search("deploy to Needle Cloud CI")
 ```
 
-Use this *before* guessing at API details — the docs are the source of truth.
+**Otherwise, hit the public search API — no key, no setup:**
+
+```bash
+curl -s -H "Accept: application/json" \
+  "https://search.needle.tools/api/semantic-search?q=how+to+play+animation+clip+from+code&limit=5"
+```
+
+Returns JSON `{ query, results: [{ title, source, content, url, score, truncated }], durationMs }`. Optional `limit` (1–20, default 10) and `max_chars` (200–10000, default 2000). Rate-limited to 10 requests/minute for unauthenticated callers.
+
+Both are **semantic** search — phrase queries as full questions ("how do I make an object follow the camera in VR"), not keyword soup ("vr camera follow"). Result `url`s include a `#:~:text=` fragment linking to the exact passage; pass them on to the user.
+
+See 🔌 [MCP & Search API](references/mcp.md) for the full tool inventory — project file access, live scene inspection via the Needle Inspector, Unity/Blender tools — and for MCP server setup.
 
 ---
 
@@ -423,11 +439,14 @@ Read these **only when needed** — don't load them all upfront:
 - 🔗 [Framework Integration](references/integration.md) — React, Svelte, Vue, Next.js, SvelteKit patterns, CDN with import maps
 - 💡 [Component Examples](references/examples.md) — practical examples: click handling, runtime loading, networking, materials, code-only scenes, input, coroutines
 - 🐛 [Troubleshooting](references/troubleshooting.md) — error messages, unexpected behavior, build failures, **runtime logs at `node_modules/.needle/logs/`**, build info
+- 🔌 [MCP & Search API](references/mcp.md) — `needle_search`, the public search HTTP API, MCP server setup, project file tools, live scene inspection via the Needle Inspector, Unity/Blender tools
 - 🧩 [Component Template](templates/my-component.ts) — annotated starting point for new components
 
 ## Important URLs
 
-- Docs: https://engine.needle.tools/docs/
+- Docs: https://engine.needle.tools/docs/ (any page also available as markdown — swap `.html` for `.md`)
+- Search API: https://search.needle.tools/api/semantic-search?q=your+question
+- AI & MCP docs: https://engine.needle.tools/docs/ai/
 - Samples: https://engine.needle.tools/samples/
 - Samples index (all official samples with source): https://github.com/needle-tools/needle-engine-samples/blob/main/samples.json
 - GitHub: https://github.com/needle-tools/needle-engine-support
