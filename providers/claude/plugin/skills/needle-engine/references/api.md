@@ -36,6 +36,8 @@ class MyComponent extends Behaviour {
   // Deactivation / cleanup
   onDisable()    // when component/GO becomes inactive
   onDestroy()    // called by destroy(obj) — NOT by removeComponent()
+  // autoCleanup(disposable) — 5.1+, register teardown against the lifecycle.
+  // Scope depends on WHERE you call it: onEnable → disable; awake/start → destroy.
 
   // Pointer events — raycast visible mesh geometry (no Collider needed).
   // The EventSystem + ObjectRaycaster are auto-created; no manual setup.
@@ -106,6 +108,17 @@ this.context.scene          // THREE.Scene
 this.context.mainCamera     // THREE.Camera (currently active)
 this.context.renderer       // THREE.WebGLRenderer
 this.context.domElement     // <needle-engine> HTML element
+
+// Lighting (5.1+)
+this.context.lights         // ILight[] — all registered lights
+this.context.mainLight      // brightest directional light, or null
+
+// Scene Bindings (5.1+, experimental) — see whats-new.md
+this.context.sceneData      // typed node/component access; components need .$components
+
+// Typed event bus (5.1+) — on() returns an unsubscribe function
+this.context.events.on("scene-content-changed", e => e.object);
+this.context.events.emit<{ pts: number }>("scored", { pts: 10 });
 
 // Time
 this.context.time.frame       // frame counter (number)

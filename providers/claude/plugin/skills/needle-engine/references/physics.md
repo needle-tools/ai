@@ -94,4 +94,9 @@ const hits = this.context.physics.raycast();
 
 // Physics engine raycast (hits Rapier colliders only)
 const hit = this.context.physics.engine?.raycast(origin, direction);
+
+// Triggers are skipped by default — opt in explicitly (5.1+)
+const hitWithTriggers = this.context.physics.engine?.raycast(origin, direction, {
+    includeTriggers: true
+});
 ```

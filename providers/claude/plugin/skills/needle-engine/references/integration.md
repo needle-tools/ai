@@ -251,8 +251,8 @@ onUpdate((ctx) => { /* per-frame logic */ });
 onDestroy((ctx) => { /* cleanup */ });
 ```
 
-### With SSR (Next.js, SvelteKit, Nuxt, etc.)
-`@needle-tools/engine` depends on WebGL / browser APIs and **cannot be imported on the server**. Use a dynamic import so the module is only loaded client-side (same pattern as with any three.js-based engine):
+### Server-side rendering (SSR)
+`@needle-tools/engine` is a WebGL / browser library. **Use a dynamic import so the module only loads client-side** — this is the recommended pattern for Next.js, SvelteKit, Nuxt, and anything else that renders on the server:
 ```ts
 import("@needle-tools/engine").then(({ onStart, onUpdate, onDestroy }) => {
   onStart((ctx) => { /* setup */ });
@@ -260,3 +260,13 @@ import("@needle-tools/engine").then(({ onStart, onUpdate, onDestroy }) => {
   onDestroy((ctx) => { /* cleanup */ });
 });
 ```
+In Svelte that's an `await import(...)` inside `onMount`; in React, an effect or `next/dynamic` with `ssr: false`.
+
+Rendering the `<needle-engine>` **tag** during SSR is fine either way — it's emitted as inert HTML and upgrades once the engine loads on the client.
+
+**5.1 added experimental server-side imports**, so a top-level `import` is expected to work on 5.1+. It's still marked experimental, so prefer the dynamic import above unless you've verified it in the specific framework. Two things that *are* safe at module level today:
+- the `needle` shorthand (`import { needle } from "@needle-tools/engine"`) — explicitly documented as SSR-safe, since it's a lazy Proxy. Only *access* it inside handlers/callbacks, never at module top-level.
+- type-only imports (`import type { ... }`), which are erased at compile time.
+
+### JSX types
+Type declarations for `<needle-engine>` ship with the package, so React, Preact, and SolidJS get attribute autocomplete with no extra setup.

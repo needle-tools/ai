@@ -50,6 +50,33 @@ export class HelloWorld extends Behaviour {
 
 > ⚠️ **TypeScript config required:** `tsconfig.json` must have `"experimentalDecorators": true` and `"useDefineForClassFields": false` for decorators to work. Without `useDefineForClassFields: false`, TypeScript overwrites `@serializable()` properties with their default values *after* the decorator runs, silently breaking deserialization.
 
+On **5.1+**, scenes expose auto-generated typed bindings, and `needle` gives you the context from
+anywhere — often shorter than `getComponent` lookups:
+```ts
+import { needle, onStart } from "@needle-tools/engine";
+
+// `needle` resolves to the current context when the handler runs — no wrapper needed
+button.onclick = () => {
+  needle.sceneData.MyScene.MainCamera.$components.OrbitControls.autoRotate = false;
+};
+
+// Without it, you'd wrap the wiring in onStart purely to capture a ctx:
+onStart(ctx => {
+  button.onclick = () => {
+    ctx.sceneData.MyScene.MainCamera.$components.OrbitControls.autoRotate = false;
+  };
+});
+```
+`onStart(ctx => …)` is still the right tool for setup that must run once the scene is ready —
+`needle` is for reaching the context from code that runs later.
+> ⚠️ **Don't touch `needle` at module top-level.** It's a lazy Proxy resolving to the *current*
+> context — module bodies evaluate before any scene exists, so it logs an error and returns a
+> no-op proxy. Use it inside callbacks and event handlers; use `onStart(ctx => …)` for setup.
+> (Importing it at top level is fine, including under SSR — only *access* is the problem.)
+
+Components need `$components`; bare names are child nodes. Both APIs are experimental — see
+[What's New](references/whats-new.md).
+
 ---
 
 ## Key Concepts
@@ -140,7 +167,9 @@ Boolean attributes can be disabled with `="0"` (e.g. `camera-controls="0"`).
 | `background-color` | Hex or RGB background color (e.g. `#ff0000`) |
 | `background-image` | Skybox URL or preset: `studio`, `blurred-skybox`, `quicklook`, `quicklook-ar` |
 | `background-blurriness` | Blur intensity for background (0–1) |
+| `background-rotation` | Rotate the background skybox (5.1+) |
 | `environment-image` | Environment lighting image URL or preset (same presets as `background-image`) |
+| `environment-rotation` | Rotate the environment lighting (5.1+) |
 | `contactshadows` | Enable contact shadows |
 | `tone-mapping` | `none`, `linear`, `neutral`, `agx` |
 | `poster` | Placeholder image URL shown while loading |
@@ -247,6 +276,13 @@ export default defineConfig(async ({ command }) => ({
   ],
 }));
 ```
+
+As of 5.1, `needlePlugins()` resolves the Vite command itself, so it can be called with no
+arguments and without `await`/spread — handy when composing with other framework plugins:
+```js
+export default defineConfig({ plugins: [sveltekit(), needlePlugins()] });
+```
+Still pass `(command, config, settings)` when you need options like `makeFilesLocal`.
 
 ---
 
@@ -405,6 +441,8 @@ See 🔌 [MCP & Search API](references/mcp.md) for the full tool inventory — p
 
 ## Common Gotchas
 
+- **Scene Bindings: bare names are child nodes, components need `$components`.** `ctx.sceneData.MyGlb.Camera.OrbitControls` looks for a child *object* named OrbitControls; the component is `ctx.sceneData.MyGlb.Camera.$components.OrbitControls`. Worse, misses don't throw — they return an error proxy that swallows every get/set and only warns. If a scene-bindings assignment appears to run but changes nothing, check the console for `[SceneData]`.
+- **`autoCleanup`'s teardown timing depends on where you call it.** In `onEnable` → cleaned on disable. In `awake`/`start` → cleaned on destroy, so it survives disable/enable. Registering a subscription in `start()` and expecting it to stop when the component is disabled is the common mistake.
 - **`obj.visible = false` disables components!** Setting `visible = false` on a parent disables the entire hierarchy including component lifecycle (SyncedTransform, etc.) — like Unity's `setActive`. To hide visually but keep components running, hide child meshes instead: `obj.traverse(c => { if (c.isMesh) c.visible = false; })`. Or use `Renderer.setVisible(obj, false)` which only affects rendering.
 - `@registerType` is required or the component won't be instantiated from GLB. Unity/Blender export adds this automatically via codegen; hand-written components need it explicitly.
 - GLB assets go in `assets/`, static files (fonts, images, videos) in `public/` (configurable via `needle.config.json`)
@@ -429,6 +467,7 @@ See 🔌 [MCP & Search API](references/mcp.md) for the full tool inventory — p
 
 Read these **only when needed** — don't load them all upfront:
 
+- 🆕 [What's New (5.1 → 6.0)](references/whats-new.md) — Scene Bindings (`ctx.sceneData`), `needle` shorthand, `Context.events`, `autoCleanup`, builder APIs, `<needle-app>`, GaussianSplat. **Check this before assuming an API doesn't exist** — much of it postdates the rest of these references.
 - 📖 [Core API](references/api.md) — lifecycle, decorators, context (input, physics, time), gameobject, coroutines, asset loading, renderer/materials, async modules
 - 🧩 [Components](references/components.md) — animation, audio, video, lighting, camera, scene switching, interaction, splines, particles, debug tools
 - ⚡ [Physics](references/physics.md) — colliders, Rigidbody (forces, velocity, impulse), raycasting, async Rapier loading
@@ -445,7 +484,7 @@ Read these **only when needed** — don't load them all upfront:
 ## Important URLs
 
 - Docs: https://engine.needle.tools/docs/ (any page also available as markdown — swap `.html` for `.md`)
-- Search API: https://search.needle.tools/api/semantic-search?q=your+question
+- Search API: https://search.needle.tools/api/semantic-search?q=your+question ([API reference](https://search.needle.tools/api-docs))
 - AI & MCP docs: https://engine.needle.tools/docs/ai/
 - Samples: https://engine.needle.tools/samples/
 - Samples index (all official samples with source): https://github.com/needle-tools/needle-engine-samples/blob/main/samples.json

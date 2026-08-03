@@ -11,6 +11,7 @@
 - [Scene Switching](#scene-switching)
 - [Interaction](#interaction)
 - [Splines](#splines)
+- [Gaussian Splats](#gaussian-splats)
 - [Debug Tools](#debug-tools)
 - [Utilities](#utilities)
 
@@ -90,6 +91,8 @@ AudioSource.registerWaitForAllowAudio(() => {
 ```
 
 Key properties: `clip` (string/MediaStream), `volume` (0–1), `loop`, `spatialBlend` (0–1), `playOnAwake`, `pitch`, `minDistance`, `maxDistance`, `isPlaying`, `time`, `duration`.
+
+Supported formats include `.opus` (5.1+). There's also a standalone `AudioClip` class (5.1+) with its own playback control, for audio not tied to an `AudioSource` component.
 
 ### AudioListener
 Represents the "ears" in the scene. Attach to the camera (auto-added to main camera if missing). Only one should be active.
@@ -285,7 +288,11 @@ import { DragControls, DragMode } from "@needle-tools/engine";
 const drag = obj.addComponent(DragControls);
 drag.dragMode = DragMode.XZPlane;       // horizontal plane
 // Modes: XZPlane, Attached, HitNormal, DynamicViewAngle (default), SnapToSurfaces, None
+
+drag.keepScale = true;                  // 5.1+ constraint system, two-touch scale min/max
 ```
+As of 5.1, rotation is limited to two-touch and XR controller input — single-touch dragging is
+translation-only and more predictable — plus a dedicated screen-space drag mode for AR.
 
 ### Duplicatable
 Add alongside `DragControls` — dragging creates a clone instead of moving the original.
@@ -384,6 +391,27 @@ walker.duration = 5;        // seconds for full traversal
 walker.autoRun = true;
 walker.useLookAt = true;    // face movement direction
 ```
+
+---
+
+## Gaussian Splats
+
+### GaussianSplat *(6.0-alpha, experimental)*
+Renders 3D Gaussian splats via Spark, with LOD, correct bounds, and raycasting.
+```ts
+import { GaussianSplat } from "@needle-tools/engine";
+const splat = obj.addComponent(GaussianSplat);
+splat.url = "assets/scan.spz";   // reassigning at runtime reloads the splat
+splat.opacity = 1;               // 0–1
+splat.raycastable = true;
+splat.quality = "auto";          // "auto" | "high" | "medium" | "low"
+```
+Formats: `.ply`, `.spz`, `.splat`, `.sog`, `.rad` (`.rad` is chunked/seekable → streams progressively).
+
+`quality: "auto"` resolves per device (mobile → low) and adapts at runtime — LOD density degrades
+while frame rate is below target, and any step that doesn't measurably help is reverted. Sort
+throttling and LOD density apply to the scene's *shared* splat renderer, so with multiple
+GaussianSplat components the last applied quality wins for those. Debug with `?debugsplats`.
 
 ---
 

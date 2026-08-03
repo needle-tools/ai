@@ -13,6 +13,8 @@ Prefer MCP when it's connected. Fall back to the HTTP API when it isn't.
 
 Public endpoint at `https://search.needle.tools`. Indexes Needle Engine documentation, the API reference, the community forum, Discord, and Needle source code. No API key needed.
 
+Full reference, including endpoints not covered here: **https://search.needle.tools/api-docs**
+
 ### Semantic search
 
 ```bash

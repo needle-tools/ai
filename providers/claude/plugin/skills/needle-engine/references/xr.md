@@ -60,6 +60,12 @@ These are requested automatically — you don't need to add them:
 
 **VR (`immersive-vr`):** `local-floor`, `bounded-floor`, `high-fixed-foveation-level`, `layers`, `hand-tracking` (except on visionOS)
 
+WebXR anchors (`useAnchors`) are enabled by default as of 6.0-alpha.1.
+
+Cap the XR frame rate with `context.xrFrameRateLimit` (6.0+) — applied through WebXR
+`updateTargetFrameRate` where the device supports it. Useful for thermal headroom on phones;
+the mobile splat preset uses it to hold AR at 30 fps.
+
 **Not requested by default** — add these via `onBeforeXR` or the session init if you need them:
 - `camera-access` — needed for AR screenshots/camera feed compositing (add `ARCameraBackground` component or request manually)
 - `depth-sensing` — depth-based occlusion
@@ -339,6 +345,11 @@ tracker.trackedImages = [
   })
 ];
 
+// Per-frame EventList fired while images are tracked (5.1+):
+tracker.imageTracked.addEventListener(evt => {
+  for (const img of evt.trackedImages) console.log(img.url, img.state);
+});
+
 // Listen for tracking updates:
 tracker.onTrackedImage = (images) => {
   for (const img of images) {
@@ -400,4 +411,8 @@ await NeedleXRSession.start("quicklook");
 // immersive-ar is standard WebXR — works on Android, Quest, visionOS
 // On iOS, Needle Engine automatically launches the Needle App Clip (Needle Go) to provide WebXR support
 await NeedleXRSession.start("immersive-ar");
+
+// 5.1+ — launch a custom-branded App Clip (your own card title and image).
+// Requires a registered appclip.needle.tools/x/… URL or experience id. PRO feature.
+NeedleXRSession.appClipUrl = "https://appclip.needle.tools/x/your-experience";
 ```
