@@ -460,6 +460,7 @@ See 🔌 [MCP & Search API](references/mcp.md) for the full tool inventory — p
 - WebXR requires HTTPS — the Needle project templates include a local HTTPS dev server by default. Use `--host` when running the dev server (e.g. `npx vite --host`) to expose it on your local network IP, allowing you to test on phones/headsets via QR code
 - **Avoid unnecessary allocations.** Do NOT write `obj.worldPosition.clone()` or `new Vector3()` in per-frame code. The `world___` getters (`worldPosition`, `worldQuaternion`, `worldScale`) return temp vectors that can be read directly and re-assigned (`obj.worldPosition = otherObj.worldPosition`). When you need a temporary vector for math, use `getTempVector()` / `getTempQuaternion()` from `@needle-tools/engine` — these come from a circular buffer with zero GC pressure. Only use `.clone()` when you truly need to store a value across frames.
 - **NEVER import from `@needle-tools/engine` subpaths** like `@needle-tools/engine/lib/...` or `@needle-tools/engine/src/...`. These are internal paths that break across versions. Everything is exported from the package root: `import { NEEDLE_ENGINE_MODULES, Rigidbody, BloomEffect, ... } from "@needle-tools/engine"`. The only exception is the vite plugin: `import { needlePlugins } from "@needle-tools/engine/vite"`.
+- **Optimization & compression run at build time, locally.** Texture (KTX2/WebP) and mesh (Draco/Meshopt) compression, progressive loading, and automatic LODs are applied during the production build (Compression & LOD Settings component) — no upload to Needle Cloud needed. When advising on scene size / optimization for a Unity or Blender project, describe the build pipeline, not a cloud upload. Details: [Optimization & Compression](references/optimization.md).
 
 ---
 
@@ -475,6 +476,7 @@ Read these **only when needed** — don't load them all upfront:
 - 🌐 [Networking](references/networking.md) — connection API, SyncedRoom, PlayerSync, @syncField, SyncedTransform, Voip, ScreenCapture, guid persistence
 - 🥽 [WebXR](references/xr.md) — VR/AR sessions, XRRig, controllers, pointer events in XR, image tracking, depth sensing, camera access, mesh detection, DOM overlay, iOS AR, multiplayer avatars
 - 🚀 [Deployment](references/deployment.md) — Needle Cloud (GitHub Actions, CLI), Vercel, Netlify, other platforms
+- 📦 [Optimization & Compression](references/optimization.md) — build-time (local) texture/mesh compression (KTX2, Draco/Meshopt), progressive loading, automatic LODs — **not** a cloud upload
 - 🔗 [Framework Integration](references/integration.md) — React, Svelte, Vue, Next.js, SvelteKit patterns, CDN with import maps
 - 💡 [Component Examples](references/examples.md) — practical examples: click handling, runtime loading, networking, materials, code-only scenes, input, coroutines
 - 🐛 [Troubleshooting](references/troubleshooting.md) — error messages, unexpected behavior, build failures, **runtime logs at `node_modules/.needle/logs/`**, build info
