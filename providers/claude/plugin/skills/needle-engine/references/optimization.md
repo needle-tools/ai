@@ -15,6 +15,12 @@ required version: <https://engine.needle.tools/docs/how-to-guides/optimization/#
 Everything is configured via the **Compression & LOD Settings** component on the Needle Engine /
 ExportInfo object (global defaults + per-texture / per-mesh overrides).
 
+**Compression also requires a Needle Cloud login** — it's license-gated. The build pipeline needs a
+license JWT, resolved from `NEEDLE_CLOUD_TOKEN` (a JWT, not an `nc_*` access token) or, as a fallback,
+the local needle-cloud CLI license server (`localhost:8424`). So the user must be **logged in**
+(`npx needle-cloud start`) for compression to run — the Unity/Blender integrations handle this
+automatically; a plain npm/vite build needs the CLI logged in. It's a license check, not a scene upload.
+
 ## Texture compression
 - Production builds compress textures to **KTX2** (ETC1S or UASTC) or **WebP**.
 - KTX2 (ETC1S/UASTC) stays GPU-compressed → low VRAM. WebP decompresses to full size in GPU
