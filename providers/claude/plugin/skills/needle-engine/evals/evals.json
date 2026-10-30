@@ -56,6 +56,19 @@
         {"text": "Does not use GitHub Pages deployment", "type": "output_check"},
         {"text": "Includes a name parameter for the project", "type": "output_check"}
       ]
+    },
+    {
+      "id": 6,
+      "prompt": "In my Needle Engine kitchen scene, make the cabinet door swing open up to 90 degrees around its hinge edge when dragged, make the drawer pull out 0.4 m, and turn on a light as the drawer opens.",
+      "expected_output": "Uses DragControls with DragMode.HingeRotate (customPivot, axis, startAngle/rangeAngle) for the door and DragMode.Slide (axis, axisMin/axisMax) for the drawer, drives the light from valueChangedNormalized; no hand-written pointer math",
+      "files": [],
+      "assertions": [
+        {"text": "Uses DragMode.HingeRotate for the door with startAngle = 0 and rangeAngle = 90 (or -90)", "type": "output_check"},
+        {"text": "Sets customPivot (or explains the pivot must be at the hinge edge) for the door", "type": "output_check"},
+        {"text": "Uses DragMode.Slide with axisMin/axisMax for the drawer", "type": "output_check"},
+        {"text": "Drives the light from valueChanged or valueChangedNormalized, not by polling the transform", "type": "output_check"},
+        {"text": "Does not implement dragging by hand with onPointerDown/onPointerMove and raycasts", "type": "output_check"}
+      ]
     }
   ]
 }

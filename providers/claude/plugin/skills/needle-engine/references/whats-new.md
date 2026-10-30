@@ -167,6 +167,10 @@ tracker.imageTracked.addEventListener(evt => {
 
 **Audio (5.1)** — standalone `AudioClip` class with its own playback control; `AudioSource` gained spatial blend and `.opus` support.
 
+**DragControls rework** — in-place modes `Slide`, `HingeRotate`, `Rotate`, `Scale`, `ScaleAndRotate` plus `XYPlane`/`YZPlane`; new `DragTarget` component (slots, grids, stacks, areas); `rotation` / `allowScaling` / `xrHold` / `dragTargets` / `checkForCollider` replace the old booleans; `returnOnRelease`, snap steps, engage thresholds, edge/corner grab gestures, typed `dragStarted`/`dragUpdated`/`dragEnded`/`allowDrop` events, and `valueChanged` readouts. The `EventSystem` handles raycasts — `DragControls`/`Duplicatable` no longer add an `ObjectRaycaster`. Full reference: [drag-controls.md](drag-controls.md).
+
+**EventList** — calls authored in Unity with a static (inspector-typed) argument now receive that value instead of the event's payload, matching Unity's static vs. dynamic calls.
+
 **DragControls (5.1)** — new constraint system: `keepScale`, two-touch scale with min/max limits, refined hit regions, and a screen-space AR drag mode. Rotation is now limited to two-touch and XR controller input, so single-touch dragging is more predictable.
 
 **OrbitControls (5.0)** — uses `lookAtTarget` / `lockLookAtTarget`. The `LookAtConstraint` component is deprecated.

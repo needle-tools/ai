@@ -284,15 +284,27 @@ this.context.scene.add(model.scene);
 ### DragControls
 Enables dragging objects in 3D. Automatically takes ownership in networked scenes.
 ```ts
-import { DragControls, DragMode } from "@needle-tools/engine";
+import { DragControls, DragMode, DragRotationMode } from "@needle-tools/engine";
 const drag = obj.addComponent(DragControls);
 drag.dragMode = DragMode.XZPlane;       // horizontal plane
-// Modes: XZPlane, Attached, HitNormal, DynamicViewAngle (default), SnapToSurfaces, None
-
-drag.keepScale = true;                  // 5.1+ constraint system, two-touch scale min/max
+drag.rotation = DragRotationMode.YawOnly; // locked by default
+// Moving: XZPlane, XYPlane, YZPlane, Attached, HitNormal, DynamicViewAngle (default), SnapToSurfaces
+// In place: Slide (drawers), HingeRotate (doors), Rotate (joysticks), Scale, ScaleAndRotate
 ```
-As of 5.1, rotation is limited to two-touch and XR controller input — single-touch dragging is
-translation-only and more predictable — plus a dedicated screen-space drag mode for AR.
+Single-touch dragging is translation-only; rotation comes from two-touch, XR controllers, or edge
+grabs. **The API is large** — modes, `DragTarget`, snapping, return-on-release, collision
+checks, events: see [drag-controls.md](drag-controls.md).
+
+### DragTarget
+Drop slots, grids, stacks, and regions for objects dragged with `DragControls`. See
+[drag-controls.md](drag-controls.md#dragtarget).
+```ts
+import { DragTarget, DragTargetMode } from "@needle-tools/engine";
+const board = boardObj.addComponent(DragTarget);
+board.mode = DragTargetMode.Grid;
+board.gridColumns = 8; board.gridRows = 8;
+board.objectDropped.addEventListener(e => console.log("slot", e.slot));
+```
 
 ### Duplicatable
 Add alongside `DragControls` — dragging creates a clone instead of moving the original.

@@ -365,7 +365,8 @@ These are commonly used components — all imported from `@needle-tools/engine`.
 | `Volume` | Post-processing (Bloom, SSAO, DoF, Vignette, etc.) |
 | `Camera` | Camera control, field of view, switching active camera |
 | `SceneSwitcher` | Load/unload multiple GLB scenes |
-| `DragControls` | Drag objects in 3D (auto-ownership in multiplayer) |
+| `DragControls` | Drag objects in 3D; also drawers, doors, joysticks, scale handles — see [drag-controls.md](references/drag-controls.md) |
+| `DragTarget` | Drop slots, grids, stacks, regions for dragged objects |
 | `Duplicatable` | Drag to clone objects |
 | `DropListener` | Drag-and-drop files from desktop into scene |
 | `SplineContainer` / `SplineWalker` | Paths and motion along curves |
@@ -468,9 +469,10 @@ See 🔌 [MCP & Search API](references/mcp.md) for the full tool inventory — p
 
 Read these **only when needed** — don't load them all upfront:
 
-- 🆕 [What's New (5.1 → 6.0)](references/whats-new.md) — Scene Bindings (`ctx.sceneData`), `needle` shorthand, `Context.events`, `autoCleanup`, builder APIs, `<needle-app>`, GaussianSplat. **Check this before assuming an API doesn't exist** — much of it postdates the rest of these references.
+- 🆕 [What's New (5.1 → 6.0)](references/whats-new.md) — Scene Bindings (`ctx.sceneData`), `needle` shorthand, `Context.events`, `autoCleanup`, builder APIs, `<needle-app>`, GaussianSplat, DragControls rework + DragTarget. **Check this before assuming an API doesn't exist** — much of it postdates the rest of these references.
 - 📖 [Core API](references/api.md) — lifecycle, decorators, context (input, physics, time), gameobject, coroutines, asset loading, renderer/materials, async modules
 - 🧩 [Components](references/components.md) — animation, audio, video, lighting, camera, scene switching, interaction, splines, particles, debug tools
+- ✋ [DragControls & DragTarget](references/drag-controls.md) — drag modes (planes, surfaces, slide, hinge, rotate, scale), drop slots/grids/areas, snapping, return-on-release, collision checks, XR hold, events
 - ⚡ [Physics](references/physics.md) — colliders, Rigidbody (forces, velocity, impulse), raycasting, async Rapier loading
 - 🎨 [Post-Processing](references/postprocessing.md) — context.postprocessing API, all built-in effects with parameters
 - 🌐 [Networking](references/networking.md) — connection API, SyncedRoom, PlayerSync, @syncField, SyncedTransform, Voip, ScreenCapture, guid persistence
