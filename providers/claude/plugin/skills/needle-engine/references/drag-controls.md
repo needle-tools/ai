@@ -43,14 +43,14 @@ drag.dragMode = DragMode.XZPlane;
 
 ## Defaults: Unity vs. code
 
-A component authored in the Unity inspector and one created with `addComponent` start from **different defaults**. Code falls back to the legacy fields, Unity serializes the new ones:
+A component added in the Unity inspector and one created with `addComponent` start from **different defaults**. In code, `rotation`, `allowScaling` and `xrHold` stay unset and fall back to the legacy fields, so older scripts keep their behaviour; Unity stamps better defaults on new components and converts older ones from their legacy values:
 
-| Setting | Unity component | `addComponent(DragControls)` |
-|---------|-----------------|------------------------------|
-| `rotation` | `YawOnly` | `Locked` (from `keepRotation = true`) |
-| `allowScaling` | `false` | **`true`** (from `keepScale = false`) — pinch scales |
-| `minScale` / `maxScale` | `0.25` / `4` | `0.0001` / `1000000` |
-| `xrHold` | `FreeThenSnap` | `Free` (from `xrDragMode = Attached`) |
+| Setting | New Unity component | Older Unity component (migrated) | `addComponent(DragControls)` |
+|---------|---------------------|----------------------------------|------------------------------|
+| `rotation` | `YawOnly` | `Free` (`Locked` only if both legacy keep-rotation flags were on) | screen `Locked` (`keepRotation`), XR `Free` (`xrKeepRotation`) |
+| `allowScaling` | `false` | `!keepScale` (usually `true`) | **`true`** (`!keepScale`) — pinch scales |
+| `minScale` / `maxScale` | `0.25` / `4` | `0.0001` / `1000000` (unbounded, as before) | `0.0001` / `1000000` |
+| `xrHold` | `FreeThenSnap` | `Free` if `xrDragMode` was `Attached`, else `AlwaysSnap` | `Free` (from `xrDragMode = Attached`) |
 
 In code, set these explicitly instead of relying on defaults.
 
@@ -386,14 +386,10 @@ Still honoured when the replacement is unset, so old scenes keep working. Use th
 | `keepRotation`, `xrKeepRotation` | `rotation: DragRotationMode` |
 | `keepScale`, `xrKeepScale` | `allowScaling` (inverted) |
 | `xrDragMode` | `xrHold: XRHoldBehaviour` |
-| `requireDropTarget` | `dragTargets: DropTargetMode` |
-| `blockOnColliders` | `checkForCollider: DragCollisionCheck` |
-| `minAngle` / `maxAngle` | `startAngle` + `rangeAngle` |
-| `engageThresholdPreview` / `engageThresholdResistance` | `engageThresholdElastic` / `engageThresholdStiffness` |
 
 ## Gotchas
 
-- Code-created DragControls default to **rotation locked and pinch scaling on** — see [Defaults](#defaults-unity-vs-code).
+- Code-created DragControls default to **rotation locked on screen and pinch scaling on** — see [Defaults](#defaults-unity-vs-code).
 - `rangeAngle` ≥ 360 means **no limit**, not a 360° range. Negative ranges sweep the other way.
 - Slide/Hinge/Rotate/Scale/ScaleAndRotate **never** enter drop targets — `DragTarget` only works with moving modes.
 - `customPivot` is read once at drag start, position only, in the parent's space.
