@@ -161,7 +161,7 @@ Boolean attributes can be disabled with `="0"` (e.g. `camera-controls="0"`).
 | Attribute | Description |
 |---|---|
 | `src` | GLB/glTF file path(s) — string, array, or comma-separated |
-| `camera-controls` | Adds default OrbitControls with auto-fit if no `OrbitControls`/`ICameraController` exists in the root GLB. Disable with `="0"` for fully custom camera. To tweak defaults, get `OrbitControls` from the main camera in `onStart` |
+| `camera-controls` | Adds default OrbitControls with auto-fit if no `OrbitControls`/`ICameraController` exists in the root GLB. `="0"` is only for a fully custom camera: it also **disables every `OrbitControls`**, including ones you add in code. To tweak defaults, get `OrbitControls` from the main camera in `onStart` |
 | `auto-rotate` | Auto-rotate the camera (requires `camera-controls`) |
 | `autoplay` | Auto-play animations in the loaded scene |
 | `background-color` | Hex or RGB background color (e.g. `#ff0000`) |
@@ -177,7 +177,18 @@ Boolean attributes can be disabled with `="0"` (e.g. `camera-controls="0"`).
 
 HTML attributes on `<needle-engine>` **override** the equivalent settings from the scene/Camera component. For example, `background-color="#222"` overrides whatever `Camera.backgroundColor` is set to in Unity/Blender. Remove the attribute to let the scene settings take effect.
 
-**Auto camera-controls:** If no GLB is loaded, or no component implementing `ICameraController` (e.g. `OrbitControls`) exists in the scene, `<needle-engine>` automatically adds OrbitControls with auto-fit. Use `camera-controls="0"` to disable this and manage camera input yourself.
+**Auto camera-controls:** If no GLB is loaded, or no component implementing `ICameraController` (e.g. `OrbitControls`) exists in the scene, `<needle-engine>` automatically adds OrbitControls with auto-fit. Use `camera-controls="0"` to disable this and manage camera input yourself. If you add your own `OrbitControls` in code, leave the attribute off instead: nothing is auto-added once a camera controller exists, and `="0"` would switch yours off (`enabled = false` in its `awake`).
+
+**Camera made in code:** create it as a `PerspectiveCamera` and add `Camera` and `OrbitControls` to that object. `OrbitControls.setCameraTargetPosition()` takes a position in the three.js camera's **parent** space, so if you add `Camera` to a plain `Object3D` (the three.js camera becomes its child), those positions are relative to that object instead of the scene.
+```ts
+const camObj = new PerspectiveCamera(45, 1, 0.1, 100);
+camObj.position.set(0, 4, 7);
+ctx.scene.add(camObj);
+ctx.setCurrentCamera(camObj.addComponent(Camera));
+const orbit = camObj.addComponent(OrbitControls);
+orbit.setCameraTargetPosition(new Vector3(0, 1.5, 3), 1.2); // world position, 1.2 s glide
+orbit.setLookTargetPosition(new Vector3(0, 1, 0), 1.2);
+```
 
 ---
 
@@ -381,6 +392,8 @@ These are commonly used components — all imported from `@needle-tools/engine`.
 
 Three.js objects work directly alongside these — `ObjectUtils.createPrimitive()` is a convenience, not a requirement. Use `new THREE.Mesh(geometry, material)` anytime.
 
+**Check the built-ins before writing input code.** Moving, turning and resizing objects, drawers, doors, lids, windows, sliders, knobs and resize handles are all `DragControls` modes. One `DragControls` can be a handle that drives another object (`customTransform`), and child objects can carry their own `DragControls` inside a draggable parent (drawers in a movable cabinet, edge handles on a rug). Before writing your own pointer, raycast or drag logic, find the mode or recipe in [drag-controls.md](references/drag-controls.md) and the working setups in [drag-controls-patterns.md](references/drag-controls-patterns.md) (buttons, dials, containers, board games, machines), and try them. Write custom input code only when a built-in mode demonstrably can't do the job, and tell the user why.
+
 ---
 
 ## Environment Maps / HDRIs
@@ -472,7 +485,8 @@ Read these **only when needed** — don't load them all upfront:
 - 🆕 [What's New (5.1 → 6.0)](references/whats-new.md) — Scene Bindings (`ctx.sceneData`), `needle` shorthand, `Context.events`, `autoCleanup`, builder APIs, `<needle-app>`, GaussianSplat, DragControls rework + DragTarget. **Check this before assuming an API doesn't exist** — much of it postdates the rest of these references.
 - 📖 [Core API](references/api.md) — lifecycle, decorators, context (input, physics, time), gameobject, coroutines, asset loading, renderer/materials, async modules
 - 🧩 [Components](references/components.md) — animation, audio, video, lighting, camera, scene switching, interaction, splines, particles, debug tools
-- ✋ [DragControls & DragTarget](references/drag-controls.md) — drag modes (planes, surfaces, slide, hinge, rotate, scale), drop slots/grids/areas, snapping, return-on-release, collision checks, XR hold, events
+- ✋ [DragControls & DragTarget](references/drag-controls.md) — drag modes (planes, surfaces, slide, hinge, rotate, scale), handles and child controls (drawers in a movable cabinet, rug edges, turning furniture), drop slots/grids/areas, snapping, return-on-release, collision checks, XR hold, events
+- 🧰 [DragControls patterns](references/drag-controls-patterns.md) — working setups: buttons, switches, dials, levers, doors, drawers that hold items, furniture, resize handles, joysticks, containers, chess, puzzles, bricks, machines, and the script calls that connect them
 - ⚡ [Physics](references/physics.md) — colliders, Rigidbody (forces, velocity, impulse), raycasting, async Rapier loading
 - 🎨 [Post-Processing](references/postprocessing.md) — context.postprocessing API, all built-in effects with parameters
 - 🌐 [Networking](references/networking.md) — connection API, SyncedRoom, PlayerSync, @syncField, SyncedTransform, Voip, ScreenCapture, guid persistence

@@ -4,6 +4,8 @@
 
 API reference: https://engine.needle.tools/docs/api/DragControls · https://engine.needle.tools/docs/api/DragTarget
 
+**Building something specific** (a button, a dial, a drawer that holds things, chess, bricks, a machine with several controls)? Start with [drag-controls-patterns.md](drag-controls-patterns.md). It has working settings for each of these and the script calls that tie them together.
+
 ## Table of Contents
 - [Setup](#setup)
 - [Defaults: Unity vs. code](#defaults-unity-vs-code)
@@ -99,16 +101,16 @@ Each mode reads only its own settings; the rest are silently ignored. This mirro
 | `angleSteps`, `angleSnapMode`, `hingeInput` | | | | | ✓ | | | |
 | `engageMode` | | | | ✓ | ✓ | | | |
 | `rotateX/Y/Z` | | | | | | ✓ | | |
-| `scaleMask`, `minScale/maxScale`, `scaleEngageThreshold` | pinch / corner | pinch / corner | pinch / corner | | | | ✓ | ✓ |
+| `scaleMask`, `minScale/maxScale`, `scaleEngageThreshold` | pinch / rim resize | pinch / rim resize | pinch / rim resize | | | | ✓ | ✓ |
 | `applyAngularVelocityOnRelease` | | | | | | ✓ | | |
 | `valueChanged`, `valueChangedNormalized` | | | | ✓ | ✓ | first axis | factor | angle |
 
 ## Combining settings
 
 **Prerequisites — a setting does nothing unless:**
-- `rotateOnEdgeGrab` → `rotation` is not `Locked`, and `edgeGrabMargin > 0`.
-- `scaleOnCornerGrab` → `allowScaling = true`, and `edgeGrabMargin > 0`.
-- `minScale` / `maxScale` in a moving mode → `allowScaling = true` (pinch) or `scaleOnCornerGrab`.
+- `edgeGrab` / `cornerGrab` → `edgeGrabMargin > 0`. Their `Rotate` option also needs `rotation` other than `Locked`; `Stretch` and the scale options do not need `allowScaling`.
+- `edgeGrabInXR` → `edgeGrab` or `cornerGrab` set.
+- `minScale` / `maxScale` in a moving mode → `allowScaling = true` (pinch), `edgeGrab = Stretch` or a `cornerGrab` scale option.
 - `limitAreaFit` → `limitArea` is set. **`limitArea` must not be a child of the dragged object** — it would move with it and never constrain anything. Use a sibling or a scene object.
 - `customAnchor` → `surfaceAnchor = SurfaceAnchor.Custom` (falls back to the bounding box while empty).
 - `grabPoints` / `alignGrabPointToPointer` → `grabPointMode = GrabPoint.Custom` (empty list falls back to the hit point). Each grab point needs a non-zero scale on every axis (lossy scale counts) — its scaled unit cube is the grab area.
@@ -127,7 +129,7 @@ Each mode reads only its own settings; the rest are silently ignored. This mirro
 - `rangeAngle` ≥ 360 (abs) is free rotation, not a limit; the value still sweeps once per revolution. A range that doesn't contain 0° (the rest pose) is allowed, but the first drag carries the object in and it can't come back out — usually a range measured against the model instead of the pivot.
 - `customPivot` set to the dragged object itself is the same as leaving it empty.
 - `xrHold` is ignored by all in-place modes (they always hold) and has nothing to settle into with `Attached`.
-- Edge/corner grabs are screen and handheld-AR only; XR hands rotate and two-hand-scale instead.
+- Edge/corner grabs are screen and handheld-AR only unless `edgeGrabInXR = true`; by default XR hands rotate and two-hand-scale instead.
 - `settleOnSurface = false` lets a `SnapToSurfaces` object leave the surface edge and be dropped in mid-air.
 
 **Precedence when settings compete for where the object ends up:**
@@ -137,7 +139,7 @@ Each mode reads only its own settings; the rest are silently ignored. This mirro
 4. `returnOnRelease` (`Rest` / `DragStart`).
 5. `checkForCollider = DestinationOnly` release correction, XR `FreeThenSnap` settle.
 
-**`minScale` / `maxScale` mean different things:** in `Scale`/`ScaleAndRotate` they are multiples of the **authored** size (same limits across drags); for pinch and corner resizes they are multiples of the **drag-start** scale (`scaleRelativeToStart`, code-only, default `true`; `false` = absolute world scale per axis).
+**`minScale` / `maxScale` mean different things:** in `Scale`/`ScaleAndRotate` and for edge/corner resizes they are multiples of the **authored** size (same limits across drags); for pinch they are multiples of the **drag-start** scale (`scaleRelativeToStart`, code-only, default `true`; `false` = absolute world scale per axis).
 
 **Good pairs:** `ignorePhysicsWhileDragging` + `checkForCollider` (place by testing colliders, nothing gets scattered) · `Slide`/`HingeRotate` + `axisEngageThreshold`/`angleEngageThreshold` + `engageMode = FromStart` (sticks shut, free once open) · `Rotate` + `returnOnRelease = Rest` + `returnCurve` overshoot (springy joystick) · `SnapToSurfaces` + `surfaceObjects` + `surfaceNormalFilter` (floor only, no walls) · moving mode + `dragTargets = Require` + `DragTarget` (board games).
 
@@ -192,6 +194,80 @@ prop.surfaceObjects = [floorObj];    // descendants count; ANDed with surfaceMas
 prop.surfaceNormalFilter = n => n.y > 0.8;  // code-only: refuse walls/steep faces
 ```
 
+### Several controls on one object
+
+DragControls are built to be combined: each child with its own `DragControls` is a separate grip, and a press goes to the nearest one under the pointer. So the parent's drag doesn't fire when you grab a child.
+
+```ts
+// Movable cabinet with drawers: the cabinet slides on the floor, each drawer opens on its own
+const cab = cabinet.addComponent(DragControls);
+cab.dragMode = DragMode.XZPlane;
+cab.allowScaling = false;
+for (const drawerObj of drawers) {             // children of `cabinet`, origin on the front face
+  const d = drawerObj.addComponent(DragControls);
+  d.dragMode = DragMode.Slide;
+  d.axis = DragAxis.Z;                          // parent (cabinet) space, so it follows the cabinet's yaw
+  d.axisMin = 0; d.axisMax = 0.38;
+}
+```
+
+### Rug that stretches from each edge (one side only)
+
+One `DragControls` on the rug does it: the middle moves it, an edge stretches it along that axis (the opposite edge stays put), a corner resizes both axes.
+
+```ts
+const d = rugObj.addComponent(DragControls);
+d.dragMode = DragMode.XZPlane;
+d.rotation = DragRotationMode.YawOnly;
+d.edgeGrab = EdgeGrabAction.Stretch;
+d.cornerGrab = CornerGrabAction.ScaleFree;   // or ScaleProportional; None = corners stretch too
+d.scaleMask.set(1, 0, 1);
+d.minScale = 0.3; d.maxScale = 3;            // multiples of the authored size
+d.limitArea = floorArea;                     // optional
+```
+
+For visible grips instead of an invisible rim, use four edge handles, each with its own `DragControls` that drives the same rug through `customTransform`. `Scale` resizes about `customPivot`, so a pivot on the **opposite** edge keeps that edge still while the grabbed one follows the pointer. With `scaleMask` the handle only stretches its own axis, not the whole rug.
+
+```ts
+// rug: root of the carpet at unit scale; its geometry spans -0.5..0.5 on X and Z
+const edges = [
+  { axis: "x", side:  1 }, { axis: "x", side: -1 },
+  { axis: "z", side:  1 }, { axis: "z", side: -1 },
+] as const;
+for (const { axis, side } of edges) {
+  const handle = makeHandleMesh(axis);          // thin bar along the edge, child of `rug`
+  handle.position[axis] = 0.5 * side;
+  rug.add(handle);
+
+  const pivot = new Object3D();                 // empty on the opposite edge
+  pivot.position[axis] = -0.5 * side;
+  rug.add(pivot);
+
+  const d = handle.addComponent(DragControls);
+  d.customTransform = rug;                      // the handle is the grip, the rug is what resizes
+  d.dragMode = DragMode.Scale;
+  d.customPivot = pivot;                        // read once per drag, position only
+  d.scaleMask.set(axis === "x" ? 1 : 0, 0, axis === "z" ? 1 : 0);
+  d.minScale = 0.3; d.maxScale = 3;             // multiples of the authored size
+}
+// Moving the whole rug: one more DragControls on `rug` itself (XZPlane). The handles win the press on the edges.
+```
+Handles parented to the rug inherit its scale, so a bar along the X edge gets wider when the rug is stretched along X. If that matters, keep the bars thin across their own axis, or put the handles in a sibling group that you re-place after each drag (`dragEnded`). See [patterns: Resizing](drag-controls-patterns.md#resizing) for the sibling-group setup.
+
+### Turning furniture with the mouse
+
+A single pointer moving furniture never rotates it. Let the rim of the object turn it instead, and the middle keeps moving it:
+
+```ts
+const chair = chairObj.addComponent(DragControls);
+chair.dragMode = DragMode.XZPlane;
+chair.allowScaling = false;
+chair.rotation = DragRotationMode.YawOnly;     // edge turn is off while rotation is Locked (code default)
+chair.edgeGrab = EdgeGrabAction.Rotate;
+chair.edgeGrabMargin = 0.25;                    // fraction of the shortest half-extent
+```
+Two-finger twist on touch and the XR wrist also turn it once `rotation` isn't `Locked`. For a fixed-step turn from a key or button, rotate about the up axis (`obj.rotateY(step)`) rather than adding to `rotation.y` (see [Gotchas](#gotchas)).
+
 ## Reading the value of a control
 
 | Property | Meaning |
@@ -217,7 +293,7 @@ drawer.valueChangedNormalized.addEventListener(t => light.intensity = t * 5);
 - `SnapMode`: `None = 0`, `Steps = 1` (reads `*Steps`), `Incremental = 2` (default; reads `*Snap` as spacing), `Ends = 3` (free travel; let go within `*Snap` of an end and it pulls shut/open).
 
 Engage thresholds are dead zones before the object starts following:
-- `planeEngageThreshold` (moving modes, world units), `axisEngageThreshold` (Slide), `angleEngageThreshold` (hinge, ScaleAndRotate, edge-turn), `scaleEngageThreshold` (Scale, ScaleAndRotate, corner resize), `rotateX.engageThreshold` (per axis — keeps a joystick pushed forward from drifting sideways).
+- `planeEngageThreshold` (moving modes, world units), `axisEngageThreshold` (Slide), `angleEngageThreshold` (hinge, ScaleAndRotate, edge/corner turn), `scaleEngageThreshold` (Scale, ScaleAndRotate, edge stretch, corner resize), `rotateX.engageThreshold` (per axis — keeps a joystick pushed forward from drifting sideways).
 - `engageMode` (Slide/Hinge only): `FromStart = 0`, `FromEnd = 1`, `Always = 2` (default; with snapping also holds at each stop). A drawer that sticks shut but slides freely once open: `axisEngageThreshold = 0.05`, `engageMode = 0`.
 - `engageThresholdElastic` + `engageThresholdStiffness` (0…1): stretch toward the pointer inside the dead zone instead of standing still; releasing before the threshold returns the object. Stiffness `1` = same as off.
 
@@ -255,20 +331,25 @@ In `Slide`/`HingeRotate`, `grabPoints` only restrict where the object can be tak
 
 ## Edge and corner grabs
 
-Moving modes on screen/handheld AR only: the middle moves, the rim turns, the corners resize (corners win over edges).
+Moving modes only: the middle always moves the object; the sides and corners do what you pick.
+
+| Setting | Options |
+|---------|---------|
+| `edgeGrab: EdgeGrabAction` | `None` (default) · `Rotate` (turn in place about the mode's up axis or `customPivot`) · `Stretch` (resize along that side's axis; opposite side fixed, grabbed side follows the pointer) |
+| `cornerGrab: CornerGrabAction` | `None` (default; corners do what the edges do) · `ScaleFree` (both face axes independently) · `ScaleProportional` (uniform; grows up from the floor) · `Rotate` |
 
 ```ts
-drag.rotation = DragRotationMode.YawOnly;  // edge turn is off while rotation is Locked
-drag.allowScaling = true;                  // corner resize needs this
-drag.rotateOnEdgeGrab = true;
-drag.scaleOnCornerGrab = true;
-drag.edgeGrabMargin = 0.25;                // fraction of the shortest half-extent; 0 disables
-drag.edgeGrabMode = EdgeGrabMode.SideView; // TopDown (default) | SideView | FaceGrid
-drag.edgeGrabBoundsRaycast = true;         // hit the bounding box, for non-box shapes
+drag.rotation = DragRotationMode.YawOnly;   // Rotate is off while rotation is Locked
+drag.edgeGrab = EdgeGrabAction.Rotate;
+drag.cornerGrab = CornerGrabAction.ScaleProportional;
+drag.edgeGrabMargin = 0.25;                 // fraction of the shortest half-extent; 0 disables
+drag.edgeGrabMode = EdgeGrabMode.SideView;  // TopDown (default) | SideView | FaceGrid
+drag.edgeGrabBoundsRaycast = true;          // hit the bounding box, for non-box shapes
+drag.edgeGrabInXR = false;                  // true: XR hands/controllers use the rim too
 ```
-The edge turn uses `angleEngageThreshold`, the corner resize `scaleEngageThreshold` and `scaleMask`. Ask before a drag what a spot does — for cursors and highlights:
+Every resize keeps the opposite side or corner where it is, reads `scaleMask` (`0` locks an axis), `minScale`/`maxScale` and `scaleEngageThreshold`, and respects `checkForCollider` and (plane modes) `limitArea` — the grown side stops at the area's edge. It does not need `allowScaling`. Turns use `angleEngageThreshold`. Ask before a drag what a spot does — for cursors and highlights:
 ```ts
-const g = drag.getGestureAt(hit.point);   // GrabGesture.Move | Turn | Resize | null
+const g = drag.getGestureAt(hit.point);   // GrabGesture.Move | Turn | Resize | Stretch | null
 ```
 `getGrabZoneAt(point)` returns `GrabZone.Body/Edge/Corner`; `getGrabRim(out)` gives the rim geometry for drawing. Call `invalidateBounds()` after swapping geometry.
 
@@ -396,3 +477,5 @@ Still honoured when the replacement is unset, so old scenes keep working. Use th
 - `valueChanged` only reports in-place modes; moving modes report through `dragUpdated`.
 - Event args and `pointerState` are live buffers reused every frame — copy before storing.
 - `surfaceNormalFilter` and `scaleRelativeToStart` are code-only (not in the Unity inspector).
+- Don't build your own drag, rotate or resize handles out of pointer events and a `Raycaster` before trying the modes and recipes above. Handles that drive another object (`customTransform`), pivots (`customPivot`), per-axis resize (`scaleMask`) and child controls inside a draggable parent cover most furniture and editor-style interactions.
+- Read yaw from the quaternion, not `rotation.y`. Once an object's quaternion has been written (by a drag, for example), its Euler angles can come back as `(π, 0, π)` instead of `(0, π, 0)`, and adding to `rotation.y` then turns it the wrong way. Use `obj.rotateY(delta)` or premultiply a Y-axis quaternion.
