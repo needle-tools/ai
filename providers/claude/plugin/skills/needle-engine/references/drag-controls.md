@@ -40,6 +40,7 @@ drag.dragMode = DragMode.XZPlane;
 - The object (or a child) needs **visible mesh geometry**. The `EventSystem` is created automatically; DragControls no longer adds an `ObjectRaycaster`, and none is needed.
 - A `Rigidbody` on the dragged object is made kinematic for the drag and restored afterwards.
 - `customTransform` (every mode) moves a different object while this object's geometry stays the handle — several handles with different modes can drive one object (a lid with a grip at each end, a machine with a slider and a knob).
+- Settings are grouped: `snapping` (grid, axis and angle snap, snap points), `engage` (thresholds), `rim` (edge and corner grabs), `grab` (grab points), `surface` (surface filter and anchor), `scaling` (mask, min/max) and `returning` (return on release). Set fields on the group (`drag.snapping.gridResolution = 0.25`); don't replace the group object.
 - Networking: add `SyncedTransform`; ownership is taken automatically when a drag starts.
 - Debug: `?debugdrag` (drag helpers) and `?debugdragtarget` (drop target logging/gizmos).
 
@@ -51,7 +52,7 @@ A component added in the Unity inspector and one created with `addComponent` sta
 |---------|---------------------|----------------------------------|------------------------------|
 | `rotation` | `YawOnly` | `Free` (`Locked` only if both legacy keep-rotation flags were on) | screen `Locked` (`keepRotation`), XR `Free` (`xrKeepRotation`) |
 | `allowScaling` | `false` | `!keepScale` (usually `true`) | **`true`** (`!keepScale`) — pinch scales |
-| `minScale` / `maxScale` | `0.25` / `4` | `0.0001` / `1000000` (unbounded, as before) | `0.0001` / `1000000` |
+| `scaling.min` / `scaling.max` | `0.25` / `4` | `0.0001` / `1000000` (unbounded, as before) | `0.0001` / `1000000` |
 | `xrHold` | `FreeThenSnap` | `Free` if `xrDragMode` was `Attached`, else `AlwaysSnap` | `Free` (from `xrDragMode = Attached`) |
 
 In code, set these explicitly instead of relying on defaults.
@@ -66,11 +67,11 @@ In code, set these explicitly instead of relying on defaults.
 | `DynamicViewAngle` | moving | XZ from above, screen plane from low angles (default). |
 | `Attached` | moving | Follows the pointer at its grab depth (screen plane / XR hand). |
 | `HitNormal` | moving | Along the initial hit normal. |
-| `SnapToSurfaces` | moving | Places on scene surfaces; filter with `surfaceMask` / `surfaceObjects`. |
+| `SnapToSurfaces` | moving | Places on scene surfaces; filter with `surface.mask` / `surface.objects`. |
 | `Slide` | in-place | Along `axis` between `axisMin`/`axisMax`. Drawers, sliders, levers. |
 | `HingeRotate` | in-place | Around `axis` at `customPivot`, `startAngle` + `rangeAngle`. Doors, lids, valves. |
 | `Rotate` | in-place | Several axes at once via `rotateX`/`rotateY`/`rotateZ`. Joysticks, trackballs, gimbals. |
-| `Scale` | in-place | Resize along `scaleMask`. Handles, resizable furniture. |
+| `Scale` | in-place | Resize along `scaling.mask`. Handles, resizable furniture. |
 | `ScaleAndRotate` | in-place | Turns about `axis` (bearing) and resizes by distance from it. Knobs that grow. |
 | `None` | — | Not draggable; every other setting is inactive. |
 
@@ -82,66 +83,66 @@ Each mode reads only its own settings; the rest are silently ignored. This mirro
 
 | Setting | Planes | SnapToSurfaces | Attached / HitNormal / DynamicViewAngle | Slide | HingeRotate | Rotate | Scale | ScaleAndRotate |
 |---|---|---|---|---|---|---|---|---|
-| `customTransform`, `returnOnRelease`, `checkForCollider`, `ignorePhysicsWhileDragging`, `dragStarted/Updated/Ended`, `allowDrop` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| `dragTargets`, `snapPoints` | ✓ | ✓ | ✓ | | | | | |
+| `customTransform`, `returning.mode`, `checkForCollider`, `ignorePhysicsWhileDragging`, `dragStarted/Updated/Ended`, `allowDrop` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| `dragTargets`, `snapping.points` | ✓ | ✓ | ✓ | | | | | |
 | `limitArea`, `limitAreaFit` | ✓ | | | | | | | |
-| `surfaceMask/Objects/NormalFilter`, `surfaceAnchor`, `customAnchor`, `alignToSurfaceNormal`, `settleOnSurface` | | ✓ | | | | | | |
-| `snapGridResolution`, `snapGridSpace`, `planeEngageThreshold` | ✓ | ✓ | ✓ | | | | | |
+| `surface.mask/objects/normalFilter`, `surface.anchor`, `surface.customAnchor`, `surface.alignToNormal`, `surface.settle` | | ✓ | | | | | | |
+| `snapping.gridResolution`, `snapping.gridSpace`, `engage.planeThreshold` | ✓ | ✓ | ✓ | | | | | |
 | `dragOffset` | ✓ | ✓ | not `Attached` | | | | | |
 | `rotation`, `allowScaling`, edge/corner grab | ✓ | ✓ | ✓ | | | | | |
-| `grabPointMode`, `grabPoints` | ✓ | ✓ | ✓ | handles only | handles only | | | |
-| `alignGrabPointToPointer` | ✓ | ✓ | ✓ | | | | | |
+| `grab.mode`, `grab.points` | ✓ | ✓ | ✓ | handles only | handles only | | | |
+| `grab.alignToPointer` | ✓ | ✓ | ✓ | | | | | |
 | `xrHold` | ✓ | ✓ | not `Attached` | | | | | |
 | `xrDistanceDragFactor` | ✓ | ✓ | ✓ | | | | | |
 | `attachedDepthRaycast` | | | `Attached` only | | | | | |
 | `axis` | | | | ✓ | ✓ | | | ✓ |
 | `customPivot` | | | | | ✓ | ✓ | ✓ | ✓ |
-| `axisMin/Max`, `axisSnap/Steps/SnapMode`, `axisEngageThreshold` | | | | ✓ | | | | |
-| `startAngle`, `rangeAngle`, `normalizedRangeAngle`, `angleSnap`, `angleEngageThreshold` | | | | | ✓ | | | ✓ |
-| `angleSteps`, `angleSnapMode`, `hingeInput` | | | | | ✓ | | | |
-| `engageMode` | | | | ✓ | ✓ | | | |
+| `axisMin/Max`, `snapping.axisSnap/axisSteps/axisSnapMode`, `engage.axisThreshold` | | | | ✓ | | | | |
+| `startAngle`, `rangeAngle`, `normalizedRangeAngle`, `snapping.angleSnap`, `engage.angleThreshold` | | | | | ✓ | | | ✓ |
+| `snapping.angleSteps`, `snapping.angleSnapMode`, `hingeInput` | | | | | ✓ | | | |
+| `engage.mode` | | | | ✓ | ✓ | | | |
 | `rotateX/Y/Z` | | | | | | ✓ | | |
-| `scaleMask`, `minScale/maxScale`, `scaleEngageThreshold` | pinch / rim resize | pinch / rim resize | pinch / rim resize | | | | ✓ | ✓ |
+| `scaling.mask`, `scaling.min/max`, `engage.scaleThreshold` | pinch / rim resize | pinch / rim resize | pinch / rim resize | | | | ✓ | ✓ |
 | `applyAngularVelocityOnRelease` | | | | | | ✓ | | |
 | `valueChanged`, `valueChangedNormalized` | | | | ✓ | ✓ | first axis | factor | angle |
 
 ## Combining settings
 
 **Prerequisites — a setting does nothing unless:**
-- `edgeGrab` / `cornerGrab` → `edgeGrabMargin > 0`. Their `Rotate` option also needs `rotation` other than `Locked`; `Stretch` and the scale options do not need `allowScaling`.
-- `edgeGrabInXR` → `edgeGrab` or `cornerGrab` set.
-- `minScale` / `maxScale` in a moving mode → `allowScaling = true` (pinch), `edgeGrab = Stretch` or a `cornerGrab` scale option.
+- `rim.edge` / `rim.corner` → `rim.margin > 0`. Their `Rotate` option also needs `rotation` other than `Locked`; `Stretch` and the scale options do not need `allowScaling`.
+- `rim.inXR` → `rim.edge` or `rim.corner` set.
+- `scaling.min` / `scaling.max` in a moving mode → `allowScaling = true` (pinch), `rim.edge = Stretch` or a `rim.corner` scale option.
 - `limitAreaFit` → `limitArea` is set. **`limitArea` must not be a child of the dragged object** — it would move with it and never constrain anything. Use a sibling or a scene object.
-- `customAnchor` → `surfaceAnchor = SurfaceAnchor.Custom` (falls back to the bounding box while empty).
-- `grabPoints` / `alignGrabPointToPointer` → `grabPointMode = GrabPoint.Custom` (empty list falls back to the hit point). Each grab point needs a non-zero scale on every axis (lossy scale counts) — its scaled unit cube is the grab area.
-- `engageMode` → `axisEngageThreshold` / `angleEngageThreshold` > 0.
-- `engageThresholdElastic` / `engageThresholdStiffness` → some engage threshold > 0. They are **one** shared setting for every threshold on the component.
-- `snapGridSpace` → `snapGridResolution > 0`.
-- `returnDelay` / `returnDuration` / `returnCurve` → `returnOnRelease` ≠ `None`. `returnCurve` is unused while `returnDuration = 0`.
-- `snapPoints` → `dragTargets` ≠ `Disallow` and a `DragTarget` in the scene.
+- `surface.customAnchor` → `surface.anchor = SurfaceAnchor.Custom` (falls back to the bounding box while empty).
+- `grab.points` / `grab.alignToPointer` → `grab.mode = GrabPoint.Custom` (empty list falls back to the hit point). Each grab point needs a non-zero scale on every axis (lossy scale counts) — its scaled unit cube is the grab area.
+- `engage.mode` → `engage.axisThreshold` / `engage.angleThreshold` > 0.
+- `engage.elastic` / `engage.stiffness` → some engage threshold > 0. They are **one** shared setting for every threshold on the component.
+- `snapping.gridSpace` → `snapping.gridResolution > 0`.
+- `returning.delay` / `returning.duration` / `returning.curve` → `returning.mode` ≠ `None`. `returning.curve` is unused while `returning.duration = 0`.
+- `snapping.points` → `dragTargets` ≠ `Disallow` and a `DragTarget` in the scene.
 - `applyAngularVelocityOnRelease` → a `Rigidbody` on the object (Unity: "Add Rotation Physics Component").
 
 **No effect / mode limits:**
 - `GrabPoint.Pivot` has no effect in `Slide`/`HingeRotate` (the object is never re-hung on the pointer); use `Custom` there to restrict where it can be grabbed.
-- `ScaleAndRotate` has only plain `angleSnap` spacing — no `angleSteps`/`angleSnapMode`, no `engageMode`, no `hingeInput` (it always reads the bearing around the axis).
+- `ScaleAndRotate` has only plain `snapping.angleSnap` spacing — no `snapping.angleSteps`/`snapping.angleSnapMode`, no `engage.mode`, no `hingeInput` (it always reads the bearing around the axis).
 - `Rotate` with all three axes enabled and **any** limit, snap or engage threshold runs as a gimbal: the middle axis only reaches ±90°. With no limits it is a free trackball, but the reported angles are one of several equivalent readings. For meaningful angles, disable an axis or drop the limits.
-- `Scale` / `ScaleAndRotate` with `scaleMask = (0, 0, 0)` never resize (`Scale` then does nothing at all).
+- `Scale` / `ScaleAndRotate` with `scaling.mask = (0, 0, 0)` never resize (`Scale` then does nothing at all).
 - `rangeAngle` ≥ 360 (abs) is free rotation, not a limit; the value still sweeps once per revolution. A range that doesn't contain 0° (the rest pose) is allowed, but the first drag carries the object in and it can't come back out — usually a range measured against the model instead of the pivot.
 - `customPivot` set to the dragged object itself is the same as leaving it empty.
 - `xrHold` is ignored by all in-place modes (they always hold) and has nothing to settle into with `Attached`.
-- Edge/corner grabs are screen and handheld-AR only unless `edgeGrabInXR = true`; by default XR hands rotate and two-hand-scale instead.
-- `settleOnSurface = false` lets a `SnapToSurfaces` object leave the surface edge and be dropped in mid-air.
+- Edge/corner grabs are screen and handheld-AR only unless `rim.inXR = true`; by default XR hands rotate and two-hand-scale instead.
+- `surface.settle = false` lets a `SnapToSurfaces` object leave the surface edge and be dropped in mid-air.
 
 **Precedence when settings compete for where the object ends up:**
 1. `DragControls.allowDrop` refusal or `DragTarget.beforeDrop` refusal → back to where this drag picked it up.
-2. A `DragTarget` that accepts the object → it stays in the target (beats `returnOnRelease`).
+2. A `DragTarget` that accepts the object → it stays in the target (beats `returning.mode`).
 3. `dragTargets = Require` with no target → back to the pickup pose.
-4. `returnOnRelease` (`Rest` / `DragStart`).
+4. `returning.mode` (`Rest` / `DragStart`).
 5. `checkForCollider = DestinationOnly` release correction, XR `FreeThenSnap` settle.
 
-**`minScale` / `maxScale` mean different things:** in `Scale`/`ScaleAndRotate` and for edge/corner resizes they are multiples of the **authored** size (same limits across drags); for pinch they are multiples of the **drag-start** scale (`scaleRelativeToStart`, code-only, default `true`; `false` = absolute world scale per axis).
+**`scaling.min` / `scaling.max` mean different things:** in `Scale`/`ScaleAndRotate` and for edge/corner resizes they are multiples of the **authored** size (same limits across drags); for pinch they are multiples of the **drag-start** scale (`scaling.relativeToStart`, code-only, default `true`; `false` = absolute world scale per axis).
 
-**Good pairs:** `ignorePhysicsWhileDragging` + `checkForCollider` (place by testing colliders, nothing gets scattered) · `Slide`/`HingeRotate` + `axisEngageThreshold`/`angleEngageThreshold` + `engageMode = FromStart` (sticks shut, free once open) · `Rotate` + `returnOnRelease = Rest` + `returnCurve` overshoot (springy joystick) · `SnapToSurfaces` + `surfaceObjects` + `surfaceNormalFilter` (floor only, no walls) · moving mode + `dragTargets = Require` + `DragTarget` (board games).
+**Good pairs:** `ignorePhysicsWhileDragging` + `checkForCollider` (place by testing colliders, nothing gets scattered) · `Slide`/`HingeRotate` + `engage.axisThreshold`/`engage.angleThreshold` + `engage.mode = FromStart` (sticks shut, free once open) · `Rotate` + `returning.mode = Rest` + `returning.curve` overshoot (springy joystick) · `SnapToSurfaces` + `surface.objects` + `surface.normalFilter` (floor only, no walls) · moving mode + `dragTargets = Require` + `DragTarget` (board games).
 
 ## Recipes
 
@@ -154,7 +155,7 @@ import {
 const chair = chairObj.addComponent(DragControls);
 chair.dragMode = DragMode.XZPlane;
 chair.limitArea = rugObj;            // its scaled unit cube is the region; not a child of chairObj
-chair.snapGridResolution = 0.25;
+chair.snapping.gridResolution = 0.25;
 chair.rotation = DragRotationMode.YawOnly;
 chair.allowScaling = false;          // code default would allow pinch scaling
 
@@ -179,19 +180,19 @@ stick.dragMode = DragMode.Rotate;
 stick.rotateY.enabled = false;       // two axes: no gimbal flip
 stick.rotateX.startAngle = -30; stick.rotateX.rangeAngle = 60;
 stick.rotateZ.startAngle = -15; stick.rotateZ.rangeAngle = 30;
-stick.returnOnRelease = DragReturn.Rest;
+stick.returning.mode = DragReturn.Rest;
 
 // Height-only resize handle
 const handle = boxObj.addComponent(DragControls);
 handle.dragMode = DragMode.Scale;
-handle.scaleMask.set(0, 1, 0);       // exponents per axis; 0 = never written
-handle.minScale = 0.5; handle.maxScale = 3;   // multiples of the authored size
+handle.scaling.mask.set(0, 1, 0);       // exponents per axis; 0 = never written
+handle.scaling.min = 0.5; handle.scaling.max = 3;   // multiples of the authored size
 
 // Place props on the floor mesh only
 const prop = propObj.addComponent(DragControls);
 prop.dragMode = DragMode.SnapToSurfaces;
-prop.surfaceObjects = [floorObj];    // descendants count; ANDed with surfaceMask (layers)
-prop.surfaceNormalFilter = n => n.y > 0.8;  // code-only: refuse walls/steep faces
+prop.surface.objects = [floorObj];    // descendants count; ANDed with surface.mask (layers)
+prop.surface.normalFilter = n => n.y > 0.8;  // code-only: refuse walls/steep faces
 ```
 
 ### Several controls on one object
@@ -219,14 +220,14 @@ One `DragControls` on the rug does it: the middle moves it, an edge stretches it
 const d = rugObj.addComponent(DragControls);
 d.dragMode = DragMode.XZPlane;
 d.rotation = DragRotationMode.YawOnly;
-d.edgeGrab = EdgeGrabAction.Stretch;
-d.cornerGrab = CornerGrabAction.ScaleFree;   // or ScaleProportional; None = corners stretch too
-d.scaleMask.set(1, 0, 1);
-d.minScale = 0.3; d.maxScale = 3;            // multiples of the authored size
+d.rim.edge = EdgeGrabAction.Stretch;
+d.rim.corner = CornerGrabAction.ScaleFree;   // or ScaleProportional; None = corners stretch too
+d.scaling.mask.set(1, 0, 1);
+d.scaling.min = 0.3; d.scaling.max = 3;            // multiples of the authored size
 d.limitArea = floorArea;                     // optional
 ```
 
-For visible grips instead of an invisible rim, use four edge handles, each with its own `DragControls` that drives the same rug through `customTransform`. `Scale` resizes about `customPivot`, so a pivot on the **opposite** edge keeps that edge still while the grabbed one follows the pointer. With `scaleMask` the handle only stretches its own axis, not the whole rug.
+For visible grips instead of an invisible rim, use four edge handles, each with its own `DragControls` that drives the same rug through `customTransform`. `Scale` resizes about `customPivot`, so a pivot on the **opposite** edge keeps that edge still while the grabbed one follows the pointer. With `scaling.mask` the handle only stretches its own axis, not the whole rug.
 
 ```ts
 // rug: root of the carpet at unit scale; its geometry spans -0.5..0.5 on X and Z
@@ -247,8 +248,8 @@ for (const { axis, side } of edges) {
   d.customTransform = rug;                      // the handle is the grip, the rug is what resizes
   d.dragMode = DragMode.Scale;
   d.customPivot = pivot;                        // read once per drag, position only
-  d.scaleMask.set(axis === "x" ? 1 : 0, 0, axis === "z" ? 1 : 0);
-  d.minScale = 0.3; d.maxScale = 3;             // multiples of the authored size
+  d.scaling.mask.set(axis === "x" ? 1 : 0, 0, axis === "z" ? 1 : 0);
+  d.scaling.min = 0.3; d.scaling.max = 3;             // multiples of the authored size
 }
 // Moving the whole rug: one more DragControls on `rug` itself (XZPlane). The handles win the press on the edges.
 ```
@@ -263,8 +264,8 @@ const chair = chairObj.addComponent(DragControls);
 chair.dragMode = DragMode.XZPlane;
 chair.allowScaling = false;
 chair.rotation = DragRotationMode.YawOnly;     // edge turn is off while rotation is Locked (code default)
-chair.edgeGrab = EdgeGrabAction.Rotate;
-chair.edgeGrabMargin = 0.25;                    // fraction of the shortest half-extent
+chair.rim.edge = EdgeGrabAction.Rotate;
+chair.rim.margin = 0.25;                    // fraction of the shortest half-extent
 ```
 Two-finger twist on touch and the XR wrist also turn it once `rotation` isn't `Locked`. For a fixed-step turn from a key or button, rotate about the up axis (`obj.rotateY(step)`) rather than adding to `rotation.y` (see [Gotchas](#gotchas)).
 
@@ -273,9 +274,9 @@ Two-finger twist on touch and the XR wrist also turn it once `rotation` isn't `L
 | Property | Meaning |
 |----------|---------|
 | `currentValue` | Slide: parent units from rest. Hinge/ScaleAndRotate: degrees from rest. Scale: factor. Rotate: first enabled axis. Moving modes: `0`. |
-| `normalizedValue` | `0…1` across the authored range (`axisMin`→`axisMax`, `startAngle`→end of `rangeAngle`, Scale: `minScale`→`maxScale`). |
+| `normalizedValue` | `0…1` across the authored range (`axisMin`→`axisMax`, `startAngle`→end of `rangeAngle`, Scale: `scaling.min`→`scaling.max`). |
 | `currentAngles` / `normalizedAngles` | `Rotate`: per-axis degrees / `0…1` as a `Vector3`. Live buffer — copy it. |
-| `currentScale` / `normalizedScale` | `ScaleAndRotate`: scale factor / `0…1` between `minScale` and `maxScale`. |
+| `currentScale` / `normalizedScale` | `ScaleAndRotate`: scale factor / `0…1` between `scaling.min` and `scaling.max`. |
 
 Events fire only on change:
 ```ts
@@ -287,25 +288,25 @@ drawer.valueChangedNormalized.addEventListener(t => light.intensity = t * 5);
 
 ## Snapping and engage thresholds
 
-- **Grid (moving modes):** `snapGridResolution` (0 = off), `snapGridSpace` = world grid or parent space.
-- **Slide:** `axisSnapMode` picks which field is read: `axisSteps` (count of even stops) or `axisSnap` (spacing / end capture distance).
-- **Hinge:** `angleSnapMode` + `angleSteps` / `angleSnap`. `ScaleAndRotate`: `angleSnap` spacing only. `Rotate`: per-axis `rotateX.angleSnap` etc.
+- **Grid (moving modes):** `snapping.gridResolution` (0 = off), `snapping.gridSpace` = world grid or parent space.
+- **Slide:** `snapping.axisSnapMode` picks which field is read: `snapping.axisSteps` (count of even stops) or `snapping.axisSnap` (spacing / end capture distance).
+- **Hinge:** `snapping.angleSnapMode` + `snapping.angleSteps` / `snapping.angleSnap`. `ScaleAndRotate`: `snapping.angleSnap` spacing only. `Rotate`: per-axis `rotateX.angleSnap` etc.
 - `SnapMode`: `None = 0`, `Steps = 1` (reads `*Steps`), `Incremental = 2` (default; reads `*Snap` as spacing), `Ends = 3` (free travel; let go within `*Snap` of an end and it pulls shut/open).
 
 Engage thresholds are dead zones before the object starts following:
-- `planeEngageThreshold` (moving modes, world units), `axisEngageThreshold` (Slide), `angleEngageThreshold` (hinge, ScaleAndRotate, edge/corner turn), `scaleEngageThreshold` (Scale, ScaleAndRotate, edge stretch, corner resize), `rotateX.engageThreshold` (per axis — keeps a joystick pushed forward from drifting sideways).
-- `engageMode` (Slide/Hinge only): `FromStart = 0`, `FromEnd = 1`, `Always = 2` (default; with snapping also holds at each stop). A drawer that sticks shut but slides freely once open: `axisEngageThreshold = 0.05`, `engageMode = 0`.
-- `engageThresholdElastic` + `engageThresholdStiffness` (0…1): stretch toward the pointer inside the dead zone instead of standing still; releasing before the threshold returns the object. Stiffness `1` = same as off.
+- `engage.planeThreshold` (moving modes, world units), `engage.axisThreshold` (Slide), `engage.angleThreshold` (hinge, ScaleAndRotate, edge/corner turn), `engage.scaleThreshold` (Scale, ScaleAndRotate, edge stretch, corner resize), `rotateX.engageThreshold` (per axis — keeps a joystick pushed forward from drifting sideways).
+- `engage.mode` (Slide/Hinge only): `FromStart = 0`, `FromEnd = 1`, `Always = 2` (default; with snapping also holds at each stop). A drawer that sticks shut but slides freely once open: `engage.axisThreshold = 0.05`, `engage.mode = 0`.
+- `engage.elastic` + `engage.stiffness` (0…1): stretch toward the pointer inside the dead zone instead of standing still; releasing before the threshold returns the object. Stiffness `1` = same as off.
 
 > `SnapMode`, `EngageMode` and `SnapGridSpace` are **not exported** from the `@needle-tools/engine` root at the time of writing — assign the numeric values shown above (or set them in Unity).
 
 ## Return on release
 
 ```ts
-lever.returnOnRelease = DragReturn.Rest;   // None (default) | Rest (authored pose) | DragStart (undo this drag)
-lever.returnDelay = 0.5;                   // seconds held before returning; regrab cancels
-lever.returnDuration = 0.25;               // 0 snaps
-lever.returnCurve = myAnimationCurve;      // progress→progress; >1 overshoots (springy)
+lever.returning.mode = DragReturn.Rest;   // None (default) | Rest (authored pose) | DragStart (undo this drag)
+lever.returning.delay = 0.5;                   // seconds held before returning; regrab cancels
+lever.returning.duration = 0.25;               // 0 snaps
+lever.returning.curve = myAnimationCurve;      // progress→progress; >1 overshoots (springy)
 ```
 Works in every mode. Value events follow the object home. An accepting drop target wins over the return. From code: `drag.resetToRest(obj?, animate = true)` and `drag.getRestPose(obj?)` (parent-space pose; the zero every range is measured from).
 
@@ -315,18 +316,18 @@ Four separate ideas — don't mix them up:
 
 | Field | Answers |
 |-------|---------|
-| `grabPointMode` (`GrabPoint.Hit` default / `Pivot` / `Custom`) + `grabPoints` | What the **pointer** holds. `Custom` = only the scaled unit cube of each `grabPoints` transform can be grabbed (a cup by its handle). `alignGrabPointToPointer` hangs the object by the handle's frame. |
-| `surfaceAnchor` (`SurfaceAnchor.BoundsBottom` default / `Pivot` / `Custom`) + `customAnchor` | What touches the **surface** in `SnapToSurfaces` (height only). |
-| `snapPoints` | What mates with a `DragTarget` **slot** (connectors, plugs). Empty = object origin. |
+| `grab.mode` (`GrabPoint.Hit` default / `Pivot` / `Custom`) + `grab.points` | What the **pointer** holds. `Custom` = only the scaled unit cube of each `grab.points` transform can be grabbed (a cup by its handle). `grab.alignToPointer` hangs the object by the handle's frame. |
+| `surface.anchor` (`SurfaceAnchor.BoundsBottom` default / `Pivot` / `Custom`) + `surface.customAnchor` | What touches the **surface** in `SnapToSurfaces` (height only). |
+| `snapping.points` | What mates with a `DragTarget` **slot** (connectors, plugs). Empty = object origin. |
 | `customPivot` | What `HingeRotate`/`Rotate`/`Scale`/`ScaleAndRotate` turn and scale **about**. |
 
-In `Slide`/`HingeRotate`, `grabPoints` only restrict where the object can be taken hold of; the object is not re-hung on them.
+In `Slide`/`HingeRotate`, `grab.points` only restrict where the object can be taken hold of; the object is not re-hung on them.
 
 ## Rotating and scaling while moving
 
 - `rotation: DragRotationMode` — `Locked = 0`, `YawOnly = 1` (upright, turnable — usually what you want), `Free = 2`. Applies to screen and XR. Single-pointer screen drags never rotate; rotation comes from two-finger twist, XR wrist, edge grabs, or drop-target previews.
-- `allowScaling` — two-pointer pinch / two-hand scaling, bounded by `minScale`/`maxScale`.
-- `alignToSurfaceNormal` (`SnapToSurfaces`) is independent of `rotation`.
+- `allowScaling` — two-pointer pinch / two-hand scaling, bounded by `scaling.min`/`scaling.max`.
+- `surface.alignToNormal` (`SnapToSurfaces`) is independent of `rotation`.
 - `dragOffset` — visual stand-off along the plane/surface normal while dragging (lifts the object slightly); eases away on release.
 
 ## Edge and corner grabs
@@ -335,19 +336,19 @@ Moving modes only: the middle always moves the object; the sides and corners do 
 
 | Setting | Options |
 |---------|---------|
-| `edgeGrab: EdgeGrabAction` | `None` (default) · `Rotate` (turn in place about the mode's up axis or `customPivot`) · `Stretch` (resize along that side's axis; opposite side fixed, grabbed side follows the pointer) |
-| `cornerGrab: CornerGrabAction` | `None` (default; corners do what the edges do) · `ScaleFree` (both face axes independently) · `ScaleProportional` (uniform; grows up from the floor) · `Rotate` |
+| `rim.edge: EdgeGrabAction` | `None` (default) · `Rotate` (turn in place about the mode's up axis or `customPivot`) · `Stretch` (resize along that side's axis; opposite side fixed, grabbed side follows the pointer) |
+| `rim.corner: CornerGrabAction` | `None` (default; corners do what the edges do) · `ScaleFree` (both face axes independently) · `ScaleProportional` (uniform; grows up from the floor) · `Rotate` |
 
 ```ts
 drag.rotation = DragRotationMode.YawOnly;   // Rotate is off while rotation is Locked
-drag.edgeGrab = EdgeGrabAction.Rotate;
-drag.cornerGrab = CornerGrabAction.ScaleProportional;
-drag.edgeGrabMargin = 0.25;                 // fraction of the shortest half-extent; 0 disables
-drag.edgeGrabMode = EdgeGrabMode.SideView;  // TopDown (default) | SideView | FaceGrid
-drag.edgeGrabBoundsRaycast = true;          // hit the bounding box, for non-box shapes
-drag.edgeGrabInXR = false;                  // true: XR hands/controllers use the rim too
+drag.rim.edge = EdgeGrabAction.Rotate;
+drag.rim.corner = CornerGrabAction.ScaleProportional;
+drag.rim.margin = 0.25;                 // fraction of the shortest half-extent; 0 disables
+drag.rim.mode = EdgeGrabMode.SideView;  // TopDown (default) | SideView | FaceGrid
+drag.rim.boundsRaycast = true;          // hit the bounding box, for non-box shapes
+drag.rim.inXR = false;                  // true: XR hands/controllers use the rim too
 ```
-Every resize keeps the opposite side or corner where it is, reads `scaleMask` (`0` locks an axis), `minScale`/`maxScale` and `scaleEngageThreshold`, and respects `checkForCollider` and (plane modes) `limitArea` — the grown side stops at the area's edge. It does not need `allowScaling`. Turns use `angleEngageThreshold`. Ask before a drag what a spot does — for cursors and highlights:
+Every resize keeps the opposite side or corner where it is, reads `scaling.mask` (`0` locks an axis), `scaling.min`/`scaling.max` and `engage.scaleThreshold`, and respects `checkForCollider` and (plane modes) `limitArea` — the grown side stops at the area's edge. It does not need `allowScaling`. Turns use `engage.angleThreshold`. Ask before a drag what a spot does — for cursors and highlights:
 ```ts
 const g = drag.getGestureAt(hit.point);   // GrabGesture.Move | Turn | Resize | Stretch | null
 ```
@@ -467,6 +468,7 @@ Still honoured when the replacement is unset, so old scenes keep working. Use th
 | `keepRotation`, `xrKeepRotation` | `rotation: DragRotationMode` |
 | `keepScale`, `xrKeepScale` | `allowScaling` (inverted) |
 | `xrDragMode` | `xrHold: XRHoldBehaviour` |
+| `snapGridResolution` | `snapping.gridResolution` |
 
 ## Gotchas
 
@@ -476,6 +478,6 @@ Still honoured when the replacement is unset, so old scenes keep working. Use th
 - `customPivot` is read once at drag start, position only, in the parent's space.
 - `valueChanged` only reports in-place modes; moving modes report through `dragUpdated`.
 - Event args and `pointerState` are live buffers reused every frame — copy before storing.
-- `surfaceNormalFilter` and `scaleRelativeToStart` are code-only (not in the Unity inspector).
-- Don't build your own drag, rotate or resize handles out of pointer events and a `Raycaster` before trying the modes and recipes above. Handles that drive another object (`customTransform`), pivots (`customPivot`), per-axis resize (`scaleMask`) and child controls inside a draggable parent cover most furniture and editor-style interactions.
+- `surface.normalFilter` and `scaling.relativeToStart` are code-only (not in the Unity inspector).
+- Don't build your own drag, rotate or resize handles out of pointer events and a `Raycaster` before trying the modes and recipes above. Handles that drive another object (`customTransform`), pivots (`customPivot`), per-axis resize (`scaling.mask`) and child controls inside a draggable parent cover most furniture and editor-style interactions.
 - Read yaw from the quaternion, not `rotation.y`. Once an object's quaternion has been written (by a drag, for example), its Euler angles can come back as `(π, 0, π)` instead of `(0, π, 0)`, and adding to `rotation.y` then turns it the wrong way. Use `obj.rotateY(delta)` or premultiply a Y-axis quaternion.
