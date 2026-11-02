@@ -439,7 +439,7 @@ Key settings:
 - **Full slots:** `stackCount`, `swapOnFullSlot` (default `true` — dropping on an occupied slot swaps), `swapHoverAxis` / `swapHoverDistance` (preview stand-off).
 - **Holding:** `parentOnDrop` (+ `adoptChildren` claims pre-placed children at start), `holdOccupants` (default `true`, kinematic while in a slot), `holdAreaOccupants` (Area, default `false`), `dropScale` (uniform world scale while held).
 - **Area:** `areaObject`, `areaFit` (`DragTargetAreaFit.None` / `AutoFitKeepRotation` / `AutoFit`), `areaDropPoint` (`0` None, `1` Surface, `2` Interior, `3` ThroughTop, `4` OnTop — not exported from the root).
-- **Fly in/out:** `flyHeight`, `flyAxis`, `flyDuration`; `engageThreshold` (+ `engageElastic`, `engageStiffness`) — pull-out distance before an object comes free (a sword from a stone).
+- **Fly in/out:** `flyHeight` (distance, `0` = no flight), `flyAxis` (`DragTargetAxis`, signed: `PosX`/`NegX`/`PosY`/`NegY`/`PosZ`/`NegZ`, default `PosY`; the slot-local side objects enter, leave and are pulled out by), `flyDuration`; `engageThreshold` (+ `engageElastic`, `engageStiffness`) — pull-out distance before an object comes free (a sword from a stone).
 - **Filtering:** `allowedObjects` (descendants count), `targetMask` (layers), `allowedTags` (any of), `blockUnallowedObjects`. All filters combine with AND.
 
 **DragTarget combinations:**
@@ -449,7 +449,7 @@ Key settings:
 - `snapRotationSteps` / `snapRotationAxis` need `snapRotation`. `autoRotate` needs `snapRotation`, `snapRotationSteps` ≥ 2, and `snapOnRelease = false`.
 - `swapOnFullSlot` only works at `stackCount = 1`; above that a full stack refuses. `swapHoverAxis`/`swapHoverDistance` need `swapOnFullSlot` (zero axis = no stand-off).
 - `adoptChildren` needs `parentOnDrop`; children with in-place modes (drawers, lids) are skipped.
-- `flyDuration` needs `flyHeight` ≠ 0; `engageElastic`/`engageStiffness` need `engageThreshold` > 0. `flyAxis` serves both.
+- `flyDuration` needs `flyHeight` > 0; `engageElastic`/`engageStiffness` need `engageThreshold` > 0. `flyAxis` serves both and sets the engage side with `flyHeight` at `0`.
 - `blockUnallowedObjects = false` lets refused objects be aimed through this target (a carpet spot on the floor that must not block furniture).
 - Drag Targets only receive objects whose DragControls uses a moving mode and `dragTargets` ≠ `Disallow`.
 
