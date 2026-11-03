@@ -28,10 +28,10 @@ Only `DragControls`, `DragTarget` and `Duplicatable` are engine components. Wher
 - **One object can carry both** a `DragControls` and a `DragTarget`. It's then a movable receiver: a pot that takes vegetables, a crate that takes another crate, a brick that takes bricks, a drawer that holds items.
 - **Children with their own `DragControls`** are separate grips. A press goes to the nearest control under the pointer, so a drawer opens without moving its commode and the lid of a chest swings without carrying the chest.
 - **`customTransform`** splits grip and moved object. A small icon or handle mesh is what you grab, and another object moves, turns or resizes. Several grips can drive one object.
-- **`parentOnDrop`** on a `DragTarget` makes contents ride along with the target: items in a drawer, weights on a balance pan, arrows on a ballista. **`holdOccupants` / `holdAreaOccupants`** keep their rigidbodies kinematic while they're held.
+- **`holding.parentOnDrop`** on a `DragTarget` makes contents ride along with the target: items in a drawer, weights on a balance pan, arrows on a ballista. **`holding.occupants` / `holding.areaOccupants`** keep their rigidbodies kinematic while they're held.
 - **In-place modes never enter targets.** Only moving modes (planes, `SnapToSurfaces`, `Attached`, `HitNormal`, `DynamicViewAngle`) can be dropped into a `DragTarget`. A drawer can still *be* a target.
 - **`dragTargets = Require`** + a target = "only valid places". A miss returns the object to where it was picked up.
-- **Filters on a `DragTarget` combine with AND**: `allowedObjects`, `targetMask` (layers, matched against `object.layers.mask`), `allowedTags`. Put each family of objects on its own layer (vegetables, arrows, bricks, crates) and set `targetMask` to that layer, so pots don't take bricks.
+- **Filters on a `DragTarget` combine with AND**: `filter.objects`, `filter.mask` (layers, matched against `object.layers.mask`), `filter.tags`. Put each family of objects on its own layer (vegetables, arrows, bricks, crates) and set `filter.mask` to that layer, so pots don't take bricks.
 
 ## Controls
 
@@ -57,8 +57,8 @@ All are in-place modes on a child of the device; the device itself has no `DragC
 | **Self-closing door** | `HingeRotate`, `rangeAngle = -130`, `engage.angleThreshold = 11` + `engage.elastic` (stiff at first), `returning.mode = Rest`, `returning.duration = 3`, a `returning.curve` that eases in. Optionally add `Rigidbody` + `HingeJoint` (`useLimits`, limits `-130…0`). |
 | **Casement / top-hung window sash** | `HingeRotate`, `axis = Z` (side-hung, `rangeAngle = ±98`) or `X` (top-hung, `rangeAngle = 73`). Each sash is its own child. |
 | **Oven door** grabbed by its handle only | `HingeRotate`, `rangeAngle = 82`, `snapping.angleSnapMode = Ends`, `snapping.angleSnap = 10` (falls shut/open near the ends), `grab.mode = Custom`, `grab.points = [handle]`, `checkForCollider = PathAndDestination` (doesn't swing through the pulled-out rack). |
-| **Oven rack / baking sheet** | `Slide`, `axis = Z`, `axisMax = 0.32`, `checkForCollider = PathAndDestination`. The rack also has a `DragTarget` (`snapWhenPointedAt`, `snapRotation = false`, `parentOnDrop`) for pots. |
-| **Drawer that holds things** | `Slide`, `axis = Z`, `axisMax = 0.36` **plus** `DragTarget` `mode = Area`, `areaObject = <child box>`, `areaFit = AutoFit`, `snapWhenPointedAt`, `parentOnDrop`, `holdAreaOccupants`. Items put in ride out with the drawer. |
+| **Oven rack / baking sheet** | `Slide`, `axis = Z`, `axisMax = 0.32`, `checkForCollider = PathAndDestination`. The rack also has a `DragTarget` (`snapping.whenPointedAt`, `snapping.rotation = false`, `holding.parentOnDrop`) for pots. |
+| **Drawer that holds things** | `Slide`, `axis = Z`, `axisMax = 0.36` **plus** `DragTarget` `mode = Area`, `area.region = <child box>`, `area.fit = AutoFit`, `snapping.whenPointedAt`, `holding.parentOnDrop`, `holding.areaOccupants`. Items put in ride out with the drawer. |
 | **Chest lid** | Child of the movable chest: `HingeRotate`, `rangeAngle = -176`. The chest itself: `SnapToSurfaces` + `DragTarget` Area for its contents. |
 | **Cassette lid that latches** | `HingeRotate`, `axis = Y`, `rangeAngle = 72`, `snapping.angleSnapMode = Ends`, `snapping.angleSnap = 9`. The script sets `lid.enabled = false` when it is closed (locked) and enables the cassette `DragTarget` only while it's open. |
 
@@ -108,27 +108,27 @@ The grip is a child sprite or mesh with its own `DragControls` and `customTransf
 
 | Setup | Settings |
 |---|---|
-| **Box you drop things into** | `DragTarget` `mode = Area`, `areaObject = <child box marking the inside>`, `areaFit = AutoFit`, `snapWhenPointedAt`, `parentOnDrop`. Objects: any moving mode (`SnapToSurfaces` + `surface.alignToNormal` works well). |
-| **Cooking pot** (carry it with its contents) | on the pot: `DragControls` `SnapToSurfaces`, `rotation = Free` **and** `DragTarget` Area, `areaFit = AutoFit`, `parentOnDrop`, `holdAreaOccupants`, `targetMask = <vegetables layer>`. |
+| **Box you drop things into** | `DragTarget` `mode = Area`, `area.region = <child box marking the inside>`, `area.fit = AutoFit`, `snapping.whenPointedAt`, `holding.parentOnDrop`. Objects: any moving mode (`SnapToSurfaces` + `surface.alignToNormal` works well). |
+| **Cooking pot** (carry it with its contents) | on the pot: `DragControls` `SnapToSurfaces`, `rotation = Free` **and** `DragTarget` Area, `area.fit = AutoFit`, `holding.parentOnDrop`, `holding.areaOccupants`, `filter.mask = <vegetables layer>`. |
 | **Pan / pot grabbed by its handle** | `SnapToSurfaces`, `grab.mode = Custom`, `grab.points = [handle empties]` (each empty's scaled unit cube is the grab area), `surface.anchor = Pivot`, `surface.alignToNormal`, `ignorePhysicsWhileDragging`. |
-| **Shelf with places for pots** | `DragTarget` `Slots`, `slots = [5 empties]`, `snapWhenPointedAt`, `snapRotation = false`, `parentOnDrop`, `targetMask = <pots layer>`. Stove top: same with 4 slots and `snapDistance = 0.05`. |
-| **Glass with a lid and fruit inside** | glass: `DragTarget` `Slots` with one lid slot, `allowedObjects = [lid]`, `blockUnallowedObjects = false` (fruit can be aimed *through* it). Inner child: `DragTarget` Area, `capacity = 6`, `areaDropPoint = OnTop`, `adoptChildren = false`. Lid: `Attached`, `attachedDepthRaycast`. |
-| **Fruit bowl** | `DragTarget` Area, `areaDropPoint = ThroughTop`, `parentOnDrop`. Fruit: `Rigidbody` + `ignorePhysicsWhileDragging`, `rotation = Free`. |
-| **Balance scale** | two pans, each `DragTarget` Area, `capacity = 3`, `snapRotation = false`, `parentOnDrop` (weights tilt with the beam). The script sums `pan.occupants` each frame. |
-| **Quiver / arrow box** | `DragTarget` `mode = Stacked`, `slots = [2 empties]`, `stackCount = 4`, `stackDirection = (1,0,0)`, `snapWhenPointedAt`, `parentOnDrop`, `targetMask = <arrows layer>`. Arrows: `dragTargets = Require`, `ignorePhysicsWhileDragging`, kinematic `Rigidbody`. |
-| **Record crate** (pull a record out) | `DragTarget` `Slots` (5), `flyAxis = DragTargetAxis.NegZ`, `flyHeight = 0.18` (records fly in/out along the slot's -Z), `engageThreshold = 0.1` + `engageElastic` (resists before letting go). Records: `dragTargets = Require`. Platter: `Slots` with one slot, `flyHeight = 0.08`. |
-| **Rug rack that swaps** | rack: `DragTarget` `Slots` (2), `dropScale = 0.38` (rugs shrink while on the rack), `flyHeight`, `swapHoverDistance`. Floor spot: `DragTarget` Single, `blockUnallowedObjects = false`, `allowedObjectDragStarted` / `allowedObjectDragEnded` show and hide a marker. Rugs: `XZPlane`, `dragTargets = Require`, `dragOffset = 0.5`. Dropping on a full slot swaps (`swapOnFullSlot`, default on). |
+| **Shelf with places for pots** | `DragTarget` `Slots`, `slots = [5 empties]`, `snapping.whenPointedAt`, `snapping.rotation = false`, `holding.parentOnDrop`, `filter.mask = <pots layer>`. Stove top: same with 4 slots and `snapping.distance = 0.05`. |
+| **Glass with a lid and fruit inside** | glass: `DragTarget` `Slots` with one lid slot, `filter.objects = [lid]`, `filter.blockUnallowed = false` (fruit can be aimed *through* it). Inner child: `DragTarget` Area, `area.capacity = 6`, `area.dropPoint = OnTop`, `holding.adoptChildren = false`. Lid: `Attached`, `attachedDepthRaycast`. |
+| **Fruit bowl** | `DragTarget` Area, `area.dropPoint = ThroughTop`, `holding.parentOnDrop`. Fruit: `Rigidbody` + `ignorePhysicsWhileDragging`, `rotation = Free`. |
+| **Balance scale** | two pans, each `DragTarget` Area, `area.capacity = 3`, `snapping.rotation = false`, `holding.parentOnDrop` (weights tilt with the beam). The script sums `pan.occupants` each frame. |
+| **Quiver / arrow box** | `DragTarget` `mode = Stacked`, `slots = [2 empties]`, `stack.count = 4`, `stack.direction = (1,0,0)`, `snapping.whenPointedAt`, `holding.parentOnDrop`, `filter.mask = <arrows layer>`. Arrows: `dragTargets = Require`, `ignorePhysicsWhileDragging`, kinematic `Rigidbody`. |
+| **Record crate** (pull a record out) | `DragTarget` `Slots` (5), `fly.axis = DragTargetAxis.NegZ`, `fly.height = 0.18` (records fly in/out along the slot's -Z), `engage.threshold = 0.1` + `engage.elastic` (resists before letting go). Records: `dragTargets = Require`. Platter: `Slots` with one slot, `fly.height = 0.08`. |
+| **Rug rack that swaps** | rack: `DragTarget` `Slots` (2), `holding.dropScale = 0.38` (rugs shrink while on the rack), `fly.height`, `swap.hoverDistance`. Floor spot: `DragTarget` Single, `filter.blockUnallowed = false`, `allowedObjectDragStarted` / `allowedObjectDragEnded` show and hide a marker. Rugs: `XZPlane`, `dragTargets = Require`, `dragOffset = 0.5`. Dropping on a full slot swaps (`swap.onFullSlot`, default on). |
 
 ## Board games and puzzles
 
 | Game | Settings |
 |---|---|
-| **Chess** | board: `DragTarget` `Grid`, `8 × 8`, `gridSpacing = 0.0625`, `snapOnRelease`, `parentOnDrop`, `flyDuration = 0.24`, `allowedObjects = [32 pieces]`. Pieces (children of the board): `XZPlane`, `limitArea = <board mesh>`, `dragTargets = Require`, `dragOffset = 0.26` (lifted while carried). Rules: `allowDrop` → `e.disallow()` unless `target.currentSlot` is a legal square. A lever (`HingeRotate`, 2 steps) switches rules on and off. |
-| **Jigsaw** | tray: `DragTarget` `Slots` (9), `snapWhenPointedAt`, `flyHeight = 0.2`; `beforeDrop` vetoes a tile whose name suffix doesn't match `slots[e.slot]`. Storage: `DragTarget` Area with `snapOnRelease`. Tiles: `SnapToSurfaces`, `dragTargets = Require`. |
-| **Shape sorter** | one `DragTarget` Single per hole, `allowedObjects = [its shape]`, `snapDistance = 0.09`, `snapOnRelease`, `flyHeight = 0.15`. Shapes: `SnapToSurfaces`, `dragTargets = Require`. On `objectDropped` the script calls `hole.releaseObject(shape)` and sinks it. |
+| **Chess** | board: `DragTarget` `Grid`, `8 × 8`, `grid.spacing = 0.0625`, `snapping.onRelease`, `holding.parentOnDrop`, `fly.duration = 0.24`, `filter.objects = [32 pieces]`. Pieces (children of the board): `XZPlane`, `limitArea = <board mesh>`, `dragTargets = Require`, `dragOffset = 0.26` (lifted while carried). Rules: `allowDrop` → `e.disallow()` unless `target.currentSlot` is a legal square. A lever (`HingeRotate`, 2 steps) switches rules on and off. |
+| **Jigsaw** | tray: `DragTarget` `Slots` (9), `snapping.whenPointedAt`, `fly.height = 0.2`; `beforeDrop` vetoes a tile whose name suffix doesn't match `slots[e.slot]`. Storage: `DragTarget` Area with `snapping.onRelease`. Tiles: `SnapToSurfaces`, `dragTargets = Require`. |
+| **Shape sorter** | one `DragTarget` Single per hole, `filter.objects = [its shape]`, `snapping.distance = 0.09`, `snapping.onRelease`, `fly.height = 0.15`. Shapes: `SnapToSurfaces`, `dragTargets = Require`. On `objectDropped` the script calls `hole.releaseObject(shape)` and sinks it. |
 | **Sliding-block parking puzzle (colliders)** | every block: `Slide` along its row/column (`axis` X or Z, range in cells, `snapping.axisSnap = 1`), `checkForCollider = PathAndDestinationStrict`, `BoxCollider`. Blocks stop at each other; no script. |
-| **Same puzzle on a grid** | board: `DragTarget` `Grid 6 × 6`, `snapRotation = false`, `swapOnFullSlot = false`, `parentOnDrop`. Blocks: `XZPlane`, `dragTargets = Require`, `snapping.points = [one empty per cell the block covers]`, `rotation = Locked`. |
-| **Seed bed** | `DragTarget` `Slots` (8), `flyHeight = 0.09`, `engageThreshold = 0.18` + `engageElastic`. `allowTarget` refuses anything that isn't a spawned seed. A planted seed is locked with `dc.dragMode = DragMode.None`; grown carrots get a `DragControls` (`engage.planeThreshold = 0.18`, elastic) and `allowDrop` refuses releases over the bed. |
+| **Same puzzle on a grid** | board: `DragTarget` `Grid 6 × 6`, `snapping.rotation = false`, `swap.onFullSlot = false`, `holding.parentOnDrop`. Blocks: `XZPlane`, `dragTargets = Require`, `snapping.points = [one empty per cell the block covers]`, `rotation = Locked`. |
+| **Seed bed** | `DragTarget` `Slots` (8), `fly.height = 0.09`, `engage.threshold = 0.18` + `engage.elastic`. `allowTarget` refuses anything that isn't a spawned seed. A planted seed is locked with `dc.dragMode = DragMode.None`; grown carrots get a `DragControls` (`engage.planeThreshold = 0.18`, elastic) and `allowDrop` refuses releases over the bed. |
 
 ## Snapping parts together
 
@@ -145,18 +145,18 @@ dc.ignorePhysicsWhileDragging = true;
 const dt = brick.addComponent(DragTarget);
 dt.mode = DragTargetMode.Slots;
 dt.slots = topStuds;                    // empties on top ("Stud.*")
-dt.snapDistance = 0.03;
-dt.snapWhenPointedAt = true;
-dt.checkForCollider = true;             // landing space must be free
-dt.snapRotationSteps = 4; dt.snapRotationAxis = DragAxis.Z;  // fits 4 ways around the stud axis
-dt.autoRotate = true;                   // cycles orientations while hovering
-dt.swapOnFullSlot = false;
-dt.parentOnDrop = true;                 // the stack moves as one
-dt.targetMask = bricksLayerMask;
+dt.snapping.distance = 0.03;
+dt.snapping.whenPointedAt = true;
+dt.snapping.checkForCollider = true;             // landing space must be free
+dt.snapping.rotationSteps = 4; dt.snapping.rotationAxis = DragAxis.Z;  // fits 4 ways around the stud axis
+dt.snapping.autoRotate = true;                   // cycles orientations while hovering
+dt.swap.onFullSlot = false;
+dt.holding.parentOnDrop = true;                 // the stack moves as one
+dt.filter.mask = bricksLayerMask;
 ```
 A `snapping.points` entry mates with a slot, so a 2×4 brick can land on any stud with any of its sockets. Bricks also have a non-kinematic `Rigidbody` + `BoxCollider` and `Duplicatable` on the spawn copies.
 
-**Stackable crates:** each crate `SnapToSurfaces` + `surface.alignToNormal`, and `DragTarget` `Slots` with one empty on its top, `snapDistance = 0.22`, `snapWhenPointedAt`, `parentOnDrop`, `swapOnFullSlot = false`, `targetMask = <crates layer>`.
+**Stackable crates:** each crate `SnapToSurfaces` + `surface.alignToNormal`, and `DragTarget` `Slots` with one empty on its top, `snapping.distance = 0.22`, `snapping.whenPointedAt`, `holding.parentOnDrop`, `swap.onFullSlot = false`, `filter.mask = <crates layer>`.
 
 **Sword in a stone:** `Attached`, `attachedDepthRaycast`, `engage.planeThreshold = 0.45`, `engage.elastic`, `engage.stiffness = 0.47`. It stretches toward the hand and only comes free past 0.45 units.
 
@@ -166,11 +166,11 @@ A machine is a few `DragControls`/`DragTarget` components plus one script that r
 
 | Machine | Parts |
 |---|---|
-| **Cassette player** | 9 controls (buttons `Slide` + return, switches `Slide` + `Steps`, volume/tune `HingeRotate`, lid `HingeRotate`). A `DragTarget` `Slots` for the tape with `allowedTags = ["Cassette"]`, `flyAxis = Z`, disabled until the lid opens. The tape: `Attached`. The script reads `normalizedValue` every frame. |
+| **Cassette player** | 9 controls (buttons `Slide` + return, switches `Slide` + `Steps`, volume/tune `HingeRotate`, lid `HingeRotate`). A `DragTarget` `Slots` for the tape with `filter.tags = ["Cassette"]`, `fly.axis = Z`, disabled until the lid opens. The tape: `Attached`. The script reads `normalizedValue` every frame. |
 | **Stove + oven** | 5 dials (6-step hinge), oven door, rack, stove-top `Slots`. The script maps each dial's `normalizedValue` to a plate glow and cooks whatever `plates.getOccupant(slot)` holds. |
-| **Ballista** | base `HingeRotate` Y (aim). Arm `HingeRotate` (pitch) + `DragTarget` `Slots` with the arrow slot, `flyAxis = DragTargetAxis.NegY`, `flyHeight = 0.92`, `targetMask`. Draw string: `Slide`, `axis = Z`, `axisMax = 0.53`, `returning.mode = Rest`, `returning.duration = 0.3`, overshoot `returning.curve`. On `dragEnded`: read `normalizedValue` (before the return resets it), `loadTarget.releaseObject(arrow)`, wait one frame, then apply the impulse. |
-| **Cannon** | barrel `HingeRotate` + `DragTarget` (cannonballs in `allowedObjects`); `objectDropped` triggers the fire animation. |
-| **Juice mixer** | button `Slide` (`axisMax = -0.01`, return). Mixes when the inner Area is full (`occupants.length >= capacity`) and the lid slot is occupied, then `releaseObject` + destroy each fruit. |
+| **Ballista** | base `HingeRotate` Y (aim). Arm `HingeRotate` (pitch) + `DragTarget` `Slots` with the arrow slot, `fly.axis = DragTargetAxis.NegY`, `fly.height = 0.92`, `filter.mask`. Draw string: `Slide`, `axis = Z`, `axisMax = 0.53`, `returning.mode = Rest`, `returning.duration = 0.3`, overshoot `returning.curve`. On `dragEnded`: read `normalizedValue` (before the return resets it), `loadTarget.releaseObject(arrow)`, wait one frame, then apply the impulse. |
+| **Cannon** | barrel `HingeRotate` + `DragTarget` (cannonballs in `filter.objects`); `objectDropped` triggers the fire animation. |
+| **Juice mixer** | button `Slide` (`axisMax = -0.01`, return). Mixes when the inner Area is full (`occupants.length >= area.capacity`) and the lid slot is occupied, then `releaseObject` + destroy each fruit. |
 
 ## Script glue
 
@@ -222,7 +222,7 @@ onPointerDown(args: PointerEventData) {
   - `surface.customAnchor` without `surface.anchor = Custom`.
   - `rim.margin` without `rim.edge` / `rim.corner`.
   - `snapping.gridSpace = Local` without `snapping.gridResolution > 0`.
-  - `snapDistance` on `Area` targets.
-- **A container target blocks aiming at what's inside it.** Set `blockUnallowedObjects = false` on the outer target (a glass with fruit inside, a floor marker under furniture).
+  - `snapping.distance` on `Area` targets.
+- **A container target blocks aiming at what's inside it.** Set `filter.blockUnallowed = false` on the outer target (a glass with fruit inside, a floor marker under furniture).
 - **Names lose their dots at runtime.** `PuzzleTile.006` arrives as `PuzzleTile006`; match name suffixes with `/\.?(\d{3})$/`.
 - **`occupants` and event args are reused buffers.** Spread them before iterating while you release or destroy.

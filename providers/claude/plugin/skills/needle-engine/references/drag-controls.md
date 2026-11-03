@@ -416,9 +416,9 @@ Receiver for objects dragged in a **moving** mode. Add `DragControls` to each mo
 |------|-------|
 | `Single` (default) | One slot at this transform. |
 | `Slots` | One per transform in `slots` (empty list = accepts nothing). |
-| `Grid` | `gridColumns` × `gridRows` with `gridSpacing`, local XZ, centred. |
-| `Area` | A region (this object's unit cube, or `areaObject`'s); objects keep their drop position. `capacity` limits it (0 = unlimited). |
-| `Stacked` | One pile per `slots` transform along its up axis (or `stackDirection`); `stackCount` < 2 = unlimited. |
+| `Grid` | `grid.columns` × `grid.rows` with `grid.spacing`, local XZ, centred. |
+| `Area` | A region (this object's unit cube, or `area.region`'s); objects keep their drop position. `area.capacity` limits it (0 = unlimited). |
+| `Stacked` | One pile per `slots` transform along its up axis (or `stack.direction`); `stack.count` < 2 = unlimited. |
 
 ```ts
 import { DragControls, DragMode, DragTarget, DragTargetMode, DropTargetMode } from "@needle-tools/engine";
@@ -429,28 +429,30 @@ piece.dragTargets = DropTargetMode.Require;   // Allow (default) | Require (retu
 
 const board = boardObj.addComponent(DragTarget);
 board.mode = DragTargetMode.Grid;
-board.gridColumns = 8; board.gridRows = 8; board.gridSpacing = 1;
+board.grid.columns = 8; board.grid.rows = 8; board.grid.spacing = 1;
 board.objectDropped.addEventListener(e => console.log("square", e.slot));
 ```
 
+Settings live in groups, like `DragControls`: `grid`, `area`, `stack`, `snapping`, `swap`, `holding`, `fly`, `engage` and `filter`. `mode`, `slots` and the events stay on the component.
+
 Key settings:
-- **Offering:** `snapDistance` (world units, default 0.2), `snapWhenPointedAt` (offer what the pointer aims at, at any distance; empty slot transforms and grid cells get a hit disc of radius `snapDistance`, an Area its region box), `snapOnRelease` (don't pull in live; snap on release), `checkForCollider` (boolean — landing space must be empty).
-- **Orientation:** `snapRotation` (default `true`), `snapRotationSteps` + `snapRotationAxis` (symmetric objects fitting several ways), `autoRotate` / `autoRotateInterval` (cycle orientations while hovering).
-- **Full slots:** `stackCount`, `swapOnFullSlot` (default `true` — dropping on an occupied slot swaps), `swapHoverAxis` / `swapHoverDistance` (preview stand-off).
-- **Holding:** `parentOnDrop` (+ `adoptChildren` claims pre-placed children at start), `holdOccupants` (default `true`, kinematic while in a slot), `holdAreaOccupants` (Area, default `false`), `dropScale` (uniform world scale while held).
-- **Area:** `areaObject`, `areaFit` (`DragTargetAreaFit.None` / `AutoFitKeepRotation` / `AutoFit`), `areaDropPoint` (`DragTargetAreaDropPoint.None` / `Surface` / `Interior` / `ThroughTop` / `OnTop`).
-- **Fly in/out:** `flyHeight` (distance, `0` = no flight), `flyAxis` (`DragTargetAxis`, signed: `PosX`/`NegX`/`PosY`/`NegY`/`PosZ`/`NegZ`, default `PosY`; the slot-local side objects enter, leave and are pulled out by), `flyDuration`; `engageThreshold` (+ `engageElastic`, `engageStiffness`) — pull-out distance before an object comes free (a sword from a stone).
-- **Filtering:** `allowedObjects` (descendants count), `targetMask` (layers), `allowedTags` (any of), `blockUnallowedObjects`. All filters combine with AND.
+- **`snapping`, offering:** `distance` (world units, default 0.2), `whenPointedAt` (offer what the pointer aims at, at any distance; empty slot transforms and grid cells get a hit disc of radius `distance`, an Area its region box), `onRelease` (don't pull in live; snap on release), `checkForCollider` (boolean — landing space must be empty).
+- **`snapping`, orientation:** `rotation` (default `true`), `rotationSteps` + `rotationAxis` (symmetric objects fitting several ways), `autoRotate` / `autoRotateInterval` (cycle orientations while hovering).
+- **Full slots:** `stack.count`, `swap.onFullSlot` (default `true` — dropping on an occupied slot swaps), `swap.hoverAxis` / `swap.hoverDistance` (preview stand-off).
+- **`holding`:** `parentOnDrop` (+ `adoptChildren` claims pre-placed children at start), `occupants` (default `true`, kinematic while in a slot), `areaOccupants` (Area, default `false`), `dropScale` (uniform world scale while held).
+- **`area`:** `region`, `fit` (`DragTargetAreaFit.None` / `AutoFitKeepRotation` / `AutoFit`), `dropPoint` (`DragTargetAreaDropPoint.None` / `Surface` / `Interior` / `ThroughTop` / `OnTop`), `capacity`.
+- **`fly` and `engage`, in/out:** `fly.height` (distance, `0` = no flight), `fly.axis` (`DragTargetAxis`, signed: `PosX`/`NegX`/`PosY`/`NegY`/`PosZ`/`NegZ`, default `PosY`; the slot-local side objects enter, leave and are pulled out by), `fly.duration`; `engage.threshold` (+ `engage.elastic`, `engage.stiffness`) — pull-out distance before an object comes free (a sword from a stone).
+- **`filter`:** `objects` (descendants count), `mask` (layers), `tags` (any of), `blockUnallowed`. All filters combine with AND.
 
 **DragTarget combinations:**
-- `Area` ignores `snapDistance`, `snapRotation*`, `autoRotate*`, `stackCount`, `swap*`, `holdOccupants`, `fly*` and `engage*`; it uses `capacity`, `areaFit`, `areaDropPoint`, `holdAreaOccupants` instead. `snapOnRelease` in Area only matters with `areaFit` ≠ `None` (fit on release instead of live).
-- Slot modes ignore `capacity`, `areaObject`, `areaFit`, `areaDropPoint`, `holdAreaOccupants`.
-- `areaDropPoint` ≠ `None` also enables pointed drops without `snapWhenPointedAt`; changes apply when the target is next enabled.
-- `snapRotationSteps` / `snapRotationAxis` need `snapRotation`. `autoRotate` needs `snapRotation`, `snapRotationSteps` ≥ 2, and `snapOnRelease = false`.
-- `swapOnFullSlot` only works at `stackCount = 1`; above that a full stack refuses. `swapHoverAxis`/`swapHoverDistance` need `swapOnFullSlot` (zero axis = no stand-off).
-- `adoptChildren` needs `parentOnDrop`; children with in-place modes (drawers, lids) are skipped.
-- `flyDuration` needs `flyHeight` > 0; `engageElastic`/`engageStiffness` need `engageThreshold` > 0. `flyAxis` serves both and sets the engage side with `flyHeight` at `0`.
-- `blockUnallowedObjects = false` lets refused objects be aimed through this target (a carpet spot on the floor that must not block furniture).
+- `Area` ignores `snapping.distance`, `snapping.rotation*`, `snapping.autoRotate*`, `stack`, `swap`, `holding.occupants`, `fly` and `engage`; it uses `area.capacity`, `area.fit`, `area.dropPoint`, `holding.areaOccupants` instead. `snapping.onRelease` in Area only matters with `area.fit` ≠ `None` (fit on release instead of live).
+- Slot modes ignore `area` and `holding.areaOccupants`.
+- `area.dropPoint` ≠ `None` also enables pointed drops without `snapping.whenPointedAt`; changes apply when the target is next enabled.
+- `snapping.rotationSteps` / `snapping.rotationAxis` need `snapping.rotation`. `snapping.autoRotate` needs `snapping.rotation`, `snapping.rotationSteps` ≥ 2, and `snapping.onRelease = false`.
+- `swap.onFullSlot` only works at `stack.count = 1`; above that a full stack refuses. `swap.hoverAxis`/`swap.hoverDistance` need `swap.onFullSlot` (zero axis = no stand-off).
+- `holding.adoptChildren` needs `holding.parentOnDrop`; children with in-place modes (drawers, lids) are skipped.
+- `fly.duration` needs `fly.height` > 0; `engage.elastic`/`engage.stiffness` need `engage.threshold` > 0. `fly.axis` serves both and sets the engage side with `fly.height` at `0`.
+- `filter.blockUnallowed = false` lets refused objects be aimed through this target (a carpet spot on the floor that must not block furniture).
 - Drag Targets only receive objects whose DragControls uses a moving mode and `dragTargets` ≠ `Disallow`.
 
 Events (`EventList<…>`): `targetEntered`, `targetExited`, `objectDropped`, `objectRemoved`, `allowedObjectDragStarted` / `allowedObjectDragEnded` (light up valid targets as soon as a piece is picked up), `allowTarget` (veto once per drag: `e.disallow()`), `beforeDrop` (final veto with the resolved `e.position`/`e.quaternion`/`e.snapPoint`).

@@ -302,7 +302,7 @@ Drop slots, grids, stacks, and regions for objects dragged with `DragControls`. 
 import { DragTarget, DragTargetMode } from "@needle-tools/engine";
 const board = boardObj.addComponent(DragTarget);
 board.mode = DragTargetMode.Grid;
-board.gridColumns = 8; board.gridRows = 8;
+board.grid.columns = 8; board.grid.rows = 8;
 board.objectDropped.addEventListener(e => console.log("slot", e.slot));
 ```
 
