@@ -110,7 +110,7 @@ Each mode reads only its own settings; the rest are silently ignored. This mirro
 
 **Prerequisites — a setting does nothing unless:**
 - `rim.edge` / `rim.corner` → `rim.margin > 0`. Their `Rotate` option also needs `rotation` other than `Locked`; `Stretch` and the scale options do not need `allowScaling`.
-- `rim.inXR` → `rim.edge` or `rim.corner` set.
+- `rim.inXR` / `rim.inTouch` → `rim.edge` or `rim.corner` set.
 - `scaling.min` / `scaling.max` in a moving mode → `allowScaling = true` (pinch), `rim.edge = Stretch` or a `rim.corner` scale option.
 - `limitAreaFit` → `limitArea` is set. **`limitArea` must not be a child of the dragged object** — it would move with it and never constrain anything. Use a sibling or a scene object.
 - `surface.customAnchor` → `surface.anchor = SurfaceAnchor.Custom` (falls back to the bounding box while empty).
@@ -130,7 +130,7 @@ Each mode reads only its own settings; the rest are silently ignored. This mirro
 - `rangeAngle` ≥ 360 (abs) is free rotation, not a limit; the value still sweeps once per revolution. A range that doesn't contain 0° (the rest pose) is allowed, but the first drag carries the object in and it can't come back out — usually a range measured against the model instead of the pivot.
 - `customPivot` set to the dragged object itself is the same as leaving it empty.
 - `xrHold` is ignored by all in-place modes (they always hold) and has nothing to settle into with `Attached`.
-- Edge/corner grabs are screen and handheld-AR only unless `rim.inXR = true`; by default XR hands rotate and two-hand-scale instead.
+- Edge/corner grabs are mouse and pen only unless `rim.inTouch = true` (touch, handheld AR included) or `rim.inXR = true`; by default fingers and XR hands carry by the edge, and pinch to turn and scale.
 - `surface.settle = false` lets a `SnapToSurfaces` object leave the surface edge and be dropped in mid-air.
 
 **Precedence when settings compete for where the object ends up:**
@@ -347,6 +347,7 @@ drag.rim.margin = 0.25;                 // fraction of the shortest half-extent;
 drag.rim.mode = EdgeGrabMode.SideView;  // TopDown (default) | SideView | FaceGrid
 drag.rim.boundsRaycast = true;          // hit the bounding box, for non-box shapes
 drag.rim.inXR = false;                  // true: XR hands/controllers use the rim too
+drag.rim.inTouch = false;               // true: touch (and handheld AR) uses the rim too
 ```
 Every resize keeps the opposite side or corner where it is, reads `scaling.mask` (`0` locks an axis), `scaling.min`/`scaling.max` and `engage.scaleThreshold`, and respects `checkForCollider` and (plane modes) `limitArea` — the grown side stops at the area's edge. It does not need `allowScaling`. Turns use `engage.angleThreshold`. Ask before a drag what a spot does — for cursors and highlights:
 ```ts
