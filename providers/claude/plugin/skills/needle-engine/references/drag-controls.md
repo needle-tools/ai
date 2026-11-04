@@ -109,7 +109,7 @@ Each mode reads only its own settings; the rest are silently ignored. This mirro
 ## Combining settings
 
 **Prerequisites — a setting does nothing unless:**
-- `rim.edge` / `rim.corner` → `rim.margin > 0`. Their `Rotate` option also needs `rotation` other than `Locked`; `Stretch` and the scale options do not need `allowScaling`.
+- `rim.edge` / `rim.corner` → their `Rotate` option needs `rotation` other than `Locked`; `Stretch` and the scale options do not need `allowScaling`.
 - `rim.inXR` / `rim.inTouch` → `rim.edge` or `rim.corner` set.
 - `scaling.min` / `scaling.max` in a moving mode → `allowScaling = true` (pinch), `rim.edge = Stretch` or a `rim.corner` scale option.
 - `limitAreaFit` → `limitArea` is set. **`limitArea` must not be a child of the dragged object** — it would move with it and never constrain anything. Use a sibling or a scene object.
@@ -264,8 +264,7 @@ const chair = chairObj.addComponent(DragControls);
 chair.dragMode = DragMode.XZPlane;
 chair.allowScaling = false;
 chair.rotation = DragRotationMode.YawOnly;     // edge turn is off while rotation is Locked (code default)
-chair.rim.edge = EdgeGrabAction.Rotate;
-chair.rim.margin = 0.25;                    // fraction of the shortest half-extent
+chair.rim.edge = EdgeGrabAction.Rotate;           // rim sized automatically: ~24 px on screen, 10-30% of the shortest half-extent
 ```
 Two-finger twist on touch and the XR wrist also turn it once `rotation` isn't `Locked`. For a fixed-step turn from a key or button, rotate about the up axis (`obj.rotateY(step)`) rather than adding to `rotation.y` (see [Gotchas](#gotchas)).
 
@@ -343,9 +342,8 @@ Moving modes only: the middle always moves the object; the sides and corners do 
 drag.rotation = DragRotationMode.YawOnly;   // Rotate is off while rotation is Locked
 drag.rim.edge = EdgeGrabAction.Rotate;
 drag.rim.corner = CornerGrabAction.ScaleProportional;
-drag.rim.margin = 0.25;                 // fraction of the shortest half-extent; 0 disables
 drag.rim.mode = EdgeGrabMode.SideView;  // TopDown (default) | SideView | FaceGrid
-drag.rim.boundsRaycast = true;          // hit the bounding box, for non-box shapes
+drag.grab.boundsRaycast = true;         // hit the bounding box: meshes with holes, non-box shapes
 drag.rim.inXR = false;                  // true: XR hands/controllers use the rim too
 drag.rim.inTouch = false;               // true: touch (and handheld AR) uses the rim too
 ```

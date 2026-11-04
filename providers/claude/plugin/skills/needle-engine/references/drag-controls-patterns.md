@@ -66,7 +66,7 @@ All are in-place modes on a child of the device; the device itself has no `DragC
 
 | Object | Settings |
 |---|---|
-| **Sofa / table on the floor** | `SnapToSurfaces`, `surface.mask = <floor layer>`, `dragTargets = Disallow`, `xrHold = AlwaysSnap`. Turning and resizing with the mouse: `rim.edge = Rotate`, `rim.corner = ScaleProportional`, `rim.margin ≈ 0.25`. For non-box shapes add `rim.boundsRaycast = true`; for side views `rim.mode = FaceGrid`. |
+| **Sofa / table on the floor** | `SnapToSurfaces`, `surface.mask = <floor layer>`, `dragTargets = Disallow`, `xrHold = AlwaysSnap`. Turning and resizing with the mouse: `rim.edge = Rotate`, `rim.corner = ScaleProportional` (the rim sizes itself). For non-box shapes or meshes with holes add `grab.boundsRaycast = true`; for side views `rim.mode = FaceGrid`. |
 | **Furniture that must not overlap** | add `checkForCollider = DestinationOnly` (resolve on release) or `DestinationOnlyStrict` (no overlapping pose ever). Colliders on all furniture. |
 | **Chair turned by a ring handle** | Chair: `SnapToSurfaces`, floor `surface.mask`. Child ring mesh: `HingeRotate`, `axis = Y`, `rangeAngle = -360`, `customTransform = chair`. The ring turns the chair, the body moves it. |
 | **Picture on a wall** | `XYPlane`, `limitArea = <box on the wall, sibling of the pictures>`, `rotation = Locked`, `checkForCollider = PathAndDestination` (pictures don't overlap), `dragTargets = Disallow`, `xrHold = AlwaysSnap`. |
@@ -220,7 +220,7 @@ onPointerDown(args: PointerEventData) {
 - **`limitArea` must not be a child of the dragged object.** Chess pieces are children of the board target and use the board *mesh* (a sibling) as `limitArea`.
 - **Settings that do nothing on their own:**
   - `surface.customAnchor` without `surface.anchor = Custom`.
-  - `rim.margin` without `rim.edge` / `rim.corner`.
+  - `rim.mode` without `rim.edge` / `rim.corner`.
   - `snapping.gridSpace = Local` without `snapping.gridResolution > 0`.
   - `snapping.distance` on `Area` targets.
 - **A container target blocks aiming at what's inside it.** Set `filter.blockUnallowed = false` on the outer target (a glass with fruit inside, a floor marker under furniture).
