@@ -86,7 +86,7 @@ Each mode reads only its own settings; the rest are silently ignored. This mirro
 | `customTransform`, `returning.mode`, `checkForCollider`, `ignorePhysicsWhileDragging`, `dragStarted/Updated/Ended`, `allowDrop` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | `dragTargets`, `snapping.points` | ✓ | ✓ | ✓ | | | | | |
 | `limitArea`, `limitAreaFit` | ✓ | | | | | | | |
-| `surface.mask/objects/normalFilter`, `surface.anchor`, `surface.customAnchor`, `surface.alignToNormal`, `surface.settle` | | ✓ | | | | | | |
+| `surface.mask/objects/normalFilter`, `surface.anchor`, `surface.customAnchor`, `surface.alignToNormal`, `surface.settle`, `surface.preventOverhang` | | ✓ | | | | | | |
 | `snapping.gridResolution`, `snapping.gridSpace`, `engage.planeThreshold` | ✓ | ✓ | ✓ | | | | | |
 | `dragOffset` | ✓ | ✓ | not `Attached` | | | | | |
 | `rotation`, `allowScaling`, edge/corner grab | ✓ | ✓ | ✓ | | | | | |
@@ -132,6 +132,7 @@ Each mode reads only its own settings; the rest are silently ignored. This mirro
 - `xrHold` is ignored by all in-place modes (they always hold) and has nothing to settle into with `Attached`.
 - Edge/corner grabs are mouse and pen only unless `rim.inTouch = true` (touch, handheld AR included) or `rim.inXR = true`; by default fingers and XR hands carry by the edge, and pinch to turn and scale.
 - `surface.settle = false` lets a `SnapToSurfaces` object leave the surface edge and be dropped in mid-air.
+- `surface.settle` only keeps the anchor on the surface. `surface.preventOverhang = true` (requires `settle`) keeps the whole bounding box on it, and stops rim turns and resizes at the edge. It tests the corners, side midpoints and centre with short rays, so the surface can have any shape, but a lower surface does not count and a hole between the samples can be missed. Two-pointer pinch scaling and `Scale` handles are not limited by it.
 
 **Precedence when settings compete for where the object ends up:**
 1. `DragControls.allowDrop` refusal or `DragTarget.beforeDrop` refusal → back to where this drag picked it up.
