@@ -286,6 +286,13 @@ drawer.valueChangedNormalized.addEventListener(t => light.intensity = t * 5);
 
 `normalizedRangeAngle` moves where a hinge reports `1` (e.g. a 360° free dial that reads `1` at 340°, or a 90° door that counts as open at 80°) without changing the swing.
 
+Set it from code (Slide and HingeRotate only; clamped, not snapped, ignored while dragged; fires the value events):
+```ts
+drawer.setValue(0.25);              // parent units from rest
+dial.setNormalizedValue(0.5, false); // 0…1 across the range; false = no animation
+```
+A full-turn hinge turns the shorter way; a ranged one stays inside its range.
+
 ## Snapping and engage thresholds
 
 - **Grid (moving modes):** `snapping.gridResolution` (0 = off), `snapping.gridSpace` = world grid or parent space.
@@ -308,7 +315,7 @@ lever.returning.delay = 0.5;                   // seconds held before returning;
 lever.returning.duration = 0.25;               // 0 snaps
 lever.returning.curve = myAnimationCurve;      // progress→progress; >1 overshoots (springy)
 ```
-Works in every mode. Value events follow the object home. An accepting drop target wins over the return. From code: `drag.resetToRest(obj?, animate = true)` and `drag.getRestPose(obj?)` (parent-space pose; the zero every range is measured from).
+Works in every mode. Value events follow the object home. An accepting drop target wins over the return. From code: `drag.resetToRest(animate = true)` and `drag.getRestPose()` (parent-space pose; the zero every range is measured from). Both act on `dragObject`.
 
 ## Grab point, anchor, pivot, snap points
 

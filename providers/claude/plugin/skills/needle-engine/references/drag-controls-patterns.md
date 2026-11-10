@@ -192,7 +192,8 @@ dc.allowDrop.addEventListener(e => {       // every frame + once on release
 dc.pointerState != null;                    // "being dragged right now" (hover/drag highlight)
 dc.enabled = false;                         // lock a control (latched lid, planted seed)
 dc.dragMode = DragMode.None;                // same, but keeps the component active
-dc.getRestPose(obj);                        // authored pose that ranges are measured from
+dc.getRestPose();                           // authored pose that ranges are measured from
+dc.setNormalizedValue(1);                   // open a drawer or lid from code (Slide / HingeRotate)
 
 // Targets
 dt.occupants;                               // live array — copy before mutating: [...dt.occupants]
