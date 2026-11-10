@@ -94,7 +94,7 @@ Each mode reads only its own settings; the rest are silently ignored. This mirro
 | `grab.alignToPointer` | ✓ | ✓ | ✓ | | | | | |
 | `xrHold` | ✓ | ✓ | not `Attached` | | | | | |
 | `xrDistanceDragFactor` | ✓ | ✓ | ✓ | | | | | |
-| `attachedDepthRaycast` | | | `Attached` only | | | | | |
+| `attachedDepthRaycast` | | `surface.settle` off | `Attached` only | | | | | |
 | `axis` | | | | ✓ | ✓ | | | ✓ |
 | `customPivot` | | | | | ✓ | ✓ | ✓ | ✓ |
 | `axisMin/Max`, `snapping.axisSnap/axisSteps/axisSnapMode`, `engage.axisThreshold` | | | | ✓ | | | | |
@@ -366,7 +366,7 @@ const g = drag.getGestureAt(hit.point);   // GrabGesture.Move | Turn | Resize | 
 - `checkForCollider: DragCollisionCheck` (every mode; needs colliders on obstacles):
   `None = 0` · `DestinationOnly = 1` (overlap allowed while dragging, resolved on release) · `PathAndDestination = 2` (path and pose clear, slides along obstacles) · `DestinationOnlyStrict = 3` (every pose clear, path not checked) · `PathAndDestinationStrict = 4` (no reacquiring past obstacles). `drag.collisionBlocked` reports a live block.
 - `ignorePhysicsWhileDragging` — disables the object's colliders and makes its bodies kinematic for the drag, so carrying a crate through a stack doesn't scatter it.
-- `attachedDepthRaycast` — `Attached` + screen pointer: pull the object toward the camera instead of into geometry.
+- `attachedDepthRaycast` — screen pointer, `Attached` or `SnapToSurfaces` with `surface.settle` off: pull the object toward the camera instead of into geometry. In `SnapToSurfaces` only while no allowed surface is under the pointer.
 - `applyAngularVelocityOnRelease` (default `true`) — a `Rotate` flick spins a `Rigidbody` on release. Freeze the body's position and the rotation axes the drag leaves disabled, or physics drifts the pose.
 - `HingeJoint` honours `useLimits` / `limits` (degrees from the authored pose). In Unity, "Add Hinge Physics Component" on a `HingeRotate` DragControls sets up the body, a kinematic frame and the joint limits from the hinge range (unlimited beyond ±180°, where the drag keeps the range itself).
 
