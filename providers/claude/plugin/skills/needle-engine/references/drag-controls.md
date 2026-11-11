@@ -359,7 +359,7 @@ Every resize keeps the opposite side or corner where it is, reads `scaling.mask`
 ```ts
 const g = drag.getGestureAt(hit.point);   // GrabGesture.Move | Turn | Resize | Stretch | null
 ```
-`getGrabZoneAt(point)` returns `GrabZone.Body/Edge/Corner`; `getGrabRim(out)` gives the rim geometry for drawing. Call `invalidateBounds()` after swapping geometry.
+Call `invalidateBounds()` after swapping geometry.
 
 ## Collisions and physics
 
@@ -374,7 +374,7 @@ const g = drag.getGestureAt(hit.point);   // GrabGesture.Move | Turn | Resize | 
 
 - `xrHold: XRHoldBehaviour` — what happens to the mode while a controller/hand holds a moving-mode object: `AlwaysSnap = 0` (constraints stay, furniture stays on the floor), `FreeThenSnap = 1` (loose in the hand, settles back into the mode on release), `Free = 2` (stays where let go).
 - `xrDistanceDragFactor` — push/pull multiplier for far grabs.
-- `screenProfile` / `xrProfile` expose the resolved settings per input type (`dragMode`, `hold`, `rotation`, `allowScaling`).
+- The mode actually running for an input is `e.mode` on the drag events.
 
 ## Events and live state
 
@@ -401,16 +401,18 @@ Statics: `DragControls.CurrentlySelected`, `DragControls.HasAnySelected`.
 
 ## Custom constraints and modes
 
-`drag.constraints` runs after the mode's own constraints every frame (single and two-pointer). Built-ins include `BoundsConstraint`, `LimitAreaConstraint`, `AxisLineConstraint`, `FixedPositionConstraint`, `GridSnapConstraint`, `KeepScaleConstraint`, `ScaleLimitConstraint`, `CollisionBlockConstraint`:
+`drag.constraints` runs after the mode's own constraints every frame (single and two-pointer). The built-in constraints are internal; configure them through the settings (`limitArea`, `snapping`, `scaling`, `checkForCollider`). A custom one is any `IDragConstraint`: `apply(followObject)` modifies the follow object in place, `init(ctx)` is optional:
 ```ts
-import { BoundsConstraint } from "@needle-tools/engine";
-const bounds = new BoundsConstraint();
-bounds.min.set(-5, 0, -5); bounds.max.set(5, 0, 5);
-bounds.referenceSpace = room;   // null = world
-bounds.clampBounds = true;      // whole box, not just the pivot
-drag.constraints.push(bounds);
+import type { IDragConstraint } from "@needle-tools/engine";
+const keepAboveFloor: IDragConstraint = {
+  apply(follow) {
+    const p = follow.worldPosition;
+    if (p.y < 0) { p.y = 0; follow.worldPosition = p; }
+  },
+};
+drag.constraints.push(keepAboveFloor);
 ```
-A custom one is any object with `apply(followObject)` (modify the follow object in place) and optional `init(ctx)`. A whole new mode: `registerDragStrategy(100 as DragMode, () => new MyStrategy())`. A custom drop system: implement `IDropTargetSystem` and `registerDropTargetSystem(...)`.
+A custom drop system: implement `IDropTargetSystem` and `registerDropTargetSystem(...)`.
 
 ---
 
