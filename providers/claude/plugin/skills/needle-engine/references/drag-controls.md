@@ -412,7 +412,6 @@ const keepAboveFloor: IDragConstraint = {
 };
 drag.constraints.push(keepAboveFloor);
 ```
-A custom drop system: implement `IDropTargetSystem` and `registerDropTargetSystem(...)`.
 
 ---
 
