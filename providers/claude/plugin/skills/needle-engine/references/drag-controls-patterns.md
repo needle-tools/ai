@@ -123,7 +123,7 @@ The grip is a child sprite or mesh with its own `DragControls` and `customTransf
 
 | Game | Settings |
 |---|---|
-| **Chess** | board: `DragTarget` `Grid`, `8 × 8`, `grid.spacing = 0.0625`, `snapping.onRelease`, `holding.parentOnDrop`, `fly.duration = 0.24`, `filter.objects = [32 pieces]`. Pieces (children of the board): `XZPlane`, `limitArea = <board mesh>`, `dragTargets = Require`, `dragOffset = 0.26` (lifted while carried). Rules: `allowDrop` → `e.disallow()` unless `target.currentSlot` is a legal square. A lever (`HingeRotate`, 2 steps) switches rules on and off. |
+| **Chess** | board: `DragTarget` `Grid`, `8 × 8`, `grid.spacing = 0.0625`, `snapping.onRelease`, `holding.parentOnDrop`, `fly.duration = 0.24`, `filter.objects = [32 pieces]`. Pieces (children of the board): `XZPlane`, `limitArea = <board mesh>`, `dragTargets = Require`, `dragOffset = 0.26` (lifted while carried). Rules: `allowDrop` → `e.disallow()` unless `e.currentState.dropSlot` is a legal square. A lever (`HingeRotate`, 2 steps) switches rules on and off. |
 | **Jigsaw** | tray: `DragTarget` `Slots` (9), `snapping.whenPointedAt`, `fly.height = 0.2`; `beforeDrop` vetoes a tile whose name suffix doesn't match `slots[e.slot]`. Storage: `DragTarget` Area with `snapping.onRelease`. Tiles: `SnapToSurfaces`, `dragTargets = Require`. |
 | **Shape sorter** | one `DragTarget` Single per hole, `filter.objects = [its shape]`, `snapping.distance = 0.09`, `snapping.onRelease`, `fly.height = 0.15`. Shapes: `SnapToSurfaces`, `dragTargets = Require`. On `objectDropped` the script calls `hole.releaseObject(shape)` and sinks it. |
 | **Sliding-block parking puzzle (colliders)** | every block: `Slide` along its row/column (`axis` X or Z, range in cells, `snapping.axisSnap = 1`), `checkForCollider = PathAndDestinationStrict`, `BoxCollider`. Blocks stop at each other; no script. |
@@ -187,9 +187,10 @@ dc.valueChangedNormalized.addEventListener(v => light.intensity = v * 5);
 dc.dragStarted.addEventListener(e => {});  // pause IK, show highlights for legal squares
 dc.dragEnded.addEventListener(e => { if (e.returning) return; /* harvest, fire */ });
 dc.allowDrop.addEventListener(e => {       // every frame + once on release
-  if (e.dropTarget !== board || !legal.has((e.dropTarget as DragTarget).currentSlot)) e.disallow();
+  const s = e.currentState;
+  if (s.dropTarget !== board || !legal.has(s.dropSlot)) e.disallow();
 });
-dc.pointerState != null;                    // "being dragged right now" (hover/drag highlight)
+dc.currentState != null;                    // "being dragged right now" (hover/drag highlight)
 dc.enabled = false;                         // lock a control (latched lid, planted seed)
 dc.dragMode = DragMode.None;                // same, but keeps the component active
 dc.getRestPose();                           // authored pose that ranges are measured from
@@ -197,9 +198,9 @@ dc.setNormalizedValue(1);                   // open a drawer or lid from code (S
 
 // Targets
 dt.occupants;                               // live array — copy before mutating: [...dt.occupants]
-dt.getOccupant(slot); dt.currentSlot;       // what's in a slot; slot under the dragged object
+dt.getOccupant(slot);                       // what's in a slot (the hovered one is dc.currentState.dropSlot)
 dt.objectDropped.addEventListener(e => e.object /* , e.slot */);
-dt.objectRemoved.addEventListener(e => {});
+dt.objectRemoved.addEventListener(e => e.reason /* DraggedOut, Swapped, Released, Destroyed */);
 dt.allowTarget.addEventListener(e => { if (!ok(e.object)) e.disallow(); });   // once per drag
 dt.beforeDrop.addEventListener(e => { if (!fits(e.object, dt.slots[e.slot])) e.disallow(); });
 dt.allowedObjectDragStarted.addEventListener(e => marker.visible = true);    // light up valid targets

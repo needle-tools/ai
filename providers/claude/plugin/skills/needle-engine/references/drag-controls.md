@@ -364,7 +364,7 @@ Call `invalidateBounds()` after swapping geometry.
 ## Collisions and physics
 
 - `checkForCollider: DragCollisionCheck` (every mode; needs colliders on obstacles):
-  `None = 0` · `DestinationOnly = 1` (overlap allowed while dragging, resolved on release) · `PathAndDestination = 2` (path and pose clear, slides along obstacles) · `DestinationOnlyStrict = 3` (every pose clear, path not checked) · `PathAndDestinationStrict = 4` (no reacquiring past obstacles). `drag.collisionBlocked` reports a live block.
+  `None = 0` · `DestinationOnly = 1` (overlap allowed while dragging, resolved on release) · `PathAndDestination = 2` (path and pose clear, slides along obstacles) · `DestinationOnlyStrict = 3` (every pose clear, path not checked) · `PathAndDestinationStrict = 4` (no reacquiring past obstacles). `drag.currentState?.collisionBlocked` / `collisionBlocker` report a live block.
 - `ignorePhysicsWhileDragging` — disables the object's colliders and makes its bodies kinematic for the drag, so carrying a crate through a stack doesn't scatter it.
 - `attachedDepthRaycast` — screen pointer, `Attached` or `SnapToSurfaces` with `surface.settle` off: pull the object toward the camera instead of into geometry. In `SnapToSurfaces` only while no allowed surface is under the pointer.
 - `applyAngularVelocityOnRelease` (default `true`) — a `Rotate` flick spins a `Rigidbody` on release. Freeze the body's position and the rotation axes the drag leaves disabled, or physics drifts the pose.
@@ -381,23 +381,25 @@ Call `invalidateBounds()` after swapping geometry.
 ```ts
 drag.dragStarted.addEventListener(e => {});   // DragStartedEventArgs
 drag.dragUpdated.addEventListener(e => {      // every frame
-  e.dropTarget;     // IDropTargetHandle | null — what would catch it now
-  e.dropAllowed;    // advisory allowDrop answer
+  const s = e.currentState;                   // DragState, same object as drag.currentState
+  s.dropTarget; s.dropSlot;                   // DragTarget | null and slot (-1) that would catch it now
+  s.swapWith;                                 // occupant a drop now would swap out, or null
+  s.dropAllowed; s.blockedTarget;             // advisory allowDrop answer; target in reach that refuses it
 });
 drag.dragEnded.addEventListener(e => {
-  e.dropped; e.dropTarget; e.allowed; e.returning;
+  e.dropped; e.dropTarget; e.dropSlot; e.swappedWith; e.allowed; e.returning; e.cancelled;
 });
 // Veto a release (every mode). Returns the object to where this drag picked it up.
 drag.allowDrop.addEventListener(e => {
   if (!e.isRelease) return;                   // per-frame advisory call vs. binding release call
-  if (e.dropTarget?.gameObject !== board) e.disallow();
+  if (e.currentState.dropTarget !== board) e.disallow();
 });
 ```
 All args carry `target`, `object`, `mode` (the mode actually running — an XR hold can differ from `dragMode`), `pointerCount`, `isXR`, `startPosition`/`startQuaternion`/`startScale`, `value`, `normalizedValue`. Vectors are the component's **own buffers** — copy what you keep. Use `e.object` in `dragEnded`; `draggedObject` is already `null` there.
 
-`drag.pointerState` (`null` when not dragging) describes the **pointer** for overlays: `point`, `plane`, `origin`, `axis`, `grabPoint`, `aimPosition`, `gesture`, `ray`. `getModeOrigin(out)` / `getModeAxis(out)` give origin/axis without a drag (to draw a control's range at rest).
+`drag.currentState` (`null` when not dragging) is the live `DragState`: the drop fields above, `collisionBlocked`/`collisionBlocker`, `surfaceData`, and the **pointer** for overlays: `point`, `plane`, `origin`, `axis`, `grabPoint`, `aimPosition`, `gesture`, `ray`. Read it, don't store it. A custom drop/swap indicator needs nothing else. `getModeOrigin(out)` / `getModeAxis(out)` give origin/axis without a drag (to draw a control's range at rest).
 
-Statics: `DragControls.CurrentlySelected`, `DragControls.HasAnySelected`.
+Statics: `DragControls.getDragging(context)` — the drags running in one `<needle-engine>` (several in XR or multi-touch).
 
 ## Custom constraints and modes
 
@@ -463,9 +465,9 @@ Key settings:
 - `filter.blockUnallowed = false` lets refused objects be aimed through this target (a carpet spot on the floor that must not block furniture).
 - Drag Targets only receive objects whose DragControls uses a moving mode and `dragTargets` ≠ `Disallow`.
 
-Events (`EventList<…>`): `targetEntered`, `targetExited`, `objectDropped`, `objectRemoved`, `allowedObjectDragStarted` / `allowedObjectDragEnded` (light up valid targets as soon as a piece is picked up), `allowTarget` (veto once per drag: `e.disallow()`), `beforeDrop` (final veto with the resolved `e.position`/`e.quaternion`/`e.snapPoint`).
+Events (`EventList<…>`): `targetEntered`, `targetExited`, `objectDropped`, `objectRemoved` (`e.reason`: `DragTargetRemoveReason.DraggedOut` / `Swapped` / `Released` / `Destroyed`), `allowedObjectDragStarted` / `allowedObjectDragEnded` (light up valid targets as soon as a piece is picked up), `allowTarget` (veto once per drag: `e.disallow()`), `beforeDrop` (final veto with the resolved `e.position`/`e.quaternion`/`e.snapPoint`/`e.swapWith`). Several objects can be dragged over one target at once; every event names its `e.object`.
 
-Queries: `occupants`, `getOccupant(slot)`, `getOccupants(slot)`, `getSlotLoad(slot)`, `slotCount`, `slotCapacity`, `currentSlot`, `draggedObject`, `getSlotWorldPosition(slot)`, `getSlotWorldQuaternion(slot)`, `accepts(obj)`, `releaseObject(obj)`. All enabled targets: `DragTarget.instances`.
+Queries: `occupants`, `getOccupant(slot)`, `getOccupants(slot)`, `getSlotLoad(slot)`, `slotCount`, `slotCapacity`, `getSlotWorldPosition(slot)`, `getSlotWorldQuaternion(slot)`, `accepts(obj)`, `releaseObject(obj)`. Enabled targets of one `<needle-engine>`: `DragTarget.getInstances(context)`. The slot a drag hovers is `drag.currentState.dropSlot`.
 
 Three different vetoes: `DragControls.allowDrop` asks "may this release happen here" (every mode, every frame + release); `DragTarget.allowTarget` asks "will this target take this object at all" (once per drag); `DragTarget.beforeDrop` checks the exact landing pose. All must decide synchronously.
 
@@ -487,7 +489,7 @@ Still honoured when the replacement is unset, so old scenes keep working. Use th
 - Slide/Hinge/Rotate/Scale/ScaleAndRotate **never** enter drop targets — `DragTarget` only works with moving modes.
 - `customPivot` is read once at drag start, position only, in the parent's space.
 - `valueChanged` only reports in-place modes; moving modes report through `dragUpdated`.
-- Event args and `pointerState` are live buffers reused every frame — copy before storing.
+- Event args and `currentState` are live buffers reused every frame — copy before storing.
 - `surface.normalFilter` and `scaling.relativeToStart` are code-only (not in the Unity inspector).
 - Don't build your own drag, rotate or resize handles out of pointer events and a `Raycaster` before trying the modes and recipes above. Handles that drive another object (`customTransform`), pivots (`customPivot`), per-axis resize (`scaling.mask`) and child controls inside a draggable parent cover most furniture and editor-style interactions.
 - Read yaw from the quaternion, not `rotation.y`. Once an object's quaternion has been written (by a drag, for example), its Euler angles can come back as `(π, 0, π)` instead of `(0, π, 0)`, and adding to `rotation.y` then turns it the wrong way. Use `obj.rotateY(delta)` or premultiply a Y-axis quaternion.
