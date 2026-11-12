@@ -298,7 +298,7 @@ A full-turn hinge turns the shorter way; a ranged one stays inside its range.
 - **Grid (moving modes):** `snapping.gridResolution` (0 = off), `snapping.gridSpace` = world grid or parent space.
 - **Slide:** `slide.snapMode` picks which field is read: `slide.steps` (count of even stops) or `slide.snap` (spacing / end capture distance).
 - **Hinge:** `hinge.snapMode` + `hinge.steps` / `snapping.angleSnap`. `ScaleAndRotate`: `snapping.angleSnap` spacing only. `Rotate`: per-axis `rotate.x.angleSnap` etc.
-- `SnapMode`: `None = 0`, `Steps = 1` (reads `steps`), `Incremental = 2` (default; reads `slide.snap` / `snapping.angleSnap` as spacing), `Ends = 3` (free travel; let go within that distance of an end and it pulls shut/open).
+- `SnapMode`: `None = 0`, `Steps = 1` (reads `steps`), `Incremental = 2` (default; reads `slide.snap` / `snapping.angleSnap` as spacing), `Ends = 3` (free travel; let go within that distance of an end and it pulls shut/open), `StartOnly = 4` / `EndOnly = 5` (the same, but only the start, `slide.min` / `hinge.startAngle`, or only the end pulls).
 
 Engage thresholds are dead zones before the object starts following:
 - `engage.planeThreshold` (moving modes, world units), `slide.engageThreshold` (Slide), `engage.angleThreshold` (hinge, ScaleAndRotate, edge/corner turn), `engage.scaleThreshold` (Scale, ScaleAndRotate, edge stretch, corner resize), `rotate.x.engageThreshold` (per axis — keeps a joystick pushed forward from drifting sideways).
