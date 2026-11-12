@@ -141,7 +141,7 @@ Each mode reads only its own settings; the rest are silently ignored. This mirro
 4. `returning.mode` (`Rest` / `DragStart`).
 5. `checkForCollider = DestinationOnly` release correction, XR `FreeThenSnap` settle.
 
-**`scaling.min` / `scaling.max` mean different things:** in `Scale`/`ScaleAndRotate` and for edge/corner resizes they are multiples of the **authored** size (same limits across drags); for pinch they are multiples of the **drag-start** scale (`scaling.relativeToStart`, code-only, default `true`; `false` = absolute world scale per axis).
+**`scaling.min` / `scaling.max` mean different things:** in `Scale`/`ScaleAndRotate` and for edge/corner resizes they are multiples of the **authored** size (same limits across drags); for pinch they are multiples of the **drag-start** scale.
 
 **Good pairs:** `ignorePhysicsWhileDragging` + `checkForCollider` (place by testing colliders, nothing gets scattered) · `Slide`/`HingeRotate` + `slide.engageThreshold`/`engage.angleThreshold` + `engage.mode = FromStart` (sticks shut, free once open) · `Rotate` + `returning.mode = Rest` + `returning.curve` overshoot (springy joystick) · `SnapToSurfaces` + `surface.objects` + `surface.normalFilter` (floor only, no walls) · moving mode + `dragTargets = Require` + `DragTarget` (board games).
 
@@ -490,6 +490,6 @@ Still honoured when the replacement is unset, so old scenes keep working. Use th
 - `customPivot` is read once at drag start, position only, in the parent's space.
 - `valueChanged` only reports in-place modes; moving modes report through `dragUpdated`.
 - Event args and `currentState` are live buffers reused every frame — copy before storing.
-- `surface.normalFilter` and `scaling.relativeToStart` are code-only (not in the Unity inspector).
+- `surface.normalFilter` is code-only (not in the Unity inspector).
 - Don't build your own drag, rotate or resize handles out of pointer events and a `Raycaster` before trying the modes and recipes above. Handles that drive another object (`customTransform`), pivots (`customPivot`), per-axis resize (`scaling.mask`) and child controls inside a draggable parent cover most furniture and editor-style interactions.
 - Read yaw from the quaternion, not `rotation.y`. Once an object's quaternion has been written (by a drag, for example), its Euler angles can come back as `(π, 0, π)` instead of `(0, π, 0)`, and adding to `rotation.y` then turns it the wrong way. Use `obj.rotateY(delta)` or premultiply a Y-axis quaternion.
