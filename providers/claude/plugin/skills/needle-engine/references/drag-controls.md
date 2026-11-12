@@ -68,9 +68,9 @@ In code, set these explicitly instead of relying on defaults.
 | `Attached` | moving | Follows the pointer at its grab depth (screen plane / XR hand). |
 | `HitNormal` | moving | Along the initial hit normal. |
 | `SnapToSurfaces` | moving | Places on scene surfaces; filter with `surface.mask` / `surface.objects`. |
-| `Slide` | in-place | Along `axis` between `axisMin`/`axisMax`. Drawers, sliders, levers. |
-| `HingeRotate` | in-place | Around `axis` at `customPivot`, `startAngle` + `rangeAngle`. Doors, lids, valves. |
-| `Rotate` | in-place | Several axes at once via `rotateX`/`rotateY`/`rotateZ`. Joysticks, trackballs, gimbals. |
+| `Slide` | in-place | Along `axis` between `slide.min`/`slide.max`. Drawers, sliders, levers. |
+| `HingeRotate` | in-place | Around `axis` at `customPivot`, `hinge.startAngle` + `hinge.rangeAngle`. Doors, lids, valves. |
+| `Rotate` | in-place | Several axes at once via `rotate.x`/`rotate.y`/`rotate.z`. Joysticks, trackballs, gimbals. |
 | `Scale` | in-place | Resize along `scaling.mask`. Handles, resizable furniture. |
 | `ScaleAndRotate` | in-place | Turns about `axis` (bearing) and resizes by distance from it. Knobs that grow. |
 | `None` | — | Not draggable; every other setting is inactive. |
@@ -97,11 +97,11 @@ Each mode reads only its own settings; the rest are silently ignored. This mirro
 | `attachedDepthRaycast` | | `surface.settle` off | `Attached` only | | | | | |
 | `axis` | | | | ✓ | ✓ | | | ✓ |
 | `customPivot` | | | | | ✓ | ✓ | ✓ | ✓ |
-| `axisMin/Max`, `snapping.axisSnap/axisSteps/axisSnapMode`, `engage.axisThreshold` | | | | ✓ | | | | |
-| `startAngle`, `rangeAngle`, `normalizedRangeAngle`, `snapping.angleSnap`, `engage.angleThreshold` | | | | | ✓ | | | ✓ |
-| `snapping.angleSteps`, `snapping.angleSnapMode`, `hingeInput` | | | | | ✓ | | | |
+| `slide.*` (`min`, `max`, `snapMode`, `snap`, `steps`, `engageThreshold`) | | | | ✓ | | | | |
+| `hinge.startAngle`, `hinge.rangeAngle`, `hinge.normalizedRangeAngle`, `snapping.angleSnap`, `engage.angleThreshold` | | | | | ✓ | | | ✓ |
+| `hinge.steps`, `hinge.snapMode`, `hinge.input` | | | | | ✓ | | | |
 | `engage.mode` | | | | ✓ | ✓ | | | |
-| `rotateX/Y/Z` | | | | | | ✓ | | |
+| `rotate.x/y/z` | | | | | | ✓ | | |
 | `scaling.mask`, `scaling.min/max`, `engage.scaleThreshold` | pinch / rim resize | pinch / rim resize | pinch / rim resize | | | | ✓ | ✓ |
 | `applyAngularVelocityOnRelease` | | | | | | ✓ | | |
 | `valueChanged`, `valueChangedNormalized` | | | | ✓ | ✓ | first axis | factor | angle |
@@ -115,7 +115,7 @@ Each mode reads only its own settings; the rest are silently ignored. This mirro
 - `limitAreaFit` → `limitArea` is set. **`limitArea` must not be a child of the dragged object** — it would move with it and never constrain anything. Use a sibling or a scene object.
 - `surface.customAnchor` → `surface.anchor = SurfaceAnchor.Custom` (falls back to the bounding box while empty).
 - `grab.points` / `grab.alignToPointer` → `grab.mode = GrabPoint.Custom` (empty list falls back to the hit point). Each grab point needs a non-zero scale on every axis (lossy scale counts) — its scaled unit cube is the grab area.
-- `engage.mode` → `engage.axisThreshold` / `engage.angleThreshold` > 0.
+- `engage.mode` → `slide.engageThreshold` / `engage.angleThreshold` > 0.
 - `engage.elastic` / `engage.stiffness` → some engage threshold > 0. They are **one** shared setting for every threshold on the component.
 - `snapping.gridSpace` → `snapping.gridResolution > 0`.
 - `returning.delay` / `returning.duration` / `returning.curve` → `returning.mode` ≠ `None`. `returning.curve` is unused while `returning.duration = 0`.
@@ -124,10 +124,10 @@ Each mode reads only its own settings; the rest are silently ignored. This mirro
 
 **No effect / mode limits:**
 - `GrabPoint.Pivot` has no effect in `Slide`/`HingeRotate` (the object is never re-hung on the pointer); use `Custom` there to restrict where it can be grabbed.
-- `ScaleAndRotate` has only plain `snapping.angleSnap` spacing — no `snapping.angleSteps`/`snapping.angleSnapMode`, no `engage.mode`, no `hingeInput` (it always reads the bearing around the axis).
+- `ScaleAndRotate` has only plain `snapping.angleSnap` spacing — no `hinge.steps`/`hinge.snapMode`, no `engage.mode`, no `hinge.input` (it always reads the bearing around the axis).
 - `Rotate` with all three axes enabled and **any** limit, snap or engage threshold runs as a gimbal: the middle axis only reaches ±90°. With no limits it is a free trackball, but the reported angles are one of several equivalent readings. For meaningful angles, disable an axis or drop the limits.
 - `Scale` / `ScaleAndRotate` with `scaling.mask = (0, 0, 0)` never resize (`Scale` then does nothing at all).
-- `rangeAngle` ≥ 360 (abs) is free rotation, not a limit; the value still sweeps once per revolution. A range that doesn't contain 0° (the rest pose) is allowed, but the first drag carries the object in and it can't come back out — usually a range measured against the model instead of the pivot.
+- `hinge.rangeAngle` ≥ 360 (abs) is free rotation, not a limit; the value still sweeps once per revolution. A range that doesn't contain 0° (the rest pose) is allowed, but the first drag carries the object in and it can't come back out — usually a range measured against the model instead of the pivot.
 - `customPivot` set to the dragged object itself is the same as leaving it empty.
 - `xrHold` is ignored by all in-place modes (they always hold) and has nothing to settle into with `Attached`.
 - Edge/corner grabs are mouse and pen only unless `rim.inTouch = true` (touch, handheld AR included) or `rim.inXR = true`; by default fingers and XR hands carry by the edge, and pinch to turn and scale.
@@ -143,7 +143,7 @@ Each mode reads only its own settings; the rest are silently ignored. This mirro
 
 **`scaling.min` / `scaling.max` mean different things:** in `Scale`/`ScaleAndRotate` and for edge/corner resizes they are multiples of the **authored** size (same limits across drags); for pinch they are multiples of the **drag-start** scale (`scaling.relativeToStart`, code-only, default `true`; `false` = absolute world scale per axis).
 
-**Good pairs:** `ignorePhysicsWhileDragging` + `checkForCollider` (place by testing colliders, nothing gets scattered) · `Slide`/`HingeRotate` + `engage.axisThreshold`/`engage.angleThreshold` + `engage.mode = FromStart` (sticks shut, free once open) · `Rotate` + `returning.mode = Rest` + `returning.curve` overshoot (springy joystick) · `SnapToSurfaces` + `surface.objects` + `surface.normalFilter` (floor only, no walls) · moving mode + `dragTargets = Require` + `DragTarget` (board games).
+**Good pairs:** `ignorePhysicsWhileDragging` + `checkForCollider` (place by testing colliders, nothing gets scattered) · `Slide`/`HingeRotate` + `slide.engageThreshold`/`engage.angleThreshold` + `engage.mode = FromStart` (sticks shut, free once open) · `Rotate` + `returning.mode = Rest` + `returning.curve` overshoot (springy joystick) · `SnapToSurfaces` + `surface.objects` + `surface.normalFilter` (floor only, no walls) · moving mode + `dragTargets = Require` + `DragTarget` (board games).
 
 ## Recipes
 
@@ -164,23 +164,23 @@ chair.allowScaling = false;          // code default would allow pinch scaling
 const drawer = drawerObj.addComponent(DragControls);
 drawer.dragMode = DragMode.Slide;
 drawer.axis = DragAxis.X;
-drawer.axisMin = 0;                  // closed = authored position
-drawer.axisMax = 0.4;                // may be negative for the other direction
+drawer.slide.min = 0;                // closed = authored position
+drawer.slide.max = 0.4;              // may be negative for the other direction
 
 // Door: 90° around an empty at the hinge edge
 const door = doorObj.addComponent(DragControls);
 door.dragMode = DragMode.HingeRotate;
 door.customPivot = hingeEmpty;       // only its position is read, once per drag
 door.axis = DragAxis.Y;
-door.startAngle = 0;                 // degrees from the authored pose
-door.rangeAngle = 90;                // signed; ≥360 = free spin
+door.hinge.startAngle = 0;           // degrees from the authored pose
+door.hinge.rangeAngle = 90;          // signed; ≥360 = free spin
 
 // Two-axis joystick that springs back to center
 const stick = stickObj.addComponent(DragControls);
 stick.dragMode = DragMode.Rotate;
-stick.rotateY.enabled = false;       // two axes: no gimbal flip
-stick.rotateX.startAngle = -30; stick.rotateX.rangeAngle = 60;
-stick.rotateZ.startAngle = -15; stick.rotateZ.rangeAngle = 30;
+stick.rotate.y.enabled = false;       // two axes: no gimbal flip
+stick.rotate.x.startAngle = -30; stick.rotate.x.rangeAngle = 60;
+stick.rotate.z.startAngle = -15; stick.rotate.z.rangeAngle = 30;
 stick.returning.mode = DragReturn.Rest;
 
 // Height-only resize handle
@@ -209,7 +209,7 @@ for (const drawerObj of drawers) {             // children of `cabinet`, origin 
   const d = drawerObj.addComponent(DragControls);
   d.dragMode = DragMode.Slide;
   d.axis = DragAxis.Z;                          // parent (cabinet) space, so it follows the cabinet's yaw
-  d.axisMin = 0; d.axisMax = 0.38;
+  d.slide.min = 0; d.slide.max = 0.38;
 }
 ```
 
@@ -274,7 +274,7 @@ Two-finger twist on touch and the XR wrist also turn it once `rotation` isn't `L
 | Property | Meaning |
 |----------|---------|
 | `currentValue` | Slide: parent units from rest. Hinge/ScaleAndRotate: degrees from rest. Scale: factor. Rotate: first enabled axis. Moving modes: `0`. |
-| `normalizedValue` | `0…1` across the authored range (`axisMin`→`axisMax`, `startAngle`→end of `rangeAngle`, Scale: `scaling.min`→`scaling.max`). |
+| `normalizedValue` | `0…1` across the authored range (`slide.min`→`slide.max`, `hinge.startAngle`→end of `hinge.rangeAngle`, Scale: `scaling.min`→`scaling.max`). |
 | `currentAngles` / `normalizedAngles` | `Rotate`: per-axis degrees / `0…1` as a `Vector3`. Live buffer — copy it. |
 | `currentScale` / `normalizedScale` | `ScaleAndRotate`: scale factor / `0…1` between `scaling.min` and `scaling.max`. |
 
@@ -284,7 +284,7 @@ door.valueChanged.addEventListener(deg => console.log(deg));
 drawer.valueChangedNormalized.addEventListener(t => light.intensity = t * 5);
 ```
 
-`normalizedRangeAngle` moves where a hinge reports `1` (e.g. a 360° free dial that reads `1` at 340°, or a 90° door that counts as open at 80°) without changing the swing.
+`hinge.normalizedRangeAngle` moves where a hinge reports `1` (e.g. a 360° free dial that reads `1` at 340°, or a 90° door that counts as open at 80°) without changing the swing.
 
 Set it from code (Slide and HingeRotate only; clamped, not snapped, ignored while dragged; fires the value events):
 ```ts
@@ -296,13 +296,13 @@ A full-turn hinge turns the shorter way; a ranged one stays inside its range.
 ## Snapping and engage thresholds
 
 - **Grid (moving modes):** `snapping.gridResolution` (0 = off), `snapping.gridSpace` = world grid or parent space.
-- **Slide:** `snapping.axisSnapMode` picks which field is read: `snapping.axisSteps` (count of even stops) or `snapping.axisSnap` (spacing / end capture distance).
-- **Hinge:** `snapping.angleSnapMode` + `snapping.angleSteps` / `snapping.angleSnap`. `ScaleAndRotate`: `snapping.angleSnap` spacing only. `Rotate`: per-axis `rotateX.angleSnap` etc.
-- `SnapMode`: `None = 0`, `Steps = 1` (reads `*Steps`), `Incremental = 2` (default; reads `*Snap` as spacing), `Ends = 3` (free travel; let go within `*Snap` of an end and it pulls shut/open).
+- **Slide:** `slide.snapMode` picks which field is read: `slide.steps` (count of even stops) or `slide.snap` (spacing / end capture distance).
+- **Hinge:** `hinge.snapMode` + `hinge.steps` / `snapping.angleSnap`. `ScaleAndRotate`: `snapping.angleSnap` spacing only. `Rotate`: per-axis `rotate.x.angleSnap` etc.
+- `SnapMode`: `None = 0`, `Steps = 1` (reads `steps`), `Incremental = 2` (default; reads `slide.snap` / `snapping.angleSnap` as spacing), `Ends = 3` (free travel; let go within that distance of an end and it pulls shut/open).
 
 Engage thresholds are dead zones before the object starts following:
-- `engage.planeThreshold` (moving modes, world units), `engage.axisThreshold` (Slide), `engage.angleThreshold` (hinge, ScaleAndRotate, edge/corner turn), `engage.scaleThreshold` (Scale, ScaleAndRotate, edge stretch, corner resize), `rotateX.engageThreshold` (per axis — keeps a joystick pushed forward from drifting sideways).
-- `engage.mode` (Slide/Hinge only): `FromStart = 0`, `FromEnd = 1`, `Always = 2` (default; with snapping also holds at each stop). A drawer that sticks shut but slides freely once open: `engage.axisThreshold = 0.05`, `engage.mode = 0`.
+- `engage.planeThreshold` (moving modes, world units), `slide.engageThreshold` (Slide), `engage.angleThreshold` (hinge, ScaleAndRotate, edge/corner turn), `engage.scaleThreshold` (Scale, ScaleAndRotate, edge stretch, corner resize), `rotate.x.engageThreshold` (per axis — keeps a joystick pushed forward from drifting sideways).
+- `engage.mode` (Slide/Hinge only): `FromStart = 0`, `FromEnd = 1`, `Always = 2` (default; with snapping also holds at each stop). A drawer that sticks shut but slides freely once open: `slide.engageThreshold = 0.05`, `engage.mode = 0`.
 - `engage.elastic` + `engage.stiffness` (0…1): stretch toward the pointer inside the dead zone instead of standing still; releasing before the threshold returns the object. Stiffness `1` = same as off.
 
 > `SnapMode`, `EngageMode` and `SnapGridSpace` are **not exported** from the `@needle-tools/engine` root at the time of writing — assign the numeric values shown above (or set them in Unity).
@@ -485,7 +485,7 @@ Still honoured when the replacement is unset, so old scenes keep working. Use th
 ## Gotchas
 
 - Code-created DragControls default to **rotation locked on screen and pinch scaling on** — see [Defaults](#defaults-unity-vs-code).
-- `rangeAngle` ≥ 360 means **no limit**, not a 360° range. Negative ranges sweep the other way.
+- `hinge.rangeAngle` ≥ 360 means **no limit**, not a 360° range. Negative ranges sweep the other way.
 - Slide/Hinge/Rotate/Scale/ScaleAndRotate **never** enter drop targets — `DragTarget` only works with moving modes.
 - `customPivot` is read once at drag start, position only, in the parent's space.
 - `valueChanged` only reports in-place modes; moving modes report through `dragUpdated`.

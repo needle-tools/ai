@@ -39,14 +39,14 @@ All are in-place modes on a child of the device; the device itself has no `DragC
 
 | Control | Settings |
 |---|---|
-| **Push button** (springs back) | `Slide`, `axis` = press direction, `axisMax = 0.003` (sign = direction; parent units), `snapping.axisSnapMode = None`, `engage.axisThreshold = 0.001`, `returning.mode = Rest`. Read "pressed" as `normalizedValue > 0.5`. |
-| **Two-position switch** | `Slide`, `axisMax = -0.0045`, `snapping.axisSnapMode = Steps`, `snapping.axisSteps = 1`. `snapping.axisSteps` counts the segments the travel is split into, so `1` stops only at the two ends. |
-| **Three-position switch** (AM/FM/tape) | same, `snapping.axisSteps = 2`. `normalizedValue` reads `0`, `0.5`, `1`. |
-| **Lever with two states** | `HingeRotate`, `axis = Z`, `rangeAngle = -40`, `snapping.angleSnapMode = Steps`, `snapping.angleSteps = 1`, `engage.angleThreshold = 15`. Read it as on/off: `lever.valueChangedNormalized.addEventListener(v => setOn(v > 0.5))`. |
-| **Volume / tuning knob** (limited) | `HingeRotate`, `axis = Z`, `startAngle = 90`, `rangeAngle = -180`. Read `normalizedValue` as `0…1`. |
-| **Stove dial with 6 clicks** | `HingeRotate`, `axis = Z`, `rangeAngle = -360` (free spin), `normalizedRangeAngle = 300` (reads `1` at 300°), `snapping.angleSnapMode = Steps`, `snapping.angleSteps = 6`. |
-| **Linear slider** driving a light | `Slide`, `axis = Z`, `axisMin = 1.54`, `axisMax = 0` (min > max is allowed; it only decides which end reads `0`), `snapping.axisSnap = 0.2`. `valueChangedNormalized` → `light.intensity`. |
-| **Turntable tonearm** | `HingeRotate`, `axis = Y`, `rangeAngle = -38`. The script reads the angle and plays when it's inside a window. |
+| **Push button** (springs back) | `Slide`, `axis` = press direction, `slide.max = 0.003` (sign = direction; parent units), `slide.snapMode = None`, `slide.engageThreshold = 0.001`, `returning.mode = Rest`. Read "pressed" as `normalizedValue > 0.5`. |
+| **Two-position switch** | `Slide`, `slide.max = -0.0045`, `slide.snapMode = Steps`, `slide.steps = 1`. `slide.steps` counts the segments the travel is split into, so `1` stops only at the two ends. |
+| **Three-position switch** (AM/FM/tape) | same, `slide.steps = 2`. `normalizedValue` reads `0`, `0.5`, `1`. |
+| **Lever with two states** | `HingeRotate`, `axis = Z`, `hinge.rangeAngle = -40`, `hinge.snapMode = Steps`, `hinge.steps = 1`, `engage.angleThreshold = 15`. Read it as on/off: `lever.valueChangedNormalized.addEventListener(v => setOn(v > 0.5))`. |
+| **Volume / tuning knob** (limited) | `HingeRotate`, `axis = Z`, `hinge.startAngle = 90`, `hinge.rangeAngle = -180`. Read `normalizedValue` as `0…1`. |
+| **Stove dial with 6 clicks** | `HingeRotate`, `axis = Z`, `hinge.rangeAngle = -360` (free spin), `hinge.normalizedRangeAngle = 300` (reads `1` at 300°), `hinge.snapMode = Steps`, `hinge.steps = 6`. |
+| **Linear slider** driving a light | `Slide`, `axis = Z`, `slide.min = 1.54`, `slide.max = 0` (min > max is allowed; it only decides which end reads `0`), `slide.snap = 0.2`. `valueChangedNormalized` → `light.intensity`. |
+| **Turntable tonearm** | `HingeRotate`, `axis = Y`, `hinge.rangeAngle = -38`. The script reads the angle and plays when it's inside a window. |
 
 `axis` is in the **parent's** space. For buttons on a rotated device, pick the parent axis that points into the device, not the world axis.
 
@@ -54,13 +54,13 @@ All are in-place modes on a child of the device; the device itself has no `DragC
 
 | Object | Settings |
 |---|---|
-| **Self-closing door** | `HingeRotate`, `rangeAngle = -130`, `engage.angleThreshold = 11` + `engage.elastic` (stiff at first), `returning.mode = Rest`, `returning.duration = 3`, a `returning.curve` that eases in. Optionally add `Rigidbody` + `HingeJoint` (`useLimits`, limits `-130…0`). |
-| **Casement / top-hung window sash** | `HingeRotate`, `axis = Z` (side-hung, `rangeAngle = ±98`) or `X` (top-hung, `rangeAngle = 73`). Each sash is its own child. |
-| **Oven door** grabbed by its handle only | `HingeRotate`, `rangeAngle = 82`, `snapping.angleSnapMode = Ends`, `snapping.angleSnap = 10` (falls shut/open near the ends), `grab.mode = Custom`, `grab.points = [handle]`, `checkForCollider = PathAndDestination` (doesn't swing through the pulled-out rack). |
-| **Oven rack / baking sheet** | `Slide`, `axis = Z`, `axisMax = 0.32`, `checkForCollider = PathAndDestination`. The rack also has a `DragTarget` (`snapping.whenPointedAt`, `snapping.rotation = false`, `holding.parentOnDrop`) for pots. |
-| **Drawer that holds things** | `Slide`, `axis = Z`, `axisMax = 0.36` **plus** `DragTarget` `mode = Area`, `area.region = <child box>`, `area.fit = AutoFit`, `snapping.whenPointedAt`, `holding.parentOnDrop`, `holding.areaOccupants`. Items put in ride out with the drawer. |
-| **Chest lid** | Child of the movable chest: `HingeRotate`, `rangeAngle = -176`. The chest itself: `SnapToSurfaces` + `DragTarget` Area for its contents. |
-| **Cassette lid that latches** | `HingeRotate`, `axis = Y`, `rangeAngle = 72`, `snapping.angleSnapMode = Ends`, `snapping.angleSnap = 9`. The script sets `lid.enabled = false` when it is closed (locked) and enables the cassette `DragTarget` only while it's open. |
+| **Self-closing door** | `HingeRotate`, `hinge.rangeAngle = -130`, `engage.angleThreshold = 11` + `engage.elastic` (stiff at first), `returning.mode = Rest`, `returning.duration = 3`, a `returning.curve` that eases in. Optionally add `Rigidbody` + `HingeJoint` (`useLimits`, limits `-130…0`). |
+| **Casement / top-hung window sash** | `HingeRotate`, `axis = Z` (side-hung, `hinge.rangeAngle = ±98`) or `X` (top-hung, `hinge.rangeAngle = 73`). Each sash is its own child. |
+| **Oven door** grabbed by its handle only | `HingeRotate`, `hinge.rangeAngle = 82`, `hinge.snapMode = Ends`, `snapping.angleSnap = 10` (falls shut/open near the ends), `grab.mode = Custom`, `grab.points = [handle]`, `checkForCollider = PathAndDestination` (doesn't swing through the pulled-out rack). |
+| **Oven rack / baking sheet** | `Slide`, `axis = Z`, `slide.max = 0.32`, `checkForCollider = PathAndDestination`. The rack also has a `DragTarget` (`snapping.whenPointedAt`, `snapping.rotation = false`, `holding.parentOnDrop`) for pots. |
+| **Drawer that holds things** | `Slide`, `axis = Z`, `slide.max = 0.36` **plus** `DragTarget` `mode = Area`, `area.region = <child box>`, `area.fit = AutoFit`, `snapping.whenPointedAt`, `holding.parentOnDrop`, `holding.areaOccupants`. Items put in ride out with the drawer. |
+| **Chest lid** | Child of the movable chest: `HingeRotate`, `hinge.rangeAngle = -176`. The chest itself: `SnapToSurfaces` + `DragTarget` Area for its contents. |
+| **Cassette lid that latches** | `HingeRotate`, `axis = Y`, `hinge.rangeAngle = 72`, `hinge.snapMode = Ends`, `snapping.angleSnap = 9`. The script sets `lid.enabled = false` when it is closed (locked) and enables the cassette `DragTarget` only while it's open. |
 
 ## Furniture and room decoration
 
@@ -68,7 +68,7 @@ All are in-place modes on a child of the device; the device itself has no `DragC
 |---|---|
 | **Sofa / table on the floor** | `SnapToSurfaces`, `surface.mask = <floor layer>`, `dragTargets = Disallow`, `xrHold = AlwaysSnap`. Turning and resizing with the mouse: `rim.edge = Rotate`, `rim.corner = ScaleProportional` (the rim sizes itself). For non-box shapes or meshes with holes add `grab.boundsRaycast = true`; for side views `rim.mode = FaceGrid`. |
 | **Furniture that must not overlap** | add `checkForCollider = DestinationOnly` (resolve on release) or `DestinationOnlyStrict` (no overlapping pose ever). Colliders on all furniture. |
-| **Chair turned by a ring handle** | Chair: `SnapToSurfaces`, floor `surface.mask`. Child ring mesh: `HingeRotate`, `axis = Y`, `rangeAngle = -360`, `customTransform = chair`. The ring turns the chair, the body moves it. |
+| **Chair turned by a ring handle** | Chair: `SnapToSurfaces`, floor `surface.mask`. Child ring mesh: `HingeRotate`, `axis = Y`, `hinge.rangeAngle = -360`, `customTransform = chair`. The ring turns the chair, the body moves it. |
 | **Picture on a wall** | `XYPlane`, `limitArea = <box on the wall, sibling of the pictures>`, `rotation = Locked`, `checkForCollider = PathAndDestination` (pictures don't overlap), `dragTargets = Disallow`, `xrHold = AlwaysSnap`. |
 | **Wall lamp on one specific wall** | `SnapToSurfaces`, `surface.objects = [wall mesh]`, `surface.anchor = Pivot` (or `Custom` + `surface.customAnchor` = the back plate), `surface.alignToNormal`, `rotation = Locked`. `dragStarted`/`dragEnded` toggle a wall highlight object. |
 | **Floor-only / wall-only / ceiling-only** | `SnapToSurfaces` + `surface.alignToNormal` + a `surface.normalFilter` (code) that tests the world normal: floor `n.y > cos(20°)`, wall `abs(n.y) < sin(15°)`, ceiling `n.y < -cos(20°)`. The filter only sees surfaces the drag moves onto, so a drag that *starts* on a forbidden face also needs an `allowDrop` veto on release. For feedback, tint the object in `dragUpdated`. |
@@ -80,8 +80,8 @@ All are in-place modes on a child of the device; the device itself has no `DragC
 The grip is a child sprite or mesh with its own `DragControls` and `customTransform = <object>`.
 
 - **Bigger grip for a slider:** an info icon next to the slider handle with the same `Slide` settings and `customTransform = <slider handle>`. Both drive the same handle and both fire `valueChanged`.
-- **Rotation icon that swipes:** `HingeRotate`, `axis = Y`, `rangeAngle = -360`, `customTransform = <rotating object>`, `hingeInput = Swipe` (sideways movement, works at any view angle; `Circular` stops working when the axis is seen edge-on).
-- **Move + "scale & turn" icon on a tree:** tree: `XZPlane`. Child icon: `ScaleAndRotate`, `axis = Y`, `rangeAngle = -360`, `customTransform = tree`. As a child, the icon grows with the tree. To keep its size, store `icon.worldScale` in `start` and write it back in `onBeforeRender`.
+- **Rotation icon that swipes:** `HingeRotate`, `axis = Y`, `hinge.rangeAngle = -360`, `customTransform = <rotating object>`, `hinge.input = Swipe` (sideways movement, works at any view angle; `Circular` stops working when the axis is seen edge-on).
+- **Move + "scale & turn" icon on a tree:** tree: `XZPlane`. Child icon: `ScaleAndRotate`, `axis = Y`, `hinge.rangeAngle = -360`, `customTransform = tree`. As a child, the icon grows with the tree. To keep its size, store `icon.worldScale` in `start` and write it back in `onBeforeRender`.
 - **Rug resized from each edge:** see the next section.
 
 ## Resizing
@@ -98,10 +98,10 @@ The grip is a child sprite or mesh with its own `DragControls` and `customTransf
 
 | Object | Settings |
 |---|---|
-| **Joystick** | `Rotate`, `rotateX` and `rotateY` each `startAngle = ±25`, `rangeAngle = ∓50`, `engageThreshold = 8`; `rotateZ.enabled = false`. `returning.mode = Rest` with an overshoot `returning.curve` (springs to the centre). `applyAngularVelocityOnRelease = false`. Read `normalizedAngles` (copy it, it's a live buffer). |
+| **Joystick** | `Rotate`, `rotate.x` and `rotate.y` each `startAngle = ±25`, `rangeAngle = ∓50`, `engageThreshold = 8`; `rotate.z.enabled = false`. `returning.mode = Rest` with an overshoot `returning.curve` (springs to the centre). `applyAngularVelocityOnRelease = false`. Read `normalizedAngles` (copy it, it's a live buffer). |
 | **Trackball you can flick** | `Rotate`, all three axes free (`rangeAngle = 360`), `Rigidbody` with `useGravity = false` and frozen position. A flick keeps it spinning. |
-| **Globe on its axis** | `Rotate`, only `rotateZ` enabled, free. `Rigidbody` with frozen position and the two other rotation axes. |
-| **Cannon / turret** | platform: `HingeRotate`, `axis = Y`, free. Barrel (child): `HingeRotate` with a limited pitch range (`startAngle = -14`, `rangeAngle = 41`). |
+| **Globe on its axis** | `Rotate`, only `rotate.z` enabled, free. `Rigidbody` with frozen position and the two other rotation axes. |
+| **Cannon / turret** | platform: `HingeRotate`, `axis = Y`, free. Barrel (child): `HingeRotate` with a limited pitch range (`hinge.startAngle = -14`, `hinge.rangeAngle = 41`). |
 | **Robot arm** | a chain of `HingeRotate` joints, each a child of the previous one, each with its own `axis` and range (`J1 Y ±170°`, shoulder `Z startAngle 123 rangeAngle -182`, …). An IK handle (`Attached`, `rotation = Free`) is solved by a script that reads `getRestPose()` per joint and pauses while a joint is grabbed (`dragStarted` / `dragEnded`). |
 
 ## Containers and carrying contents
@@ -126,7 +126,7 @@ The grip is a child sprite or mesh with its own `DragControls` and `customTransf
 | **Chess** | board: `DragTarget` `Grid`, `8 × 8`, `grid.spacing = 0.0625`, `snapping.onRelease`, `holding.parentOnDrop`, `fly.duration = 0.24`, `filter.objects = [32 pieces]`. Pieces (children of the board): `XZPlane`, `limitArea = <board mesh>`, `dragTargets = Require`, `dragOffset = 0.26` (lifted while carried). Rules: `allowDrop` → `e.disallow()` unless `e.currentState.dropSlot` is a legal square. A lever (`HingeRotate`, 2 steps) switches rules on and off. |
 | **Jigsaw** | tray: `DragTarget` `Slots` (9), `snapping.whenPointedAt`, `fly.height = 0.2`; `beforeDrop` vetoes a tile whose name suffix doesn't match `slots[e.slot]`. Storage: `DragTarget` Area with `snapping.onRelease`. Tiles: `SnapToSurfaces`, `dragTargets = Require`. |
 | **Shape sorter** | one `DragTarget` Single per hole, `filter.objects = [its shape]`, `snapping.distance = 0.09`, `snapping.onRelease`, `fly.height = 0.15`. Shapes: `SnapToSurfaces`, `dragTargets = Require`. On `objectDropped` the script calls `hole.releaseObject(shape)` and sinks it. |
-| **Sliding-block parking puzzle (colliders)** | every block: `Slide` along its row/column (`axis` X or Z, range in cells, `snapping.axisSnap = 1`), `checkForCollider = PathAndDestinationStrict`, `BoxCollider`. Blocks stop at each other; no script. |
+| **Sliding-block parking puzzle (colliders)** | every block: `Slide` along its row/column (`axis` X or Z, range in cells, `slide.snap = 1`), `checkForCollider = PathAndDestinationStrict`, `BoxCollider`. Blocks stop at each other; no script. |
 | **Same puzzle on a grid** | board: `DragTarget` `Grid 6 × 6`, `snapping.rotation = false`, `swap.onFullSlot = false`, `holding.parentOnDrop`. Blocks: `XZPlane`, `dragTargets = Require`, `snapping.points = [one empty per cell the block covers]`, `rotation = Locked`. |
 | **Seed bed** | `DragTarget` `Slots` (8), `fly.height = 0.09`, `engage.threshold = 0.18` + `engage.elastic`. `allowTarget` refuses anything that isn't a spawned seed. A planted seed is locked with `dc.dragMode = DragMode.None`; grown carrots get a `DragControls` (`engage.planeThreshold = 0.18`, elastic) and `allowDrop` refuses releases over the bed. |
 
@@ -168,9 +168,9 @@ A machine is a few `DragControls`/`DragTarget` components plus one script that r
 |---|---|
 | **Cassette player** | 9 controls (buttons `Slide` + return, switches `Slide` + `Steps`, volume/tune `HingeRotate`, lid `HingeRotate`). A `DragTarget` `Slots` for the tape with `filter.tags = ["Cassette"]`, `fly.axis = Z`, disabled until the lid opens. The tape: `Attached`. The script reads `normalizedValue` every frame. |
 | **Stove + oven** | 5 dials (6-step hinge), oven door, rack, stove-top `Slots`. The script maps each dial's `normalizedValue` to a plate glow and cooks whatever `plates.getOccupant(slot)` holds. |
-| **Ballista** | base `HingeRotate` Y (aim). Arm `HingeRotate` (pitch) + `DragTarget` `Slots` with the arrow slot, `fly.axis = DragTargetAxis.NegY`, `fly.height = 0.92`, `filter.mask`. Draw string: `Slide`, `axis = Z`, `axisMax = 0.53`, `returning.mode = Rest`, `returning.duration = 0.3`, overshoot `returning.curve`. On `dragEnded`: read `normalizedValue` (before the return resets it), `loadTarget.releaseObject(arrow)`, wait one frame, then apply the impulse. |
+| **Ballista** | base `HingeRotate` Y (aim). Arm `HingeRotate` (pitch) + `DragTarget` `Slots` with the arrow slot, `fly.axis = DragTargetAxis.NegY`, `fly.height = 0.92`, `filter.mask`. Draw string: `Slide`, `axis = Z`, `slide.max = 0.53`, `returning.mode = Rest`, `returning.duration = 0.3`, overshoot `returning.curve`. On `dragEnded`: read `normalizedValue` (before the return resets it), `loadTarget.releaseObject(arrow)`, wait one frame, then apply the impulse. |
 | **Cannon** | barrel `HingeRotate` + `DragTarget` (cannonballs in `filter.objects`); `objectDropped` triggers the fire animation. |
-| **Juice mixer** | button `Slide` (`axisMax = -0.01`, return). Mixes when the inner Area is full (`occupants.length >= area.capacity`) and the lid slot is occupied, then `releaseObject` + destroy each fruit. |
+| **Juice mixer** | button `Slide` (`slide.max = -0.01`, return). Mixes when the inner Area is full (`occupants.length >= area.capacity`) and the lid slot is occupied, then `releaseObject` + destroy each fruit. |
 
 ## Script glue
 
