@@ -452,7 +452,7 @@ Key settings:
 - **`holding`:** `parentOnDrop` (+ `adoptChildren` claims pre-placed children at start), `occupants` (default `true`, kinematic while in a slot), `areaOccupants` (Area, default `false`), `dropScale` (uniform world scale while held).
 - **`area`:** `region`, `fit` (`DragTargetAreaFit.None` / `AutoFitKeepRotation` / `AutoFit`), `dropPoint` (`DragTargetAreaDropPoint.None` / `Surface` / `Interior` / `ThroughTop` / `OnTop`), `capacity`.
 - **`direction`:** `DragTargetAxis`, signed (`PosX`/`NegX`/`PosY`/`NegY`/`PosZ`/`NegZ`, default `PosY`); the slot-local side objects enter, leave, are pulled out by and stand off to. Shared by `fly`, `engage` and `swap.hover`.
-- **`fly` and `engage`, in/out:** `fly.height` (distance, `0` = no flight), `fly.duration`; `engage.threshold` (+ `engage.elastic`, `engage.stiffness`) — pull-out distance before an object comes free (a sword from a stone).
+- **`fly` and `engage`, in/out:** `fly.height` (distance, `0` = no flight; the flight time follows the height); `engage.threshold` (+ `engage.elastic`, `engage.stiffness`) — pull-out distance before an object comes free (a sword from a stone).
 - **`filter`:** `objects` (descendants count), `mask` (layers), `tags` (any of), `blockUnallowed`. All filters combine with AND.
 
 **DragTarget combinations:**
@@ -462,7 +462,7 @@ Key settings:
 - `snapping.rotationSteps` / `snapping.rotationAxis` need `snapping.rotation`. `snapping.autoRotate` needs `snapping.rotation`, `snapping.rotationSteps` ≥ 2, and `snapping.onRelease = false`.
 - `swap.onFullSlot` only works at `stack.count = 1`; above that a full stack refuses. `swap.hover`/`swap.hoverDistance` need `swap.onFullSlot` (`swap.hover = false` = no stand-off).
 - `holding.adoptChildren` needs `holding.parentOnDrop`; children with in-place modes (drawers, lids) are skipped.
-- `fly.duration` needs `fly.height` > 0; `engage.elastic`/`engage.stiffness` need `engage.threshold` > 0. `direction` serves `fly`, `engage` and `swap.hover`, and sets the engage side with `fly.height` at `0`.
+- `engage.elastic`/`engage.stiffness` need `engage.threshold` > 0. `direction` serves `fly`, `engage` and `swap.hover`, and sets the engage side with `fly.height` at `0`.
 - `filter.blockUnallowed = false` lets refused objects be aimed through this target (a carpet spot on the floor that must not block furniture).
 - Drag Targets only receive objects whose DragControls uses a moving mode and `dragTargets` ≠ `Disallow`.
 
