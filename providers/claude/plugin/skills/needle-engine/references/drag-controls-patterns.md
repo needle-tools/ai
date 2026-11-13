@@ -116,7 +116,7 @@ The grip is a child sprite or mesh with its own `DragControls` and `customTransf
 | **Fruit bowl** | `DragTarget` Area, `area.dropPoint = ThroughTop`, `holding.parentOnDrop`. Fruit: `Rigidbody` + `ignorePhysicsWhileDragging`, `rotation = Free`. |
 | **Balance scale** | two pans, each `DragTarget` Area, `area.capacity = 3`, `snapping.rotation = false`, `holding.parentOnDrop` (weights tilt with the beam). The script sums `pan.occupants` each frame. |
 | **Quiver / arrow box** | `DragTarget` `mode = Stacked`, `slots = [2 empties]`, `stack.count = 4`, `stack.direction = (1,0,0)`, `snapping.whenPointedAt`, `holding.parentOnDrop`, `filter.mask = <arrows layer>`. Arrows: `dragTargets = Require`, `ignorePhysicsWhileDragging`, kinematic `Rigidbody`. |
-| **Record crate** (pull a record out) | `DragTarget` `Slots` (5), `fly.axis = DragTargetAxis.NegZ`, `fly.height = 0.18` (records fly in/out along the slot's -Z), `engage.threshold = 0.1` + `engage.elastic` (resists before letting go). Records: `dragTargets = Require`. Platter: `Slots` with one slot, `fly.height = 0.08`. |
+| **Record crate** (pull a record out) | `DragTarget` `Slots` (5), `direction = DragTargetAxis.NegZ`, `fly.height = 0.18` (records fly in/out along the slot's -Z), `engage.threshold = 0.1` + `engage.elastic` (resists before letting go). Records: `dragTargets = Require`. Platter: `Slots` with one slot, `fly.height = 0.08`. |
 | **Rug rack that swaps** | rack: `DragTarget` `Slots` (2), `holding.dropScale = 0.38` (rugs shrink while on the rack), `fly.height`, `swap.hoverDistance`. Floor spot: `DragTarget` Single, `filter.blockUnallowed = false`, `allowedObjectDragStarted` / `allowedObjectDragEnded` show and hide a marker. Rugs: `XZPlane`, `dragTargets = Require`, `dragOffset = 0.5`. Dropping on a full slot swaps (`swap.onFullSlot`, default on). |
 
 ## Board games and puzzles
@@ -166,9 +166,9 @@ A machine is a few `DragControls`/`DragTarget` components plus one script that r
 
 | Machine | Parts |
 |---|---|
-| **Cassette player** | 9 controls (buttons `Slide` + return, switches `Slide` + `Steps`, volume/tune `HingeRotate`, lid `HingeRotate`). A `DragTarget` `Slots` for the tape with `filter.tags = ["Cassette"]`, `fly.axis = Z`, disabled until the lid opens. The tape: `Attached`. The script reads `normalizedValue` every frame. |
+| **Cassette player** | 9 controls (buttons `Slide` + return, switches `Slide` + `Steps`, volume/tune `HingeRotate`, lid `HingeRotate`). A `DragTarget` `Slots` for the tape with `filter.tags = ["Cassette"]`, `direction = DragTargetAxis.PosZ`, disabled until the lid opens. The tape: `Attached`. The script reads `normalizedValue` every frame. |
 | **Stove + oven** | 5 dials (6-step hinge), oven door, rack, stove-top `Slots`. The script maps each dial's `normalizedValue` to a plate glow and cooks whatever `plates.getOccupant(slot)` holds. |
-| **Ballista** | base `HingeRotate` Y (aim). Arm `HingeRotate` (pitch) + `DragTarget` `Slots` with the arrow slot, `fly.axis = DragTargetAxis.NegY`, `fly.height = 0.92`, `filter.mask`. Draw string: `Slide`, `axis = Z`, `slide.max = 0.53`, `returning.mode = Rest`, `returning.duration = 0.3`, overshoot `returning.curve`. On `dragEnded`: read `normalizedValue` (before the return resets it), `loadTarget.releaseObject(arrow)`, wait one frame, then apply the impulse. |
+| **Ballista** | base `HingeRotate` Y (aim). Arm `HingeRotate` (pitch) + `DragTarget` `Slots` with the arrow slot, `direction = DragTargetAxis.NegY`, `fly.height = 0.92`, `filter.mask`. Draw string: `Slide`, `axis = Z`, `slide.max = 0.53`, `returning.mode = Rest`, `returning.duration = 0.3`, overshoot `returning.curve`. On `dragEnded`: read `normalizedValue` (before the return resets it), `loadTarget.releaseObject(arrow)`, wait one frame, then apply the impulse. |
 | **Cannon** | barrel `HingeRotate` + `DragTarget` (cannonballs in `filter.objects`); `objectDropped` triggers the fire animation. |
 | **Juice mixer** | button `Slide` (`slide.max = -0.01`, return). Mixes when the inner Area is full (`occupants.length >= area.capacity`) and the lid slot is occupied, then `releaseObject` + destroy each fruit. |
 
