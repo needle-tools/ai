@@ -186,6 +186,9 @@ dc.valueChangedNormalized.addEventListener(v => light.intensity = v * 5);
 // Drag lifecycle
 dc.dragStarted.addEventListener(e => {});  // pause IK, show highlights for legal squares
 dc.dragEnded.addEventListener(e => { if (e.returning) return; /* harvest, fire */ });
+dc.allowDrag.addEventListener(e => {       // once per press, before anything moves
+  if (!myTurn(e.object)) e.disallow();
+});
 dc.allowDrop.addEventListener(e => {       // every frame + once on release
   const s = e.currentState;
   if (s.dropTarget !== board || !legal.has(s.dropSlot)) e.disallow();

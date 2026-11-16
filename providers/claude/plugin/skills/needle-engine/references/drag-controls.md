@@ -83,7 +83,7 @@ Each mode reads only its own settings; the rest are silently ignored. This mirro
 
 | Setting | Planes | SnapToSurfaces | Attached / HitNormal / DynamicViewAngle | Slide | HingeRotate | Rotate | Scale | ScaleAndRotate |
 |---|---|---|---|---|---|---|---|---|
-| `customTransform`, `returning.mode`, `checkForCollider`, `ignorePhysicsWhileDragging`, `dragStarted/Updated/Ended`, `allowDrop` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| `customTransform`, `returning.mode`, `checkForCollider`, `ignorePhysicsWhileDragging`, `dragStarted/Updated/Ended`, `allowDrag`, `allowDrop` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | `dragTargets`, `snapping.points` | ✓ | ✓ | ✓ | | | | | |
 | `limitArea`, `limitAreaFit` | ✓ | | | | | | | |
 | `surface.mask/objects/normalFilter`, `surface.anchor`, `surface.customAnchor`, `surface.alignToNormal`, `surface.settle`, `surface.preventOverhang` | | ✓ | | | | | | |
@@ -132,7 +132,7 @@ Each mode reads only its own settings; the rest are silently ignored. This mirro
 - `xrHold` is ignored by all in-place modes (they always hold) and has nothing to settle into with `Attached`.
 - Edge/corner grabs are mouse and pen only unless `rim.inTouch = true` (touch, handheld AR included) or `rim.inXR = true`; by default fingers and XR hands carry by the edge, and pinch to turn and scale.
 - `surface.settle = false` lets a `SnapToSurfaces` object leave the surface edge and be dropped in mid-air.
-- `surface.settle` only keeps the anchor on the surface. `surface.preventOverhang = true` (requires `settle`) keeps the whole bounding box on it, and stops rim turns and resizes, pinch scaling and `Scale` handles at the edge. It tests the corners, side midpoints and centre with short rays, so the surface can have any shape, but a lower surface does not count and a hole between the samples can be missed. A `Scale` handle follows the setting of the `SnapToSurfaces` DragControls that moves the same object; without one, only `scaling.min` and `scaling.max` apply.
+- `surface.settle` only keeps the anchor on the surface. `surface.preventOverhang = true` keeps the whole bounding box on it, and stops rim turns and resizes, pinch scaling and `Scale` handles at the edge. With `settle` off it applies only while the object is snapped to a surface; off one the object follows the pointer freely. It tests the corners, side midpoints and centre with short rays, so the surface can have any shape, but a lower surface does not count and a hole between the samples can be missed. A `Scale` handle follows the setting of the `SnapToSurfaces` DragControls that moves the same object; without one, only `scaling.min` and `scaling.max` apply.
 
 **Precedence when settings compete for where the object ends up:**
 1. `DragControls.allowDrop` refusal or `DragTarget.beforeDrop` refusal → back to where this drag picked it up.
@@ -389,12 +389,18 @@ drag.dragUpdated.addEventListener(e => {      // every frame
 drag.dragEnded.addEventListener(e => {
   e.dropped; e.dropTarget; e.dropSlot; e.swappedWith; e.allowed; e.returning; e.cancelled;
 });
+// Veto a drag before it starts: once per press, after the movement threshold, before anything moves.
+drag.allowDrag.addEventListener(e => {
+  if (!canMove(e.object)) e.disallow();       // no dragStarted/dragEnded, the object is left alone
+});
 // Veto a release (every mode). Returns the object to where this drag picked it up.
 drag.allowDrop.addEventListener(e => {
   if (!e.isRelease) return;                   // per-frame advisory call vs. binding release call
   if (e.currentState.dropTarget !== board) e.disallow();
 });
 ```
+`allowDrag` args add `pointerEvent` (the press), `movement` (pointer travel before the start) and `allowed`. A vetoed press stays consumed, so camera controls behind it do not take over; clicks never ask, and a second pointer joining a drag in progress does not ask again.
+
 All args carry `target`, `object`, `mode` (the mode actually running — an XR hold can differ from `dragMode`), `pointerCount`, `isXR`, `startPosition`/`startQuaternion`/`startScale`, `value`, `normalizedValue`. Vectors are the component's **own buffers** — copy what you keep. Use `e.object` in `dragEnded`; `draggedObject` is already `null` there.
 
 `drag.currentState` (`null` when not dragging) is the live `DragState`: the drop fields above, `collisionBlocked`/`collisionBlocker`, `surfaceData`, and the **pointer** for overlays: `point`, `plane`, `origin`, `axis`, `grabPoint`, `aimPosition`, `gesture`, `ray`. Read it, don't store it. A custom drop/swap indicator needs nothing else. `getModeOrigin(out)` / `getModeAxis(out)` give origin/axis without a drag (to draw a control's range at rest).
@@ -470,7 +476,7 @@ Events (`EventList<…>`): `targetEntered`, `targetExited`, `objectDropped`, `ob
 
 Queries: `occupants`, `getOccupant(slot)`, `getOccupants(slot)`, `getSlotLoad(slot)`, `slotCount`, `slotCapacity`, `getSlotWorldPosition(slot)`, `getSlotWorldQuaternion(slot)`, `accepts(obj)`, `releaseObject(obj)`. Enabled targets of one `<needle-engine>`: `DragTarget.getInstances(context)`. The slot a drag hovers is `drag.currentState.dropSlot`.
 
-Three different vetoes: `DragControls.allowDrop` asks "may this release happen here" (every mode, every frame + release); `DragTarget.allowTarget` asks "will this target take this object at all" (once per drag); `DragTarget.beforeDrop` checks the exact landing pose. All must decide synchronously.
+Four different vetoes: `DragControls.allowDrag` asks "may this drag start" (once per press); `DragControls.allowDrop` asks "may this release happen here" (every mode, every frame + release); `DragTarget.allowTarget` asks "will this target take this object at all" (once per drag); `DragTarget.beforeDrop` checks the exact landing pose. All must decide synchronously.
 
 ## Deprecated fields
 
