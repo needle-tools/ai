@@ -30,6 +30,7 @@ Only `DragControls`, `DragTarget` and `Duplicatable` are engine components. Wher
 - **`customTransform`** splits grip and moved object. A small icon or handle mesh is what you grab, and another object moves, turns or resizes. Several grips can drive one object.
 - **`holding.parentOnDrop`** on a `DragTarget` makes contents ride along with the target: items in a drawer, weights on a balance pan, arrows on a ballista. **`holding.occupants` / `holding.areaOccupants`** keep their rigidbodies kinematic while they're held.
 - **In-place modes never enter targets.** Only moving modes (planes, `SnapToSurfaces`, `Attached`, `HitNormal`, `DynamicViewAngle`) can be dropped into a `DragTarget`. A drawer can still *be* a target.
+- **`dragTargets` defaults to `Disallow`.** Anything meant to go into a `DragTarget` needs `Allow` or `Require`.
 - **`dragTargets = Require`** + a target = "only valid places". A miss returns the object to where it was picked up.
 - **Filters on a `DragTarget` combine with AND**: `filter.objects`, `filter.mask` (layers, matched against `object.layers.mask`), `filter.tags`. Put each family of objects on its own layer (vegetables, arrows, bricks, crates) and set `filter.mask` to that layer, so pots don't take bricks.
 
@@ -66,10 +67,10 @@ All are in-place modes on a child of the device; the device itself has no `DragC
 
 | Object | Settings |
 |---|---|
-| **Sofa / table on the floor** | `SnapToSurfaces`, `surface.mask = <floor layer>`, `dragTargets = Disallow`, `xrHold = AlwaysSnap`. Turning and resizing with the mouse: `rim.edge = Rotate`, `rim.corner = ScaleProportional` (the rim sizes itself). For non-box shapes or meshes with holes add `grab.boundsRaycast = true`; for side views `rim.mode = FaceGrid`. |
+| **Sofa / table on the floor** | `SnapToSurfaces`, `surface.mask = <floor layer>`, `xrHold = AlwaysSnap`. Turning and resizing with the mouse: `rim.edge = Rotate`, `rim.corner = ScaleProportional` (the rim sizes itself). For non-box shapes or meshes with holes add `grab.boundsRaycast = true`; for side views `rim.mode = FaceGrid`. |
 | **Furniture that must not overlap** | add `checkForCollider = DestinationOnly` (resolve on release) or `DestinationOnlyStrict` (no overlapping pose ever). Colliders on all furniture. |
 | **Chair turned by a ring handle** | Chair: `SnapToSurfaces`, floor `surface.mask`. Child ring mesh: `HingeRotate`, `axis = Y`, `hinge.rangeAngle = -360`, `customTransform = chair`. The ring turns the chair, the body moves it. |
-| **Picture on a wall** | `XYPlane`, `limitArea = <box on the wall, sibling of the pictures>`, `rotation = Locked`, `checkForCollider = PathAndDestination` (pictures don't overlap), `dragTargets = Disallow`, `xrHold = AlwaysSnap`. |
+| **Picture on a wall** | `XYPlane`, `limitArea = <box on the wall, sibling of the pictures>`, `rotation = Locked`, `checkForCollider = PathAndDestination` (pictures don't overlap), `xrHold = AlwaysSnap`. |
 | **Wall lamp on one specific wall** | `SnapToSurfaces`, `surface.objects = [wall mesh]`, `surface.anchor = Pivot` (or `Custom` + `surface.customAnchor` = the back plate), `surface.alignToNormal`, `rotation = Locked`. `dragStarted`/`dragEnded` toggle a wall highlight object. |
 | **Floor-only / wall-only / ceiling-only** | `SnapToSurfaces` + `surface.alignToNormal` + a `surface.normalFilter` (code) that tests the world normal: floor `n.y > cos(20°)`, wall `abs(n.y) < sin(15°)`, ceiling `n.y < -cos(20°)`. The filter only sees surfaces the drag moves onto, so a drag that *starts* on a forbidden face also needs an `allowDrop` veto on release. For feedback, tint the object in `dragUpdated`. |
 | **Small props** (candle holders) | `SnapToSurfaces`, `surface.alignToNormal`, `ignorePhysicsWhileDragging`, `Rigidbody` (falls once released). |
@@ -134,10 +135,11 @@ The grip is a child sprite or mesh with its own `DragControls` and `customTransf
 
 **Building bricks** (each brick receives and plugs in):
 ```ts
-import { DragAxis, DragCollisionCheck, DragControls, DragMode, DragTarget, DragTargetMode } from "@needle-tools/engine";
+import { DragAxis, DragCollisionCheck, DragControls, DragMode, DragTarget, DragTargetMode, DropTargetMode } from "@needle-tools/engine";
 
 const dc = brick.addComponent(DragControls);
 dc.dragMode = DragMode.SnapToSurfaces;
+dc.dragTargets = DropTargetMode.Allow;      // default Disallow ignores targets
 dc.snapping.points = bottomSockets;          // empties under the brick ("Slot.*")
 dc.checkForCollider = DragCollisionCheck.DestinationOnly;
 dc.ignorePhysicsWhileDragging = true;

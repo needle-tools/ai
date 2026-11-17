@@ -441,7 +441,7 @@ import { DragControls, DragMode, DragTarget, DragTargetMode, DropTargetMode } fr
 
 const piece = pieceObj.addComponent(DragControls);
 piece.dragMode = DragMode.XZPlane;
-piece.dragTargets = DropTargetMode.Require;   // Allow (default) | Require (return if missed) | Disallow
+piece.dragTargets = DropTargetMode.Require;   // Allow | Require (return if missed) | Disallow (default)
 
 const board = boardObj.addComponent(DragTarget);
 board.mode = DragTargetMode.Grid;
@@ -452,10 +452,10 @@ board.objectDropped.addEventListener(e => console.log("square", e.slot));
 Settings live in groups, like `DragControls`: `grid`, `area`, `stack`, `snapping`, `swap`, `holding`, `fly`, `engage` and `filter`. `mode`, `slots` and the events stay on the component.
 
 Key settings:
-- **`snapping`, offering:** `distance` (world units, default 0.2), `whenPointedAt` (offer what the pointer aims at, at any distance; empty slot transforms and grid cells get a hit disc of radius `distance`, an Area its region box), `onRelease` (don't pull in live; snap on release), `checkForCollider` (boolean — landing space must be empty).
+- **`snapping`, offering:** `distance` (world units, default 0.2), `whenPointedAt` (default `true`; offer what the pointer aims at, at any distance; empty slot transforms and grid cells get a hit disc of radius `distance`, an Area its region box), `onRelease` (don't pull in live; snap on release), `checkForCollider` (boolean — landing space must be empty).
 - **`snapping`, orientation:** `rotation` (default `true`), `rotationSteps` + `rotationAxis` (symmetric objects fitting several ways), `autoRotate` / `autoRotateInterval` (cycle orientations while hovering; a timer ring with a rotate icon replaces the drop icon at the pointer meanwhile, `DragControls.VisualSettings.showAutoRotate`, `.autoRotateIcon`).
 - **Full slots:** `stack.count`, `swap.onFullSlot` (default `true` — dropping on an occupied slot swaps), `swap.hover` / `swap.hoverDistance` (preview stand-off along `direction`). While a drag is over a target that would take the object, a drop icon shows at the pointer (`DragControls.VisualSettings.showDrop`, `.dropIcon`). While it hovers a slot that would swap, a swap icon shows over the occupant (`.showSwap`, `.swapIcon`).
-- **`holding`:** `parentOnDrop` (+ `adoptChildren` claims pre-placed children at start), `occupants` (default `true`, kinematic while in a slot), `areaOccupants` (Area, default `false`), `dropScale` (uniform world scale while held).
+- **`holding`:** `parentOnDrop` (default `true`; + `adoptChildren`, default `true`, claims pre-placed children at start), `occupants` (default `true`, kinematic while in a slot), `areaOccupants` (Area, default `false`), `dropScale` (uniform world scale while held).
 - **`area`:** `region`, `fit` (`DragTargetAreaFit.None` / `AutoFitKeepRotation` / `AutoFit`), `dropPoint` (`DragTargetAreaDropPoint.None` / `Surface` / `Interior` / `ThroughTop` / `OnTop`), `capacity`.
 - **`direction`:** `DragTargetAxis`, signed (`PosX`/`NegX`/`PosY`/`NegY`/`PosZ`/`NegZ`, default `PosY`); the slot-local side objects enter, leave, are pulled out by and stand off to. Shared by `fly`, `engage` and `swap.hover`.
 - **`fly` and `engage`, in/out:** `fly.height` (distance, `0` = no flight; the flight time follows the height); `engage.threshold` (+ `engage.elastic`, `engage.stiffness`) — pull-out distance before an object comes free (a sword from a stone).
@@ -470,7 +470,7 @@ Key settings:
 - `holding.adoptChildren` needs `holding.parentOnDrop`; children with in-place modes (drawers, lids) are skipped.
 - `engage.elastic`/`engage.stiffness` need `engage.threshold` > 0. `direction` serves `fly`, `engage` and `swap.hover`, and sets the engage side with `fly.height` at `0`.
 - `filter.blockUnallowed = false` lets refused objects be aimed through this target (a carpet spot on the floor that must not block furniture).
-- Drag Targets only receive objects whose DragControls uses a moving mode and `dragTargets` ≠ `Disallow`.
+- Drag Targets only receive objects whose DragControls uses a moving mode and `dragTargets` ≠ `Disallow` (the default).
 
 Events (`EventList<…>`): `targetEntered`, `targetExited`, `objectDropped`, `objectRemoved` (`e.reason`: `DragTargetRemoveReason.DraggedOut` / `Swapped` / `Released` / `Destroyed`), `allowedObjectDragStarted` / `allowedObjectDragEnded` (light up valid targets as soon as a piece is picked up), `allowTarget` (veto once per drag: `e.disallow()`), `beforeDrop` (final veto with the resolved `e.position`/`e.quaternion`/`e.snapPoint`/`e.swapWith`). Several objects can be dragged over one target at once; every event names its `e.object`.
 
